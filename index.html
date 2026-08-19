@@ -18,7 +18,7 @@
     <meta property="og:url" content="https://consultoriarf.net/producao_pstec/">
     <meta property="og:type" content="website">
     
-    <title>Programação de Produção - PSTEC V1.1</title>
+    <title>Programação de Produção - PSTEC V1.3</title>
 
     <!-- VERIFICAÇÃO DE AUTENTICAÇÃO ANTES DE RENDERIZAR A PÁGINA -->
     <script>
@@ -77,7 +77,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-extrabold tracking-wide text-white">GRUPO PSTEC</h1>
-                    <p class="text-xs text-pstec-100">Controle de Produção V1.1</p>
+                    <p class="text-xs text-pstec-100">Controle de Produção V1.3</p>
                 </div>
             </div>
 
@@ -157,7 +157,7 @@
             <!-- Busca Geral Universal -->
             <div class="flex items-center gap-2 flex-1 min-w-[200px] bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
                 <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
-                <input type="text" id="searchInput" oninput="renderView()" placeholder="Pesquisar (OS, Título, Cliente, Empresa, Origem, Cod. Interno...)" 
+                <input type="text" id="searchInput" oninput="renderView()" placeholder="Pesquisar (OS, Título, Cliente, Empresa, Classificação, Cod. Interno...)" 
                        class="w-full text-xs bg-transparent text-slate-800 focus:outline-none placeholder-slate-400 font-medium">
             </div>
 
@@ -186,6 +186,14 @@
                     <option value="">Apontamento Aberto (Todos)</option>
                     <option value="sim">🟢 Com Apontamento Aberto</option>
                     <option value="nao">🔴 Sem Apontamento Aberto</option>
+                </select>
+            </div>
+
+            <!-- Filtro por Classificação -->
+            <div id="classificacaoContainer" class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+                <i data-lucide="tag" class="w-4 h-4 text-slate-400"></i>
+                <select id="classificacaoFilter" onchange="renderView()" class="text-xs bg-transparent text-slate-700 focus:outline-none cursor-pointer max-w-[140px] font-medium">
+                    <option value="">Classificação (Todas)</option>
                 </select>
             </div>
 
@@ -290,7 +298,7 @@
         <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
             <div class="flex items-center gap-2 font-medium">
                 <i data-lucide="code-2" class="w-4 h-4 text-pstec-600"></i>
-                <span>© 2026 PSTEC Brasil — Sistema de Gestão de Produção V1.1</span>
+                <span>© 2026 PSTEC Brasil — Sistema de Gestão de Produção V1.3</span>
             </div>
         </div>
     </footer>
@@ -353,6 +361,7 @@
                     <div><span class="text-slate-500 block font-semibold">Empresa</span><span id="mSegmento" class="font-bold text-pstec-700"></span></div>
                     <div><span class="text-slate-500 block font-semibold">Código Interno</span><span id="mCodInterno" class="font-bold text-slate-800 font-mono"></span></div>
                     <div><span class="text-slate-500 block font-semibold">Origem</span><span id="mOrigem" class="font-bold text-slate-800"></span></div>
+                    <div><span class="text-slate-500 block font-semibold">Classificação</span><span id="mClassificacao" class="font-bold text-indigo-700 uppercase"></span></div>
                     <div><span class="text-slate-500 block font-semibold">Possui Prata</span><span id="mPrata" class="font-bold text-slate-800"></span></div>
                     <div><span class="text-slate-500 block font-semibold">OS Filhos (Quais)</span><span id="mOsFilhosQuais" class="font-bold text-pstec-700 font-mono"></span></div>
                     <div><span class="text-slate-500 block font-semibold">Possui Orçamento</span><span id="mPossuiOrcamento" class="font-bold text-slate-800"></span></div>
@@ -528,6 +537,7 @@
             const apontamentoContainer = document.getElementById('apontamentoContainer');
             const producaoContainer = document.getElementById('producaoContainer');
             const prataContainer = document.getElementById('prataContainer');
+            const classificacaoContainer = document.getElementById('classificacaoContainer');
             const comprasContainer = document.getElementById('comprasContainer');
             const terceirosContainer = document.getElementById('terceirosContainer');
             const extraButtonsContainer = document.getElementById('extraButtonsContainer');
@@ -551,6 +561,7 @@
                 if (apontamentoContainer) apontamentoContainer.classList.remove('hidden');
                 if (producaoContainer) producaoContainer.classList.remove('hidden');
                 if (prataContainer) prataContainer.classList.remove('hidden');
+                if (classificacaoContainer) classificacaoContainer.classList.remove('hidden');
                 if (comprasContainer) comprasContainer.classList.remove('hidden');
                 if (terceirosContainer) terceirosContainer.classList.remove('hidden');
                 if (extraButtonsContainer) extraButtonsContainer.classList.remove('hidden');
@@ -566,6 +577,7 @@
                 if (apontamentoContainer) apontamentoContainer.classList.add('hidden');
                 if (producaoContainer) producaoContainer.classList.add('hidden');
                 if (prataContainer) prataContainer.classList.add('hidden');
+                if (classificacaoContainer) classificacaoContainer.classList.add('hidden');
                 if (comprasContainer) comprasContainer.classList.add('hidden');
                 if (terceirosContainer) terceirosContainer.classList.add('hidden');
                 if (extraButtonsContainer) extraButtonsContainer.classList.add('hidden');
@@ -685,6 +697,7 @@
                 producao: document.getElementById('producaoFilter')?.value || '',
                 cliente: document.getElementById('clientFilter')?.value || '',
                 prata: document.getElementById('prataFilter')?.value || '',
+                classificacao: document.getElementById('classificacaoFilter')?.value || '',
                 compras: document.getElementById('comprasFilter')?.value || '',
                 terceiros: document.getElementById('terceirosFilter')?.value || ''
             };
@@ -778,6 +791,7 @@
             fillSelect('segmentoFilter', getUniqueOptions('empresa'), 'Empresa (Todas)', savedFilters.segmento);
             fillSelect('clientFilter', getUniqueOptions('cliente'), 'Todos os Clientes', savedFilters.cliente);
             fillSelect('prataFilter', getUniqueOptions('possui_prata'), 'Prata (Todos)', savedFilters.prata);
+            fillSelect('classificacaoFilter', getUniqueOptions('classificacao'), 'Classificação (Todas)', savedFilters.classificacao);
             fillSelect('comprasFilter', getUniqueOptions('status_compras'), 'Compras (Todos)', savedFilters.compras);
             fillSelect('terceirosFilter', getUniqueOptions('status_terceiros'), 'Terceiros (Todos)', savedFilters.terceiros);
 
@@ -889,6 +903,7 @@
             const producao = document.getElementById('producaoFilter')?.value || '';
             const cliente = document.getElementById('clientFilter')?.value || '';
             const prata = document.getElementById('prataFilter')?.value || '';
+            const classificacao = document.getElementById('classificacaoFilter')?.value || '';
             const compras = document.getElementById('comprasFilter')?.value || '';
             const terceiros = document.getElementById('terceirosFilter')?.value || '';
 
@@ -908,8 +923,9 @@
                     const matchApontamento = String(item.apontamentos_abertos_detalhe || '').toLowerCase().includes(search);
                     const matchJustificativa = String(item.justificativa || '').toLowerCase().includes(search);
                     const matchOrcamento = String(item.orcamento || '').toLowerCase().includes(search);
+                    const matchClassificacao = String(item.classificacao || '').toLowerCase().includes(search);
                     
-                    if (!matchOS && !matchTitulo && !matchCliente && !matchEmpresa && !matchOrigem && !matchCod && !matchPedido && !matchPP && !matchApontamento && !matchJustificativa && !matchOrcamento) return false;
+                    if (!matchOS && !matchTitulo && !matchCliente && !matchEmpresa && !matchOrigem && !matchCod && !matchPedido && !matchPP && !matchApontamento && !matchJustificativa && !matchOrcamento && !matchClassificacao) return false;
                 }
 
                 if (atrasadaFiltro) {
@@ -927,6 +943,7 @@
                 if (empresa && (item.empresa || '') !== empresa) return false;
                 if (cliente && (item.cliente || '') !== cliente) return false;
                 if (prata && (item.possui_prata || '') !== prata) return false;
+                if (classificacao && (item.classificacao || '') !== classificacao) return false;
                 if (compras && (item.status_compras || '') !== compras) return false;
                 if (terceiros && (item.status_terceiros || '') !== terceiros) return false;
 
@@ -1542,6 +1559,7 @@
             const compras = item.status_compras || 'N/A';
             const terceiros = item.status_terceiros || 'N/A';
             const prata = item.possui_prata || 'N/A';
+            const classificacao = item.classificacao || 'N/A';
             const ppPendentes = item.pp_pendentes || 'Nenhum processo pendente';
 
             const temApontamentoAberto = String(item.tem_apontamento_aberto || '').toLowerCase() === 'sim';
@@ -1574,9 +1592,10 @@
                         </div>
 
                         <div class="pl-1 space-y-0.5">
-                            <p class="text-xs font-black text-slate-800 tracking-tight group-hover:text-pstec-600 transition-colors uppercase">
-                                <span class="text-[9px] text-slate-400 font-normal">Orçamento:</span> ${orcamentoNum}
-                            </p>
+                            <div class="flex justify-between items-center text-xs font-black tracking-tight uppercase">
+                                <p class="text-slate-800"><span class="text-[9px] text-slate-400 font-normal">Orçamento:</span> ${orcamentoNum}</p>
+                                <span class="text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-100 px-1.5 py-0.2 rounded font-bold uppercase truncate max-w-[100px]" title="${classificacao}">${classificacao}</span>
+                            </div>
                             <p class="text-[11px] font-bold text-slate-700 line-clamp-2 leading-snug" title="${osNome}">${osNome}</p>
                         </div>
                     </div>
@@ -1905,6 +1924,7 @@
             document.getElementById('producaoFilter').value = '';
             document.getElementById('clientFilter').value = '';
             document.getElementById('prataFilter').value = '';
+            document.getElementById('classificacaoFilter').value = '';
             document.getElementById('comprasFilter').value = '';
             document.getElementById('terceirosFilter').value = '';
             renderView();
@@ -1924,6 +1944,7 @@
             document.getElementById('mSegmento').textContent = safeText(item.empresa);
             document.getElementById('mCodInterno').textContent = safeText(item.cod_interno);
             document.getElementById('mOrigem').textContent = safeText(item.origem);
+            document.getElementById('mClassificacao').textContent = safeText(item.classificacao);
             document.getElementById('mPrata').textContent = safeText(item.possui_prata);
             document.getElementById('mOsFilhosQuais').textContent = safeText(item.os_filhos_quais);
             document.getElementById('mPossuiOrcamento').textContent = safeText(item.possui_orcamento);
