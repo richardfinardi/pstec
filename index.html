@@ -18,7 +18,7 @@
     <meta property="og:url" content="https://consultoriarf.net/producao_pstec/">
     <meta property="og:type" content="website">
     
-    <title>Programação de Produção - PSTEC V1</title>
+    <title>Programação de Produção - PSTEC V1.1</title>
 
     <!-- VERIFICAÇÃO DE AUTENTICAÇÃO ANTES DE RENDERIZAR A PÁGINA -->
     <script>
@@ -77,7 +77,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-extrabold tracking-wide text-white">GRUPO PSTEC</h1>
-                    <p class="text-xs text-pstec-100">Controle de Produção V1</p>
+                    <p class="text-xs text-pstec-100">Controle de Produção V1.1</p>
                 </div>
             </div>
 
@@ -161,6 +161,14 @@
                        class="w-full text-xs bg-transparent text-slate-800 focus:outline-none placeholder-slate-400 font-medium">
             </div>
 
+            <!-- Filtro Geral por Empresa -->
+            <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+                <i data-lucide="building" class="w-4 h-4 text-slate-400"></i>
+                <select id="segmentoFilter" onchange="renderView()" class="text-xs bg-transparent text-slate-700 focus:outline-none cursor-pointer max-w-[150px] font-bold">
+                    <option value="">Empresa (Todas)</option>
+                </select>
+            </div>
+
             <!-- FILTRO DE OS ATRASADAS -->
             <div id="atrasadaContainer" class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
                 <i data-lucide="alert-triangle" class="w-4 h-4 text-slate-400"></i>
@@ -178,14 +186,6 @@
                     <option value="">Apontamento Aberto (Todos)</option>
                     <option value="sim">🟢 Com Apontamento Aberto</option>
                     <option value="nao">🔴 Sem Apontamento Aberto</option>
-                </select>
-            </div>
-
-            <!-- Filtro por Empresa -->
-            <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
-                <i data-lucide="building" class="w-4 h-4 text-slate-400"></i>
-                <select id="segmentoFilter" onchange="renderView()" class="text-xs bg-transparent text-slate-700 focus:outline-none cursor-pointer max-w-[130px] font-medium">
-                    <option value="">Empresa (Todas)</option>
                 </select>
             </div>
 
@@ -207,11 +207,11 @@
                 </select>
             </div>
 
-            <!-- Filtro por Engenharia -->
-            <div id="engenhariaContainer" class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
-                <i data-lucide="cpu" class="w-4 h-4 text-slate-400"></i>
-                <select id="engenhariaFilter" onchange="renderView()" class="text-xs bg-transparent text-slate-700 focus:outline-none cursor-pointer max-w-[130px] font-medium">
-                    <option value="">Engenharia (Todos)</option>
+            <!-- Filtro por Prata -->
+            <div id="prataContainer" class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+                <i data-lucide="sparkles" class="w-4 h-4 text-slate-400"></i>
+                <select id="prataFilter" onchange="renderView()" class="text-xs bg-transparent text-slate-700 focus:outline-none cursor-pointer max-w-[130px] font-medium">
+                    <option value="">Prata (Todos)</option>
                 </select>
             </div>
 
@@ -233,11 +233,6 @@
 
             <!-- BOTÕES DE FILTRO SEPARADOS -->
             <div id="extraButtonsContainer" class="flex items-center gap-2">
-                <button id="btnToggleMonth" onclick="toggleMonthFilter()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
-                    <i data-lucide="calendar-range" class="w-3.5 h-3.5 text-pstec-600"></i>
-                    <span id="txtToggleMonth">Exibir todas as semanas</span>
-                </button>
-
                 <button id="btnToggleOrcamento" onclick="toggleOrcamentoFilter()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
                     <i data-lucide="dollar-sign" class="w-3.5 h-3.5 text-pstecgreen-600"></i>
                     <span id="txtToggleOrcamento">Exibir somente com Orçamentos</span>
@@ -295,7 +290,7 @@
         <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
             <div class="flex items-center gap-2 font-medium">
                 <i data-lucide="code-2" class="w-4 h-4 text-pstec-600"></i>
-                <span>© 2026 PSTEC Brasil — Sistema de Gestão de Produção</span>
+                <span>© 2026 PSTEC Brasil — Sistema de Gestão de Produção V1.1</span>
             </div>
         </div>
     </footer>
@@ -358,7 +353,7 @@
                     <div><span class="text-slate-500 block font-semibold">Empresa</span><span id="mSegmento" class="font-bold text-pstec-700"></span></div>
                     <div><span class="text-slate-500 block font-semibold">Código Interno</span><span id="mCodInterno" class="font-bold text-slate-800 font-mono"></span></div>
                     <div><span class="text-slate-500 block font-semibold">Origem</span><span id="mOrigem" class="font-bold text-slate-800"></span></div>
-                    <div><span class="text-slate-500 block font-semibold">Engenharia Status</span><span id="mEngenhariaStatus" class="font-bold text-slate-800"></span></div>
+                    <div><span class="text-slate-500 block font-semibold">Possui Prata</span><span id="mPrata" class="font-bold text-slate-800"></span></div>
                     <div><span class="text-slate-500 block font-semibold">OS Filhos (Quais)</span><span id="mOsFilhosQuais" class="font-bold text-pstec-700 font-mono"></span></div>
                     <div><span class="text-slate-500 block font-semibold">Possui Orçamento</span><span id="mPossuiOrcamento" class="font-bold text-slate-800"></span></div>
                     <div><span class="text-slate-500 block font-semibold">Preço Geral / Valor</span><span id="mPreco" class="font-bold text-pstecgreen-600"></span></div>
@@ -455,7 +450,6 @@
         // GERENCIADOR DE ABA ATIVA DO SISTEMA ('dashboard', 'faturamento', 'conferencia', 'limbo')
         let abaAtiva = 'dashboard';
 
-        let onlyCurrentMonth = true;
         let onlyWithBudget = false;
         let isValuesUnlocked = true; // Liberado automaticamente sem restrição de senha
 
@@ -516,7 +510,7 @@
             }
         }
 
-        // V5.6.0: TROCA O ESTADO DA ABA ATIVA E AJUSTA FILTROS DA TELA
+        // TROCA O ESTADO DA ABA ATIVA E AJUSTA FILTROS DA TELA
         function setAbaAtiva(novaAba) {
             abaAtiva = novaAba;
 
@@ -533,7 +527,7 @@
             const atrasadaContainer = document.getElementById('atrasadaContainer');
             const apontamentoContainer = document.getElementById('apontamentoContainer');
             const producaoContainer = document.getElementById('producaoContainer');
-            const engenhariaContainer = document.getElementById('engenhariaContainer');
+            const prataContainer = document.getElementById('prataContainer');
             const comprasContainer = document.getElementById('comprasContainer');
             const terceirosContainer = document.getElementById('terceirosContainer');
             const extraButtonsContainer = document.getElementById('extraButtonsContainer');
@@ -556,7 +550,7 @@
                 if (atrasadaContainer) atrasadaContainer.classList.remove('hidden');
                 if (apontamentoContainer) apontamentoContainer.classList.remove('hidden');
                 if (producaoContainer) producaoContainer.classList.remove('hidden');
-                if (engenhariaContainer) engenhariaContainer.classList.remove('hidden');
+                if (prataContainer) prataContainer.classList.remove('hidden');
                 if (comprasContainer) comprasContainer.classList.remove('hidden');
                 if (terceirosContainer) terceirosContainer.classList.remove('hidden');
                 if (extraButtonsContainer) extraButtonsContainer.classList.remove('hidden');
@@ -571,7 +565,7 @@
                 if (atrasadaContainer) atrasadaContainer.classList.add('hidden');
                 if (apontamentoContainer) apontamentoContainer.classList.add('hidden');
                 if (producaoContainer) producaoContainer.classList.add('hidden');
-                if (engenhariaContainer) engenhariaContainer.classList.add('hidden');
+                if (prataContainer) prataContainer.classList.add('hidden');
                 if (comprasContainer) comprasContainer.classList.add('hidden');
                 if (terceirosContainer) terceirosContainer.classList.add('hidden');
                 if (extraButtonsContainer) extraButtonsContainer.classList.add('hidden');
@@ -657,7 +651,6 @@
             return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
         }
 
-        // V5.6.0: RETORNA INTERVALO FORMATADO DA SEMANA (EX: 17/08 - 23/08)
         function getWeekDateRangeStr(d) {
             const targetDate = new Date(d);
             let dayOfWeek = targetDate.getDay() - 1;
@@ -691,7 +684,7 @@
                 segmento: document.getElementById('segmentoFilter')?.value || '',
                 producao: document.getElementById('producaoFilter')?.value || '',
                 cliente: document.getElementById('clientFilter')?.value || '',
-                engenharia: document.getElementById('engenhariaFilter')?.value || '',
+                prata: document.getElementById('prataFilter')?.value || '',
                 compras: document.getElementById('comprasFilter')?.value || '',
                 terceiros: document.getElementById('terceirosFilter')?.value || ''
             };
@@ -784,7 +777,7 @@
 
             fillSelect('segmentoFilter', getUniqueOptions('empresa'), 'Empresa (Todas)', savedFilters.segmento);
             fillSelect('clientFilter', getUniqueOptions('cliente'), 'Todos os Clientes', savedFilters.cliente);
-            fillSelect('engenhariaFilter', getUniqueOptions('engenharia_status'), 'Engenharia (Todos)', savedFilters.engenharia);
+            fillSelect('prataFilter', getUniqueOptions('possui_prata'), 'Prata (Todos)', savedFilters.prata);
             fillSelect('comprasFilter', getUniqueOptions('status_compras'), 'Compras (Todos)', savedFilters.compras);
             fillSelect('terceirosFilter', getUniqueOptions('status_terceiros'), 'Terceiros (Todos)', savedFilters.terceiros);
 
@@ -895,7 +888,7 @@
             const empresa = document.getElementById('segmentoFilter')?.value || '';
             const producao = document.getElementById('producaoFilter')?.value || '';
             const cliente = document.getElementById('clientFilter')?.value || '';
-            const engenharia = document.getElementById('engenhariaFilter')?.value || '';
+            const prata = document.getElementById('prataFilter')?.value || '';
             const compras = document.getElementById('comprasFilter')?.value || '';
             const terceiros = document.getElementById('terceirosFilter')?.value || '';
 
@@ -914,8 +907,9 @@
                     const matchPP = String(item.pp_pendentes || '').toLowerCase().includes(search);
                     const matchApontamento = String(item.apontamentos_abertos_detalhe || '').toLowerCase().includes(search);
                     const matchJustificativa = String(item.justificativa || '').toLowerCase().includes(search);
+                    const matchOrcamento = String(item.orcamento || '').toLowerCase().includes(search);
                     
-                    if (!matchOS && !matchTitulo && !matchCliente && !matchEmpresa && !matchOrigem && !matchCod && !matchPedido && !matchPP && !matchApontamento && !matchJustificativa) return false;
+                    if (!matchOS && !matchTitulo && !matchCliente && !matchEmpresa && !matchOrigem && !matchCod && !matchPedido && !matchPP && !matchApontamento && !matchJustificativa && !matchOrcamento) return false;
                 }
 
                 if (atrasadaFiltro) {
@@ -932,7 +926,7 @@
 
                 if (empresa && (item.empresa || '') !== empresa) return false;
                 if (cliente && (item.cliente || '') !== cliente) return false;
-                if (engenharia && (item.engenharia_status || '') !== engenharia) return false;
+                if (prata && (item.possui_prata || '') !== prata) return false;
                 if (compras && (item.status_compras || '') !== compras) return false;
                 if (terceiros && (item.status_terceiros || '') !== terceiros) return false;
 
@@ -1194,7 +1188,7 @@
             `;
         }
 
-        // V5.6.0: CONTEÚDO DA ABA FATURAMENTO (VISÃO MENSAL FIXA + AGRUPADO POR ORÇAMENTO)
+        // CONTEÚDO DA ABA FATURAMENTO (VISÃO MENSAL FIXA + AGRUPADO POR ORÇAMENTO)
         function renderPaginaFaturamentoView() {
             const grid = document.getElementById('calendarGrid');
             if (!grid) return;
@@ -1541,13 +1535,13 @@
             const isAtrasado = String(item.atrasada || '').toLowerCase() === 'sim' || String(item.atrasada || '').toLowerCase() === 's';
             const prodStatus = item.status_producao || '0%';
             const clienteNome = item.cliente || 'CLIENTE NÃO INFORMADO';
-            const origem = item.origem || 'SEM ORIGEM';
+            const orcamentoNum = item.orcamento || 'SEM ORÇAMENTO';
             const osNome = item.titulo || 'SEM NOME';
             const empresa = item.empresa || 'SEM EMPRESA';
 
             const compras = item.status_compras || 'N/A';
             const terceiros = item.status_terceiros || 'N/A';
-            const engenharia = item.engenharia_status || 'N/A';
+            const prata = item.possui_prata || 'N/A';
             const ppPendentes = item.pp_pendentes || 'Nenhum processo pendente';
 
             const temApontamentoAberto = String(item.tem_apontamento_aberto || '').toLowerCase() === 'sim';
@@ -1558,6 +1552,8 @@
             const dtRenegociada = formatDate(item.dt_renegociada || item.u_data_renegociacao);
             const dtUltimoApontamento = formatDate(item.ultimo_apontamento);
 
+            const valorOS = formatBRL(parseValue(item.preco_geral_a_vista || item.orcamento));
+
             return `
                 <div onclick="openModal('${item.n_os}')" class="group bg-white border border-slate-200 hover:border-pstec-500 hover:shadow-md p-3.5 rounded-2xl cursor-pointer transition-all duration-200 flex flex-col justify-between gap-2.5 relative overflow-hidden">
                     <div class="absolute left-0 top-0 bottom-0 w-1.5 ${isAtrasado ? 'bg-red-500' : 'bg-emerald-500'}"></div>
@@ -1567,14 +1563,19 @@
                             <span class="font-mono text-xs font-extrabold text-pstec-700 bg-pstec-50 px-2 py-0.5 rounded-lg border border-pstec-100">
                                 OS ${item.n_os}
                             </span>
-                            <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full ${isAtrasado ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-emerald-50 text-emerald-600 border border-emerald-200'}">
-                                ${isAtrasado ? 'Atrasado' : 'No prazo'}
-                            </span>
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-xs font-extrabold text-pstecgreen-600 font-mono bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                                    ${valorOS}
+                                </span>
+                                <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full ${isAtrasado ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-emerald-50 text-emerald-600 border border-emerald-200'}">
+                                    ${isAtrasado ? 'Atrasado' : 'No prazo'}
+                                </span>
+                            </div>
                         </div>
 
                         <div class="pl-1 space-y-0.5">
                             <p class="text-xs font-black text-slate-800 tracking-tight group-hover:text-pstec-600 transition-colors uppercase">
-                                <span class="text-[9px] text-slate-400 font-normal">Origem:</span> ${origem}
+                                <span class="text-[9px] text-slate-400 font-normal">Orçamento:</span> ${orcamentoNum}
                             </p>
                             <p class="text-[11px] font-bold text-slate-700 line-clamp-2 leading-snug" title="${osNome}">${osNome}</p>
                         </div>
@@ -1589,7 +1590,7 @@
                         <div class="grid grid-cols-1 gap-1 text-[10px] bg-slate-50/80 p-2.5 rounded-xl border border-slate-100 font-medium">
                             <div class="flex justify-between items-center"><span class="text-slate-400 font-bold">Compras:</span> <span class="font-bold text-slate-700 truncate max-w-[140px]">${compras}</span></div>
                             <div class="flex justify-between items-center"><span class="text-slate-400 font-bold">Terceiros:</span> <span class="font-bold text-slate-700 truncate max-w-[140px]">${terceiros}</span></div>
-                            <div class="flex justify-between items-center"><span class="text-slate-400 font-bold">Engenharia:</span> <span class="font-bold text-slate-700 truncate max-w-[140px]">${engenharia}</span></div>
+                            <div class="flex justify-between items-center"><span class="text-slate-400 font-bold">Possui Prata:</span> <span class="font-bold text-slate-700 truncate max-w-[140px]">${prata}</span></div>
                             <div class="flex justify-between items-center pt-1 border-t border-slate-200/60 mt-0.5"><span class="text-slate-500 font-extrabold">Produção:</span> <span class="font-black text-pstec-700 font-mono text-xs">${prodStatus}</span></div>
                         </div>
 
@@ -1692,11 +1693,7 @@
                 allWeeks.push(currentWeek);
             }
 
-            const weeksToRender = onlyCurrentMonth ? allWeeks.filter(week => {
-                const temOSNaSemana = week.some(d => !d.isPadding && d.dayItems.length > 0);
-                const contemHojeOuFuturo = week.some(d => !d.isPadding && d.dateKey >= todayStr);
-                return temOSNaSemana || contemHojeOuFuturo;
-            }) : allWeeks;
+            const weeksToRender = allWeeks;
 
             let calendarHTML = `
                 <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
@@ -1886,20 +1883,6 @@
             setViewMode('day');
         }
 
-        function toggleMonthFilter() {
-            onlyCurrentMonth = !onlyCurrentMonth;
-            const btn = document.getElementById('btnToggleMonth');
-            const txt = document.getElementById('txtToggleMonth');
-            if (onlyCurrentMonth) {
-                txt.textContent = 'Exibir todas as semanas';
-                btn.className = "px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-xl text-xs font-semibold transition flex items-center gap-1.5";
-            } else {
-                txt.textContent = 'Ocultar semanas passadas';
-                btn.className = "px-3 py-2 bg-pstec-700 text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-sm";
-            }
-            renderView();
-        }
-
         function toggleOrcamentoFilter() {
             onlyWithBudget = !onlyWithBudget;
             const btn = document.getElementById('btnToggleOrcamento');
@@ -1921,7 +1904,7 @@
             document.getElementById('segmentoFilter').value = '';
             document.getElementById('producaoFilter').value = '';
             document.getElementById('clientFilter').value = '';
-            document.getElementById('engenhariaFilter').value = '';
+            document.getElementById('prataFilter').value = '';
             document.getElementById('comprasFilter').value = '';
             document.getElementById('terceirosFilter').value = '';
             renderView();
@@ -1941,7 +1924,7 @@
             document.getElementById('mSegmento').textContent = safeText(item.empresa);
             document.getElementById('mCodInterno').textContent = safeText(item.cod_interno);
             document.getElementById('mOrigem').textContent = safeText(item.origem);
-            document.getElementById('mEngenhariaStatus').textContent = safeText(item.engenharia_status);
+            document.getElementById('mPrata').textContent = safeText(item.possui_prata);
             document.getElementById('mOsFilhosQuais').textContent = safeText(item.os_filhos_quais);
             document.getElementById('mPossuiOrcamento').textContent = safeText(item.possui_orcamento);
             document.getElementById('mPreco').textContent = formatBRL(parseValue(item.preco_geral_a_vista || item.orcamento));
