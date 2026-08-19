@@ -460,7 +460,7 @@
         let abaAtiva = 'dashboard';
 
         let onlyWithBudget = false;
-        let isValuesUnlocked = true; // Liberado automaticamente sem restrição de senha
+        let isValuesUnlocked = true;
 
         document.addEventListener('DOMContentLoaded', () => {
             const nomeUser = localStorage.getItem('pstec_usuario_nome');
@@ -491,7 +491,6 @@
             }, 30000);
         });
 
-        // VALIDA AS PERMISSÕES COM TRAVA ESTRITA (OCULTA OBRIGATORIAMENTE CASO NÃO SEJA "1")
         function configurarVisibilidadeAbas() {
             const valFaturamento = localStorage.getItem('pstec_perm_faturamento');
             const valFinalizacao = localStorage.getItem('pstec_perm_finalizacao');
@@ -519,7 +518,6 @@
             }
         }
 
-        // TROCA O ESTADO DA ABA ATIVA E AJUSTA FILTROS DA TELA
         function setAbaAtiva(novaAba) {
             abaAtiva = novaAba;
 
@@ -532,7 +530,6 @@
             const btnConferencia = document.getElementById('btnAbaConferencia');
             const btnLimbo = document.getElementById('btnVerLimbo');
 
-            // Elementos de filtros específicos
             const atrasadaContainer = document.getElementById('atrasadaContainer');
             const apontamentoContainer = document.getElementById('apontamentoContainer');
             const producaoContainer = document.getElementById('producaoContainer');
@@ -543,7 +540,6 @@
             const extraButtonsContainer = document.getElementById('extraButtonsContainer');
             const viewModeContainer = document.getElementById('viewModeContainer');
 
-            // Reset estilos dos botões
             if (btnDashboard) btnDashboard.className = "flex items-center gap-1.5 px-3 py-2 bg-pstec-800 hover:bg-pstec-900 text-white font-extrabold rounded-xl text-xs transition shadow-md";
             if (btnFaturamento) btnFaturamento.className = "flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl text-xs transition shadow-md";
             if (btnConferencia) btnConferencia.className = "flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold rounded-xl text-xs transition shadow-md";
@@ -581,9 +577,9 @@
                 if (comprasContainer) comprasContainer.classList.add('hidden');
                 if (terceirosContainer) terceirosContainer.classList.add('hidden');
                 if (extraButtonsContainer) extraButtonsContainer.classList.add('hidden');
-                if (viewModeContainer) viewModeContainer.classList.add('hidden'); // Faturamento é exclusivo MÊS
+                if (viewModeContainer) viewModeContainer.classList.add('hidden');
 
-                currentView = 'month'; // Fixa visão mensal no Faturamento
+                currentView = 'month';
                 fetchFaturamentoData();
 
             } else if (abaAtiva === 'conferencia') {
@@ -726,8 +722,7 @@
                 if (!isSilent) {
                     alert('Não foi possível atualizar os dados de produção. Verifique a conexão com o servidor.');
                 }
-            } font-medium;
-            finally {
+            } finally {
                 if (refreshIcon) {
                     refreshIcon.classList.remove('animate-spin');
                 }
@@ -2072,7 +2067,6 @@
 
                 const patchUrl = `${API_URL}/${selectedItemModal.n_os}/alterar-renegociacao`;
 
-                // Envia alteração + dados para envio de e-mail no backend Python
                 const response = await fetch(patchUrl, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
