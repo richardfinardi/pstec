@@ -18,7 +18,7 @@
     <meta property="og:url" content="https://consultoriarf.net/producao_pstec/">
     <meta property="og:type" content="website">
     
-    <title>Programação de Produção - PSTEC V5.6.0</title>
+    <title>Programação de Produção - PSTEC V1</title>
 
     <!-- VERIFICAÇÃO DE AUTENTICAÇÃO ANTES DE RENDERIZAR A PÁGINA -->
     <script>
@@ -76,8 +76,8 @@
                     </div>
                 </div>
                 <div>
-                    <h1 class="text-xl font-extrabold tracking-wide text-white">PSTEC Brasil</h1>
-                    <p class="text-xs text-pstec-100">Controle de Produção V5.6.0</p>
+                    <h1 class="text-xl font-extrabold tracking-wide text-white">GRUPO PSTEC</h1>
+                    <p class="text-xs text-pstec-100">Controle de Produção V1</p>
                 </div>
             </div>
 
@@ -113,12 +113,6 @@
                     <span id="txtBtnLimbo">OS's no Limbo (0)</span>
                 </button>
 
-                <!-- Botão Trava / Exibir Valores -->
-                <button id="btnToggleValues" onclick="handleValueVisibility()" class="flex items-center gap-2 px-3 py-2 bg-pstec-800 hover:bg-pstec-900 border border-pstec-600 text-white rounded-xl font-bold text-xs transition shadow">
-                    <i data-lucide="eye-off" class="w-4 h-4 text-amber-400" id="iconValueVisibility"></i>
-                    <span id="txtValueVisibility">Exibir Valores</span>
-                </button>
-
                 <!-- Botão Atualizar Manual -->
                 <button id="btnRefresh" onclick="fetchData(false)" class="flex items-center gap-2 px-3.5 py-2 bg-pstecgreen-500 hover:bg-pstecgreen-600 text-slate-950 font-bold text-xs transition-all shadow" title="Atualizar Dados">
                     <i data-lucide="refresh-cw" class="w-4 h-4" id="refreshIcon"></i>
@@ -146,7 +140,7 @@
             </div>
             <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
                 <span class="text-[10px] text-slate-500 font-bold uppercase block">Valor Geral Total</span>
-                <span id="metricValorTotal" class="text-xl font-extrabold text-pstecgreen-600">R$ *****</span>
+                <span id="metricValorTotal" class="text-xl font-extrabold text-pstecgreen-600">R$ 0,00</span>
             </div>
             <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
                 <span class="text-[10px] text-slate-500 font-bold uppercase block">Sem Orçamento</span>
@@ -163,7 +157,7 @@
             <!-- Busca Geral Universal -->
             <div class="flex items-center gap-2 flex-1 min-w-[200px] bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
                 <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
-                <input type="text" id="searchInput" oninput="renderView()" placeholder="Pesquisar (OS, Título, Cliente, Origem, Cod. Interno...)" 
+                <input type="text" id="searchInput" oninput="renderView()" placeholder="Pesquisar (OS, Título, Cliente, Empresa, Origem, Cod. Interno...)" 
                        class="w-full text-xs bg-transparent text-slate-800 focus:outline-none placeholder-slate-400 font-medium">
             </div>
 
@@ -187,11 +181,11 @@
                 </select>
             </div>
 
-            <!-- Filtro por Segmento -->
+            <!-- Filtro por Empresa -->
             <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
-                <i data-lucide="layers" class="w-4 h-4 text-slate-400"></i>
+                <i data-lucide="building" class="w-4 h-4 text-slate-400"></i>
                 <select id="segmentoFilter" onchange="renderView()" class="text-xs bg-transparent text-slate-700 focus:outline-none cursor-pointer max-w-[130px] font-medium">
-                    <option value="">Segmento (Todos)</option>
+                    <option value="">Empresa (Todas)</option>
                 </select>
             </div>
 
@@ -306,38 +300,6 @@
         </div>
     </footer>
 
-    <!-- MODAL CUSTOMIZADO DE SENHA DE VALORES -->
-    <div id="passwordModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-        <div class="bg-white text-slate-800 rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden border border-slate-200">
-            <div class="bg-pstec-700 px-5 py-3.5 flex justify-between items-center text-white">
-                <div class="flex items-center gap-2 font-bold text-sm">
-                    <i data-lucide="lock" class="w-4 h-4 text-amber-400"></i>
-                    <span>Acesso Restrito</span>
-                </div>
-                <button onclick="closePasswordModal()" class="text-pstec-100 hover:text-white p-1"><i data-lucide="x" class="w-4 h-4"></i></button>
-            </div>
-            
-            <div class="p-5 space-y-4 text-xs">
-                <p class="text-slate-600 font-medium">Digite a senha para exibir os valores de orçamento e totais:</p>
-                
-                <div class="relative">
-                    <input type="password" id="inputPassword" onkeydown="checkPasswordKey(event)" placeholder="Digite a senha..." 
-                           class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 pr-10 text-slate-800 text-xs focus:outline-none focus:border-pstec-600 font-medium">
-                    <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none">
-                        <i data-lucide="eye" id="eyeIcon" class="w-4 h-4"></i>
-                    </button>
-                </div>
-
-                <p id="passwordError" class="text-red-600 text-[11px] font-bold hidden">Senha incorreta. Tente novamente.</p>
-            </div>
-
-            <div class="bg-slate-50 px-5 py-3 border-t border-slate-200 flex justify-end gap-2">
-                <button onclick="closePasswordModal()" class="px-3.5 py-1.5 bg-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-300 transition">Cancelar</button>
-                <button onclick="validatePassword()" class="px-4 py-1.5 bg-pstec-700 text-white rounded-xl font-bold hover:bg-pstec-800 shadow-sm transition">Confirmar</button>
-            </div>
-        </div>
-    </div>
-
     <!-- MODAL FORMULÁRIO DE EDICÃO DA DATA RENEGOCIADA & JUSTIFICATIVA -->
     <div id="altRenegociationFormModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[70]">
         <div class="bg-white text-slate-800 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200">
@@ -393,7 +355,7 @@
                 <div class="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
                     <div><span class="text-slate-500 block font-semibold">Nº Pedido</span><span id="mPedido" class="font-bold text-slate-800"></span></div>
                     <div><span class="text-slate-500 block font-semibold">Cliente</span><span id="mCliente" class="font-bold text-slate-800"></span></div>
-                    <div><span class="text-slate-500 block font-semibold">Segmento</span><span id="mSegmento" class="font-bold text-pstec-700"></span></div>
+                    <div><span class="text-slate-500 block font-semibold">Empresa</span><span id="mSegmento" class="font-bold text-pstec-700"></span></div>
                     <div><span class="text-slate-500 block font-semibold">Código Interno</span><span id="mCodInterno" class="font-bold text-slate-800 font-mono"></span></div>
                     <div><span class="text-slate-500 block font-semibold">Origem</span><span id="mOrigem" class="font-bold text-slate-800"></span></div>
                     <div><span class="text-slate-500 block font-semibold">Engenharia Status</span><span id="mEngenhariaStatus" class="font-bold text-slate-800"></span></div>
@@ -495,7 +457,7 @@
 
         let onlyCurrentMonth = true;
         let onlyWithBudget = false;
-        let isValuesUnlocked = false;
+        let isValuesUnlocked = true; // Liberado automaticamente sem restrição de senha
 
         document.addEventListener('DOMContentLoaded', () => {
             const nomeUser = localStorage.getItem('pstec_usuario_nome');
@@ -513,8 +475,7 @@
             // AUTO-REFRESH DE BACKGROUND A CADA 30 SEGUNDOS
             setInterval(() => {
                 const isModalOpen = !document.getElementById('osModal').classList.contains('hidden') ||
-                                    !document.getElementById('altRenegociationFormModal').classList.contains('hidden') ||
-                                    !document.getElementById('passwordModal').classList.contains('hidden');
+                                    !document.getElementById('altRenegociationFormModal').classList.contains('hidden');
                 
                 if (!isModalOpen) {
                     fetchData(true);
@@ -607,7 +568,6 @@
                 if (filtersBar) filtersBar.classList.remove('hidden');
                 if (navigationBar) navigationBar.classList.remove('hidden');
 
-                // V5.6.0: No Faturamento mantemos Busca, Segmento e Cliente. Esconde o resto.
                 if (atrasadaContainer) atrasadaContainer.classList.add('hidden');
                 if (apontamentoContainer) apontamentoContainer.classList.add('hidden');
                 if (producaoContainer) producaoContainer.classList.add('hidden');
@@ -822,7 +782,7 @@
                 }
             };
 
-            fillSelect('segmentoFilter', getUniqueOptions('segmento'), 'Segmento (Todos)', savedFilters.segmento);
+            fillSelect('segmentoFilter', getUniqueOptions('empresa'), 'Empresa (Todas)', savedFilters.segmento);
             fillSelect('clientFilter', getUniqueOptions('cliente'), 'Todos os Clientes', savedFilters.cliente);
             fillSelect('engenhariaFilter', getUniqueOptions('engenharia_status'), 'Engenharia (Todos)', savedFilters.engenharia);
             fillSelect('comprasFilter', getUniqueOptions('status_compras'), 'Compras (Todos)', savedFilters.compras);
@@ -924,12 +884,7 @@
             return isNaN(parsed) ? 0 : parsed;
         }
 
-        // V5.6.0: NO FATURAMENTO OS VALORES SÃO VISÍVEIS DIRETO SEM TRAVA DE SENHA
         function formatBRL(value) {
-            if (abaAtiva === 'faturamento') {
-                return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
-            }
-            if (!isValuesUnlocked) return 'R$ *****';
             return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
         }
 
@@ -937,7 +892,7 @@
             const search = (document.getElementById('searchInput')?.value || '').toLowerCase();
             const atrasadaFiltro = document.getElementById('atrasadaFilter')?.value || '';
             const apontamentoFiltro = document.getElementById('apontamentoAbertoFilter')?.value || '';
-            const segmento = document.getElementById('segmentoFilter')?.value || '';
+            const empresa = document.getElementById('segmentoFilter')?.value || '';
             const producao = document.getElementById('producaoFilter')?.value || '';
             const cliente = document.getElementById('clientFilter')?.value || '';
             const engenharia = document.getElementById('engenhariaFilter')?.value || '';
@@ -952,6 +907,7 @@
                     const matchOS = String(item.n_os || '').toLowerCase().includes(search);
                     const matchTitulo = String(item.titulo || '').toLowerCase().includes(search);
                     const matchCliente = String(item.cliente || '').toLowerCase().includes(search);
+                    const matchEmpresa = String(item.empresa || '').toLowerCase().includes(search);
                     const matchOrigem = String(item.origem || '').toLowerCase().includes(search);
                     const matchCod = String(item.cod_interno || '').toLowerCase().includes(search);
                     const matchPedido = String(item.n_pedido || '').toLowerCase().includes(search);
@@ -959,7 +915,7 @@
                     const matchApontamento = String(item.apontamentos_abertos_detalhe || '').toLowerCase().includes(search);
                     const matchJustificativa = String(item.justificativa || '').toLowerCase().includes(search);
                     
-                    if (!matchOS && !matchTitulo && !matchCliente && !matchOrigem && !matchCod && !matchPedido && !matchPP && !matchApontamento && !matchJustificativa) return false;
+                    if (!matchOS && !matchTitulo && !matchCliente && !matchEmpresa && !matchOrigem && !matchCod && !matchPedido && !matchPP && !matchApontamento && !matchJustificativa) return false;
                 }
 
                 if (atrasadaFiltro) {
@@ -974,7 +930,7 @@
                     if (apontamentoFiltro === 'nao' && temAberto) return false;
                 }
 
-                if (segmento && (item.segmento || '') !== segmento) return false;
+                if (empresa && (item.empresa || '') !== empresa) return false;
                 if (cliente && (item.cliente || '') !== cliente) return false;
                 if (engenharia && (item.engenharia_status || '') !== engenharia) return false;
                 if (compras && (item.status_compras || '') !== compras) return false;
@@ -1270,8 +1226,8 @@
                 // Garante que é do mês selecionado
                 if (itemDateStr.substring(0, 7) !== monthKey) return false;
 
-                // Filtro por Segmento
-                if (segmentoFiltro && String(item.segmento || '') !== segmentoFiltro) return false;
+                // Filtro por Empresa
+                if (segmentoFiltro && String(item.empresa || '') !== segmentoFiltro) return false;
 
                 // Filtro por Cliente
                 if (clienteFiltro && String(item.cliente || '') !== clienteFiltro) return false;
@@ -1587,7 +1543,7 @@
             const clienteNome = item.cliente || 'CLIENTE NÃO INFORMADO';
             const origem = item.origem || 'SEM ORIGEM';
             const osNome = item.titulo || 'SEM NOME';
-            const segmento = item.segmento || 'GERAL';
+            const empresa = item.empresa || 'SEM EMPRESA';
 
             const compras = item.status_compras || 'N/A';
             const terceiros = item.status_terceiros || 'N/A';
@@ -1625,9 +1581,9 @@
                     </div>
 
                     <div class="space-y-2 pl-1">
-                        <div class="flex items-center justify-between text-[10px] pt-1.5 border-t border-slate-100">
-                            <span class="bg-slate-100 text-slate-700 font-bold px-2 py-0.5 rounded-md border border-slate-200 uppercase">${segmento}</span>
-                            <span class="text-slate-500 font-semibold uppercase truncate max-w-[130px]" title="${clienteNome}">${clienteNome}</span>
+                        <div class="flex items-center justify-between text-[10px] pt-1.5 border-t border-slate-100 gap-1">
+                            <span class="bg-slate-100 text-slate-700 font-bold px-2 py-0.5 rounded-md border border-slate-200 uppercase truncate max-w-[120px]" title="${empresa}">${empresa}</span>
+                            <span class="text-slate-500 font-semibold uppercase truncate max-w-[120px]" title="${clienteNome}">${clienteNome}</span>
                         </div>
 
                         <div class="grid grid-cols-1 gap-1 text-[10px] bg-slate-50/80 p-2.5 rounded-xl border border-slate-100 font-medium">
@@ -1759,13 +1715,13 @@
                         const dayTotalVal = dayItems.reduce((acc, i) => acc + parseValue(i.preco_geral_a_vista || i.orcamento), 0);
                         const isToday = dateKey === todayStr;
 
-                        const segmentCounts = {};
+                        const empresaCounts = {};
                         dayItems.forEach(i => {
-                            const seg = (i.segmento || 'Outros').trim();
-                            segmentCounts[seg] = (segmentCounts[seg] || 0) + 1;
+                            const emp = (i.empresa || 'Outros').trim();
+                            empresaCounts[emp] = (empresaCounts[emp] || 0) + 1;
                         });
 
-                        const topSegments = Object.entries(segmentCounts)
+                        const topEmpresas = Object.entries(empresaCounts)
                             .sort((a, b) => b[1] - a[1])
                             .slice(0, 3);
 
@@ -1785,11 +1741,11 @@
                                         <span class="text-xs font-extrabold rounded-full w-6 h-6 flex items-center justify-center ${isToday ? 'bg-pstec-700 text-white shadow-sm' : 'text-slate-800'}">${day}</span>
                                         ${dayItems.length > 0 ? `<span class="bg-pstec-50 text-pstec-800 border border-pstec-200 text-[10px] font-mono font-extrabold px-1.5 py-0.5 rounded-md">OS's: ${dayItems.length}</span>` : ''}
                                     </div>
-                                    ${topSegments.length > 0 ? `
+                                    ${topEmpresas.length > 0 ? `
                                         <div class="space-y-0.5 my-1">
-                                            ${topSegments.map(([segName, count]) => `
+                                            ${topEmpresas.map(([empName, count]) => `
                                                 <div class="flex justify-between items-center bg-slate-50 border border-slate-100 rounded px-1.5 py-0.5 text-[9px]">
-                                                    <span class="font-bold text-slate-700 truncate max-w-[70px]" title="${segName}">${segName}</span>
+                                                    <span class="font-bold text-slate-700 truncate max-w-[70px]" title="${empName}">${empName}</span>
                                                     <span class="font-extrabold text-pstec-700">${count}</span>
                                                 </div>
                                             `).join('')}
@@ -1971,78 +1927,6 @@
             renderView();
         }
 
-        function handleValueVisibility() {
-            if (isValuesUnlocked) {
-                isValuesUnlocked = false;
-                updateValueVisibilityUI();
-                renderView();
-            } else {
-                openPasswordModal();
-            }
-        }
-
-        function updateValueVisibilityUI() {
-            const txt = document.getElementById('txtValueVisibility');
-            const icon = document.getElementById('iconValueVisibility');
-            if (isValuesUnlocked) {
-                txt.textContent = 'Ocultar Valores';
-                icon.setAttribute('data-lucide', 'eye');
-            } else {
-                txt.textContent = 'Exibir Valores';
-                icon.setAttribute('data-lucide', 'eye-off');
-            }
-            lucide.createIcons();
-        }
-
-        function openPasswordModal() {
-            const modal = document.getElementById('passwordModal');
-            const input = document.getElementById('inputPassword');
-            const err = document.getElementById('passwordError');
-            if (input) input.value = '';
-            if (err) err.classList.add('hidden');
-            if (modal) {
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-            }
-        }
-
-        function closePasswordModal() {
-            const modal = document.getElementById('passwordModal');
-            if (modal) {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-            }
-        }
-
-        function validatePassword() {
-            const input = document.getElementById('inputPassword').value;
-            if (input === 'Colmac@2026') {
-                isValuesUnlocked = true;
-                closePasswordModal();
-                updateValueVisibilityUI();
-                renderView();
-            } else {
-                document.getElementById('passwordError').classList.remove('hidden');
-            }
-        }
-
-        function checkPasswordKey(e) {
-            if (e.key === 'Enter') validatePassword();
-        }
-
-        function togglePasswordVisibility() {
-            const input = document.getElementById('inputPassword');
-            const eye = document.getElementById('eyeIcon');
-            if (input.type === 'password') {
-                input.type = 'text';
-                eye.setAttribute('data-lucide', 'eye-off');
-            } else {
-                input.type = 'password';
-                eye.setAttribute('data-lucide', 'eye');
-            }
-            lucide.createIcons();
-        }
-
         function openModal(n_os) {
             const item = rawData.find(i => String(i.n_os) === String(n_os));
             if (!item) return;
@@ -2054,7 +1938,7 @@
             document.getElementById('mTitulo').textContent = item.titulo || 'Sem Título';
             document.getElementById('mPedido').textContent = safeText(item.n_pedido);
             document.getElementById('mCliente').textContent = safeText(item.cliente);
-            document.getElementById('mSegmento').textContent = safeText(item.segmento);
+            document.getElementById('mSegmento').textContent = safeText(item.empresa);
             document.getElementById('mCodInterno').textContent = safeText(item.cod_interno);
             document.getElementById('mOrigem').textContent = safeText(item.origem);
             document.getElementById('mEngenhariaStatus').textContent = safeText(item.engenharia_status);
