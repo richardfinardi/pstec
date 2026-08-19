@@ -14,7 +14,7 @@
     <meta property="og:image" content="https://consultoriarf.net/producao_pstec/LOGO MINIMALISTA.png">
     <meta property="og:type" content="website">
 
-    <title>Carteira de Produção - PSTEC V1.4</title>
+    <title>Carteira de Produção - PSTEC V1.5</title>
 
     <!-- Autenticação Token -->
     <script>
@@ -56,7 +56,7 @@
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col bg-slate-100 text-slate-800" onclick="closeAllDropdowns(event)">
+<body class="min-h-screen flex flex-col bg-slate-100 text-slate-800">
 
     <!-- HEADER -->
     <header class="bg-pstec-700 text-white sticky top-0 z-50 shadow-md">
@@ -71,7 +71,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-extrabold tracking-wide text-white">GRUPO PSTEC</h1>
-                    <p class="text-xs text-pstec-100">Carteira de Produção V1.4</p>
+                    <p class="text-xs text-pstec-100">Carteira de Produção V1.5</p>
                 </div>
             </div>
 
@@ -145,13 +145,14 @@
                 </button>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 text-xs">
-                <!-- Busca Universal -->
-                <div class="col-span-1 sm:col-span-2 md:col-span-2 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 flex items-center gap-2">
-                    <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
-                    <input type="text" id="searchInput" oninput="debounceRender()" placeholder="Buscar (Orçamento, Cliente, Código, Item, OS, Pedido...)" class="w-full bg-transparent text-slate-800 focus:outline-none font-medium">
-                </div>
+            <!-- Pesquisa Global Direta -->
+            <div class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 flex items-center gap-2 text-xs">
+                <i data-lucide="search" class="w-4 h-4 text-pstec-600"></i>
+                <input type="text" id="searchInput" oninput="debounceRender()" list="searchSuggestions" placeholder="Pesquisa Geral Rápida (Digite qualquer Nº de OS, Orçamento, Cliente, Item ou Pedido...)" class="w-full bg-transparent text-slate-800 focus:outline-none font-bold placeholder-slate-400">
+                <datalist id="searchSuggestions"></datalist>
+            </div>
 
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 text-xs">
                 <!-- Previsão de Entrega (De / Até) -->
                 <div class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 flex items-center gap-1.5">
                     <span class="text-[10px] text-slate-400 font-bold">De:</span>
@@ -162,62 +163,96 @@
                     <input type="date" id="dateTo" onchange="renderCarteiraView()" class="bg-transparent w-full text-slate-800 focus:outline-none font-medium">
                 </div>
 
-                <!-- DROPDOWNS COM CAMPO DE PESQUISA INTERNA -->
-                <div id="drop_filterEmpresa"></div>
-                <div id="drop_filterCliente"></div>
-                <div id="drop_filterCodigo"></div>
-                <div id="drop_filterOS"></div>
-                <div id="drop_filterOrcamento"></div>
-                <div id="drop_filterPedido"></div>
+                <select id="filterEmpresa" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
+                    <option value="">Empresa (Todas)</option>
+                </select>
 
-                <!-- Necessita Análise Crítica -->
-                <select id="filterAnaliseCritica" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none">
+                <select id="filterCliente" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
+                    <option value="">Cliente (Todos)</option>
+                </select>
+
+                <select id="filterCodigo" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
+                    <option value="">Código (Todos)</option>
+                </select>
+
+                <select id="filterOS" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
+                    <option value="">Nº OS (Todas)</option>
+                </select>
+
+                <select id="filterOrcamento" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
+                    <option value="">Nº Orçamento (Todos)</option>
+                </select>
+
+                <select id="filterPedido" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
+                    <option value="">Nº Pedido (Todos)</option>
+                </select>
+
+                <select id="filterAnaliseCritica" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
                     <option value="">Necessita Análise... (Todos)</option>
                     <option value="sim">Sim (Possui 'Sim')</option>
                     <option value="nao">Não (Todos 'Não')</option>
                 </select>
 
-                <!-- Status OS -->
-                <div id="drop_filterStatusOS"></div>
+                <select id="filterStatusOS" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-bold focus:outline-none text-pstec-700 truncate">
+                    <option value="">Status OS (Todos)</option>
+                </select>
 
-                <!-- Saldo de Entrega -->
-                <select id="filterSaldoEntrega" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none">
+                <select id="filterSaldoEntrega" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
                     <option value="">Saldo de entrega (Todos)</option>
                     <option value="com_saldo">Com Saldo a Entregar (>0)</option>
                     <option value="sem_saldo">Entregue (Saldo = 0)</option>
                 </select>
 
-                <div id="drop_filterListaMat"></div>
-                <div id="drop_filterProcessamentoLM"></div>
-                <div id="drop_filterDispMat"></div>
-                <div id="drop_filterOrdemCompra"></div>
-                <div id="drop_filterPrata"></div>
+                <select id="filterListaMat" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
+                    <option value="">Lista de Materiais (Todas)</option>
+                </select>
 
-                <!-- Tem Capacidade -->
-                <select id="filterCapacidade" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none">
+                <select id="filterProcessamentoLM" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
+                    <option value="">Processamento LM (Todos)</option>
+                </select>
+
+                <select id="filterDispMat" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
+                    <option value="">Disponibilidade Material (Todas)</option>
+                </select>
+
+                <select id="filterOrdemCompra" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
+                    <option value="">Ordem de compra (Todas)</option>
+                </select>
+
+                <select id="filterPrata" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
+                    <option value="">Prata (Todos)</option>
+                </select>
+
+                <select id="filterCapacidade" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
                     <option value="">tem_capacidade (Todos)</option>
                     <option value="sim">Com Capacidade (>0)</option>
                     <option value="nao">Sem Capacidade (=0)</option>
                 </select>
 
-                <div id="drop_filterTipo"></div>
-                <div id="drop_filterEtapa"></div>
+                <select id="filterTipo" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
+                    <option value="">Tipo (Todos)</option>
+                </select>
+
+                <select id="filterEtapa" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
+                    <option value="">Etapa (Todas)</option>
+                </select>
 
                 <!-- PCP ou PRODUÇÃO (Regra DAX Power BI) -->
-                <select id="filterPCP" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-bold focus:outline-none text-pstec-700">
+                <select id="filterPCP" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-bold focus:outline-none text-pstec-700 truncate">
                     <option value="">PCP ou PRODUÇÃO (Todos)</option>
                     <option value="PCP">PCP (Sem OS criada)</option>
                     <option value="PRODUCAO">PRODUÇÃO (Com OS criada)</option>
                 </select>
 
-                <!-- Liberado para Faturar -->
-                <select id="filterLiberadoFaturar" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none">
+                <select id="filterLiberadoFaturar" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
                     <option value="">Liberado para Faturar (Todos)</option>
                     <option value="sim">Com Vl. Liberado (>0)</option>
                     <option value="nao">Sem Vl. Liberado (=0)</option>
                 </select>
 
-                <div id="drop_filterPrioridade"></div>
+                <select id="filterPrioridade" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
+                    <option value="">Prioridade (Todas)</option>
+                </select>
             </div>
         </div>
 
@@ -282,7 +317,7 @@
     <!-- FOOTER -->
     <footer class="bg-white border-t border-slate-200 py-3 mt-auto">
         <div class="max-w-[96%] mx-auto px-4 flex justify-between items-center text-xs text-slate-500">
-            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V1.4</span>
+            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V1.5</span>
             <span id="lastUpdateLabel">Atualizado: -</span>
         </div>
     </footer>
@@ -299,7 +334,7 @@
             </div>
             
             <div id="mContentGrid" class="p-6 space-y-4 text-xs overflow-y-auto custom-scroll flex-1">
-                <!-- Preenchido via JavaScript sob demanda -->
+                <!-- Preenchido sob demanda -->
             </div>
 
             <div class="bg-slate-50 px-6 py-3 border-t border-slate-200 flex justify-end shrink-0">
@@ -308,7 +343,7 @@
         </div>
     </div>
 
-    <!-- LOGICA JS DE ALTA PERFORMANCE & DROPDOWNS PESQUISÁVEIS -->
+    <!-- LOGICA JS -->
     <script>
         const API_CARTEIRA = 'https://pstec.consultoriarf.net/CARTEIRA';
         let rawCarteira = [];
@@ -320,25 +355,6 @@
         let currentRenderLimit = 50;
         const BATCH_SIZE = 50;
         let debounceTimer = null;
-
-        // Estado dos Dropdowns Pesquisáveis
-        const filterState = {
-            filterEmpresa: '',
-            filterCliente: '',
-            filterCodigo: '',
-            filterOS: '',
-            filterOrcamento: '',
-            filterPedido: '',
-            filterStatusOS: 'APROVADO',
-            filterListaMat: '',
-            filterProcessamentoLM: '',
-            filterDispMat: '',
-            filterOrdemCompra: '',
-            filterPrata: '',
-            filterTipo: '',
-            filterEtapa: '',
-            filterPrioridade: ''
-        };
 
         document.addEventListener('DOMContentLoaded', () => {
             const nomeUser = localStorage.getItem('pstec_usuario_nome');
@@ -403,7 +419,14 @@
                     };
                 });
 
-                buildSearchableDropdowns();
+                populateNativeSelects();
+                populateSearchSuggestions();
+
+                const selStatusOS = document.getElementById('filterStatusOS');
+                if (selStatusOS && !selStatusOS.value) {
+                    selStatusOS.value = 'APROVADO';
+                }
+
                 renderCarteiraView();
 
                 document.getElementById('lastUpdateLabel').textContent = `Atualizado: ${new Date().toLocaleTimeString('pt-BR')}`;
@@ -417,91 +440,54 @@
             }
         }
 
-        // CONSTRUTOR DE DROPDOWNS COM PESQUISA INTERNA
-        function buildSearchableDropdowns() {
-            const configs = [
-                { id: 'filterEmpresa', label: 'Empresa', key: 'Empresa' },
-                { id: 'filterCliente', label: 'Cliente', key: 'Cliente' },
-                { id: 'filterCodigo', label: 'Código', key: 'Código' },
-                { id: 'filterOS', label: 'Nº OS', key: 'Nº OS' },
-                { id: 'filterOrcamento', label: 'Nº Orçamento', key: 'Nº Orçamento' },
-                { id: 'filterPedido', label: 'Nº Pedido', key: 'Nº Pedido' },
-                { id: 'filterStatusOS', label: 'Status OS', key: 'Status OS' },
-                { id: 'filterListaMat', label: 'Lista de Materiais', key: 'Lista de Materiais' },
-                { id: 'filterProcessamentoLM', label: 'Processamento LM', key: 'Processamento LM' },
-                { id: 'filterDispMat', label: 'Disp. Material', key: 'Disponibilidade Material' },
-                { id: 'filterOrdemCompra', label: 'Ordem de compra', key: 'Ordem de compra' },
-                { id: 'filterPrata', label: 'Prata', key: 'Prata' },
-                { id: 'filterTipo', label: 'Tipo', key: 'Tipo' },
-                { id: 'filterEtapa', label: 'Etapa', key: 'Etapa' },
-                { id: 'filterPrioridade', label: 'Prioridade', key: 'Prioridade' }
-            ];
+        function populateNativeSelects() {
+            const getUnique = (key) => {
+                const vals = rawCarteira.map(i => i[key]).filter(v => v !== null && v !== undefined && String(v).trim() !== '');
+                return [...new Set(vals)].sort();
+            };
 
-            configs.forEach(cfg => {
-                const options = [...new Set(rawCarteira.map(i => i[cfg.key]).filter(v => v !== null && v !== undefined && String(v).trim() !== ''))].sort();
-                
-                const container = document.getElementById(`drop_${cfg.id}`);
-                if (!container) return;
+            const fill = (id, options, label) => {
+                const sel = document.getElementById(id);
+                if (!sel) return;
+                const currVal = sel.value;
+                sel.innerHTML = `<option value="">${label}</option>`;
+                options.forEach(opt => {
+                    const el = document.createElement('option');
+                    el.value = opt;
+                    el.textContent = opt;
+                    sel.appendChild(el);
+                });
+                sel.value = currVal;
+            };
 
-                const selectedValue = filterState[cfg.id] || '';
-                const displayLabel = selectedValue ? `${cfg.label}: ${selectedValue}` : `${cfg.label} (Todos)`;
-
-                container.className = 'relative text-xs';
-                container.innerHTML = `
-                    <div onclick="toggleDropdown('${cfg.id}', event)" class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 cursor-pointer font-medium text-slate-700 flex justify-between items-center truncate hover:border-pstec-500 transition">
-                        <span class="truncate" id="lbl_${cfg.id}">${displayLabel}</span>
-                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1"></i>
-                    </div>
-                    
-                    <div id="pop_${cfg.id}" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-40 p-2 text-xs flex flex-col gap-1.5 min-w-[180px]">
-                        <input type="text" placeholder="Pesquisar ${cfg.label}..." oninput="filterDropdownOptions('${cfg.id}', this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs focus:outline-none font-medium">
-                        <div id="opts_${cfg.id}" class="max-h-48 overflow-y-auto custom-scroll flex flex-col gap-0.5">
-                            <div onclick="selectDropdownOption('${cfg.id}', '', '${cfg.label}')" class="p-1.5 hover:bg-pstec-50 rounded-md cursor-pointer font-bold text-pstec-700">
-                                ${cfg.label} (Todos)
-                            </div>
-                            ${options.map(opt => `
-                                <div onclick="selectDropdownOption('${cfg.id}', '${String(opt).replace(/'/g, "\\'")}', '${cfg.label}')" class="p-1.5 hover:bg-slate-100 rounded-md cursor-pointer truncate">
-                                    ${opt}
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-            });
-
-            lucide.createIcons();
+            fill('filterEmpresa', getUnique('Empresa'), 'Empresa (Todas)');
+            fill('filterCliente', getUnique('Cliente'), 'Cliente (Todos)');
+            fill('filterCodigo', getUnique('Código'), 'Código (Todos)');
+            fill('filterOS', getUnique('Nº OS'), 'Nº OS (Todas)');
+            fill('filterOrcamento', getUnique('Nº Orçamento'), 'Nº Orçamento (Todos)');
+            fill('filterPedido', getUnique('Nº Pedido'), 'Nº Pedido (Todos)');
+            fill('filterStatusOS', getUnique('Status OS'), 'Status OS (Todos)');
+            fill('filterListaMat', getUnique('Lista de Materiais'), 'Lista de Materiais (Todas)');
+            fill('filterProcessamentoLM', getUnique('Processamento LM'), 'Processamento LM (Todos)');
+            fill('filterDispMat', getUnique('Disponibilidade Material'), 'Disponibilidade Material (Todas)');
+            fill('filterOrdemCompra', getUnique('Ordem de compra'), 'Ordem de compra (Todas)');
+            fill('filterPrata', getUnique('Prata'), 'Prata (Todos)');
+            fill('filterTipo', getUnique('Tipo'), 'Tipo (Todos)');
+            fill('filterEtapa', getUnique('Etapa'), 'Etapa (Todas)');
+            fill('filterPCP', ['PCP', 'PRODUCAO'], 'PCP ou PRODUÇÃO (Todos)');
+            fill('filterPrioridade', getUnique('Prioridade'), 'Prioridade (Todas)');
         }
 
-        function toggleDropdown(id, event) {
-            event.stopPropagation();
-            const pop = document.getElementById(`pop_${id}`);
-            const isHidden = pop.classList.contains('hidden');
-            closeAllDropdowns();
-            if (isHidden) pop.classList.remove('hidden');
-        }
+        function populateSearchSuggestions() {
+            const datalist = document.getElementById('searchSuggestions');
+            if (!datalist) return;
 
-        function closeAllDropdowns(event) {
-            document.querySelectorAll('[id^="pop_"]').forEach(pop => pop.classList.add('hidden'));
-        }
+            const osList = [...new Set(rawCarteira.map(i => i['Nº OS']).filter(Boolean))].slice(0, 30);
+            const orcList = [...new Set(rawCarteira.map(i => i['Nº Orçamento']).filter(Boolean))].slice(0, 30);
+            const cliList = [...new Set(rawCarteira.map(i => i.Cliente).filter(Boolean))].slice(0, 30);
 
-        function filterDropdownOptions(id, query) {
-            const q = query.toLowerCase().trim();
-            const optsContainer = document.getElementById(`opts_${id}`);
-            const divs = optsContainer.querySelectorAll('div');
-            divs.forEach(div => {
-                const txt = div.textContent.toLowerCase();
-                div.style.display = txt.includes(q) ? 'block' : 'none';
-            });
-        }
-
-        function selectDropdownOption(id, val, labelName) {
-            filterState[id] = val;
-            const lbl = document.getElementById(`lbl_${id}`);
-            if (lbl) {
-                lbl.textContent = val ? `${labelName}: ${val}` : `${labelName} (Todos)`;
-            }
-            closeAllDropdowns();
-            renderCarteiraView();
+            const allSuggestions = [...new Set([...osList, ...orcList, ...cliList])];
+            datalist.innerHTML = allSuggestions.map(s => `<option value="${s}">`).join('');
         }
 
         function parseNum(val) {
@@ -557,28 +543,43 @@
             const dtFrom = document.getElementById('dateFrom')?.value || '';
             const dtTo = document.getElementById('dateTo')?.value || '';
 
+            const emp = document.getElementById('filterEmpresa')?.value || '';
+            const cli = document.getElementById('filterCliente')?.value || '';
+            const cod = document.getElementById('filterCodigo')?.value || '';
+            const osVal = document.getElementById('filterOS')?.value || '';
+            const orcVal = document.getElementById('filterOrcamento')?.value || '';
+            const pedVal = document.getElementById('filterPedido')?.value || '';
             const analiseVal = document.getElementById('filterAnaliseCritica')?.value || '';
+            const stOS = document.getElementById('filterStatusOS')?.value || '';
             const saldoVal = document.getElementById('filterSaldoEntrega')?.value || '';
+            const listaMatVal = document.getElementById('filterListaMat')?.value || '';
+            const procLMVal = document.getElementById('filterProcessamentoLM')?.value || '';
+            const dispM = document.getElementById('filterDispMat')?.value || '';
+            const ordC = document.getElementById('filterOrdemCompra')?.value || '';
+            const prata = document.getElementById('filterPrata')?.value || '';
             const capVal = document.getElementById('filterCapacidade')?.value || '';
+            const tipo = document.getElementById('filterTipo')?.value || '';
+            const etapaVal = document.getElementById('filterEtapa')?.value || '';
             const pcpVal = document.getElementById('filterPCP')?.value || '';
             const libFatVal = document.getElementById('filterLiberadoFaturar')?.value || '';
+            const prio = document.getElementById('filterPrioridade')?.value || '';
 
             let filtered = rawCarteira.filter(item => {
-                if (filterState.filterEmpresa && String(item.Empresa || '') !== filterState.filterEmpresa) return false;
-                if (filterState.filterCliente && String(item.Cliente || '') !== filterState.filterCliente) return false;
-                if (filterState.filterCodigo && String(item.Código || '') !== filterState.filterCodigo) return false;
-                if (filterState.filterOS && String(item['Nº OS'] || '') !== filterState.filterOS) return false;
-                if (filterState.filterOrcamento && String(item['Nº Orçamento'] || '') !== filterState.filterOrcamento) return false;
-                if (filterState.filterPedido && String(item['Nº Pedido'] || '') !== filterState.filterPedido) return false;
-                if (filterState.filterStatusOS && String(item['Status OS'] || '') !== filterState.filterStatusOS) return false;
-                if (filterState.filterListaMat && String(item['Lista de Materiais'] || '') !== filterState.filterListaMat) return false;
-                if (filterState.filterProcessamentoLM && String(item['Processamento LM'] || '') !== filterState.filterProcessamentoLM) return false;
-                if (filterState.filterDispMat && String(item['Disponibilidade Material'] || '') !== filterState.filterDispMat) return false;
-                if (filterState.filterOrdemCompra && String(item['Ordem de compra'] || '') !== filterState.filterOrdemCompra) return false;
-                if (filterState.filterPrata && String(item.Prata || '') !== filterState.filterPrata) return false;
-                if (filterState.filterTipo && String(item.Tipo || '') !== filterState.filterTipo) return false;
-                if (filterState.filterEtapa && String(item.Etapa || '') !== filterState.filterEtapa) return false;
-                if (filterState.filterPrioridade && String(item.Prioridade || '') !== filterState.filterPrioridade) return false;
+                if (emp && String(item.Empresa || '') !== emp) return false;
+                if (cli && String(item.Cliente || '') !== cli) return false;
+                if (cod && String(item.Código || '') !== cod) return false;
+                if (osVal && String(item['Nº OS'] || '') !== osVal) return false;
+                if (orcVal && String(item['Nº Orçamento'] || '') !== orcVal) return false;
+                if (pedVal && String(item['Nº Pedido'] || '') !== pedVal) return false;
+                if (stOS && String(item['Status OS'] || '') !== stOS) return false;
+                if (listaMatVal && String(item['Lista de Materiais'] || '') !== listaMatVal) return false;
+                if (procLMVal && String(item['Processamento LM'] || '') !== procLMVal) return false;
+                if (dispM && String(item['Disponibilidade Material'] || '') !== dispM) return false;
+                if (ordC && String(item['Ordem de compra'] || '') !== ordC) return false;
+                if (prata && String(item.Prata || '') !== prata) return false;
+                if (tipo && String(item.Tipo || '') !== tipo) return false;
+                if (etapaVal && String(item.Etapa || '') !== etapaVal) return false;
+                if (prio && String(item.Prioridade || '') !== prio) return false;
 
                 // DAX PCP ou PRODUÇÃO
                 if (pcpVal && item._posicaoFiltro !== pcpVal) return false;
@@ -804,18 +805,27 @@
             document.getElementById('searchInput').value = '';
             document.getElementById('dateFrom').value = '';
             document.getElementById('dateTo').value = '';
+            document.getElementById('filterEmpresa').value = '';
+            document.getElementById('filterCliente').value = '';
+            document.getElementById('filterCodigo').value = '';
+            document.getElementById('filterOS').value = '';
+            document.getElementById('filterOrcamento').value = '';
+            document.getElementById('filterPedido').value = '';
             document.getElementById('filterAnaliseCritica').value = '';
+            document.getElementById('filterStatusOS').value = 'APROVADO';
             document.getElementById('filterSaldoEntrega').value = '';
+            document.getElementById('filterListaMat').value = '';
+            document.getElementById('filterProcessamentoLM').value = '';
+            document.getElementById('filterDispMat').value = '';
+            document.getElementById('filterOrdemCompra').value = '';
+            document.getElementById('filterPrata').value = '';
             document.getElementById('filterCapacidade').value = '';
+            document.getElementById('filterTipo').value = '';
+            document.getElementById('filterEtapa').value = '';
             document.getElementById('filterPCP').value = '';
             document.getElementById('filterLiberadoFaturar').value = '';
-
-            for (let k in filterState) {
-                filterState[k] = k === 'filterStatusOS' ? 'APROVADO' : '';
-            }
-
-            buildSearchableDropdowns();
-
+            document.getElementById('filterPrioridade').value = '';
+            
             sortColumn = 'Dt. aprovação';
             sortAsc = false;
             
