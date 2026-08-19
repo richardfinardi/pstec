@@ -14,7 +14,7 @@
     <meta property="og:image" content="https://consultoriarf.net/producao_pstec/LOGO MINIMALISTA.png">
     <meta property="og:type" content="website">
 
-    <title>Carteira de Produção - PSTEC V1.2</title>
+    <title>Carteira de Produção - PSTEC V1.3</title>
 
     <!-- Autenticação Token -->
     <script>
@@ -71,7 +71,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-extrabold tracking-wide text-white">GRUPO PSTEC</h1>
-                    <p class="text-xs text-pstec-100">Carteira de Produção V1.2</p>
+                    <p class="text-xs text-pstec-100">Carteira de Produção V1.3</p>
                 </div>
             </div>
 
@@ -130,7 +130,7 @@
         </div>
     </div>
 
-    <!-- PAINEL DE CONTROLES E FILTROS COMPLETO (Sintonizado com o Power BI) -->
+    <!-- PAINEL DE CONTROLES E FILTROS COMPLETO -->
     <main class="max-w-[96%] w-full mx-auto p-4 flex flex-col gap-4 flex-1">
         
         <div class="bg-white p-4 rounded-2xl border border-slate-200 flex flex-col gap-3 shadow-sm">
@@ -149,7 +149,7 @@
                 <!-- Busca Universal -->
                 <div class="col-span-1 sm:col-span-2 md:col-span-2 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 flex items-center gap-2">
                     <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
-                    <input type="text" id="searchInput" oninput="renderCarteiraView()" placeholder="Buscar (Orçamento, Cliente, Código, Item, OS, Pedido...)" class="w-full bg-transparent text-slate-800 focus:outline-none font-medium">
+                    <input type="text" id="searchInput" oninput="debounceRender()" placeholder="Buscar (Orçamento, Cliente, Código, Item, OS, Pedido...)" class="w-full bg-transparent text-slate-800 focus:outline-none font-medium">
                 </div>
 
                 <!-- Previsão de Entrega (De / Até) -->
@@ -274,7 +274,7 @@
 
         <!-- TABELA PRINCIPAL DE CARTEIRA -->
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-            <div class="overflow-x-auto custom-scroll max-h-[65vh]">
+            <div id="tableScrollContainer" class="overflow-x-auto custom-scroll max-h-[65vh]" onscroll="handleScroll()">
                 <table class="w-full text-left text-[11px] border-collapse whitespace-nowrap">
                     <thead class="sticky top-0 z-20 bg-pstec-700 text-white font-extrabold uppercase text-[10px] tracking-wider select-none">
                         <tr>
@@ -318,7 +318,7 @@
                         </tr>
                     </thead>
                     <tbody id="carteiraTableBody" class="divide-y divide-slate-100 font-medium text-slate-700">
-                        <!-- Renderizado via JavaScript -->
+                        <!-- Renderizado dinamicamente -->
                     </tbody>
                 </table>
             </div>
@@ -333,7 +333,7 @@
     <!-- FOOTER -->
     <footer class="bg-white border-t border-slate-200 py-3 mt-auto">
         <div class="max-w-[96%] mx-auto px-4 flex justify-between items-center text-xs text-slate-500">
-            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V1.2</span>
+            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V1.3 (Alta Performance)</span>
             <span id="lastUpdateLabel">Atualizado: -</span>
         </div>
     </footer>
@@ -350,7 +350,7 @@
             </div>
             
             <div id="mContentGrid" class="p-6 space-y-4 text-xs overflow-y-auto custom-scroll flex-1">
-                <!-- Preenchido via JavaScript com todos os 47 campos -->
+                <!-- Preenchido via JavaScript sob demanda -->
             </div>
 
             <div class="bg-slate-50 px-6 py-3 border-t border-slate-200 flex justify-end shrink-0">
@@ -359,13 +359,19 @@
         </div>
     </div>
 
-    <!-- LOGICA JS -->
+    <!-- LOGICA JS DE ALTA PERFORMANCE -->
     <script>
         const API_CARTEIRA = 'https://pstec.consultoriarf.net/CARTEIRA';
         let rawCarteira = [];
+        let currentFilteredData = [];
         
         let sortColumn = 'Dt. aprovação';
         let sortAsc = false;
+
+        // Paginação do Virtual Scroll
+        let currentRenderLimit = 50;
+        const BATCH_SIZE = 50;
+        let debounceTimer = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             const nomeUser = localStorage.getItem('pstec_usuario_nome');
@@ -392,8 +398,40 @@
                 const response = await fetch(`${API_CARTEIRA}?_t=${Date.now()}`, { cache: 'no-store' });
                 if (!response.ok) throw new Error(`Erro na API: ${response.status}`);
                 
-                rawCarteira = await response.json();
+                const data = await response.json();
                 
+                // Indexação e Pré-processamento dos itens para máxima velocidade de busca
+                rawCarteira = data.map((item, id) => {
+                    const saldo = parseNum(item['Saldo a entregar']);
+                    const entregue = parseNum(item['Qtde. Entregue']);
+                    const total = parseNum(item['Qtde. Total']);
+                    const vlTotal = parseNum(item['Vl. Total']);
+                    const vlAFaturar = parseNum(item['Vl. a faturar']);
+                    const vlLiberado = parseNum(item['Vl. Liberado']);
+                    const vlUnit = parseNum(item['Vl. Unitário']);
+                    const vlFaltaComp = parseNum(item['Valor falta comprar']);
+                    const capDisp = parseNum(item['Capacidade disponivel']);
+
+                    const searchStr = `${item['Nº Orçamento']||''} ${item.Cliente||''} ${item.Código||''} ${item.Item||''} ${item['Nº Pedido']||''} ${item['Nº OS']||''} ${item.Empresa||''}`.toLowerCase();
+
+                    return {
+                        ...item,
+                        _id: id,
+                        _saldo: saldo,
+                        _entregue: entregue,
+                        _total: total,
+                        _vlTotal: vlTotal,
+                        _vlAFaturar: vlAFaturar,
+                        _vlLiberado: vlLiberado,
+                        _vlUnit: vlUnit,
+                        _vlFaltaComp: vlFaltaComp,
+                        _capDisp: capDisp,
+                        _searchStr: searchStr,
+                        _dtAprov: item['Dt. aprovação'] ? String(item['Dt. aprovação']) : '',
+                        _prevEntrega: item['Prev. entrega(original)'] || item['Dt. Negociada'] ? String(item['Prev. entrega(original)'] || item['Dt. Negociada']) : ''
+                    };
+                });
+
                 populateFilters();
                 
                 const selStatusOS = document.getElementById('filterStatusOS');
@@ -473,6 +511,13 @@
             return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : clean;
         }
 
+        function debounceRender() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                renderCarteiraView();
+            }, 150);
+        }
+
         function sortByColumn(colKey) {
             if (sortColumn === colKey) {
                 sortAsc = !sortAsc;
@@ -488,11 +533,7 @@
             cols.forEach(col => {
                 const el = document.getElementById(`sort_${col}`);
                 if (el) {
-                    if (sortColumn === col) {
-                        el.textContent = sortAsc ? '▲' : '▼';
-                    } else {
-                        el.textContent = '';
-                    }
+                    el.textContent = sortColumn === col ? (sortAsc ? '▲' : '▼') : '';
                 }
             });
         }
@@ -550,44 +591,37 @@
                     if (analiseVal === 'nao' && hasSim) return false;
                 }
 
-                // Saldo de Entrega
+                // Saldo
                 if (saldoVal) {
-                    const saldo = parseNum(item['Saldo a entregar']);
-                    if (saldoVal === 'com_saldo' && saldo <= 0) return false;
-                    if (saldoVal === 'sem_saldo' && saldo > 0) return false;
+                    if (saldoVal === 'com_saldo' && item._saldo <= 0) return false;
+                    if (saldoVal === 'sem_saldo' && item._saldo > 0) return false;
                 }
 
-                // Tem Capacidade
+                // Capacidade
                 if (capVal) {
-                    const cap = parseNum(item['Capacidade disponivel']);
-                    if (capVal === 'sim' && cap <= 0) return false;
-                    if (capVal === 'nao' && cap > 0) return false;
+                    if (capVal === 'sim' && item._capDisp <= 0) return false;
+                    if (capVal === 'nao' && item._capDisp > 0) return false;
                 }
 
                 // Liberado para Faturar
                 if (libFatVal) {
-                    const vlLib = parseNum(item['Vl. Liberado']);
-                    if (libFatVal === 'sim' && vlLib <= 0) return false;
-                    if (libFatVal === 'nao' && vlLib > 0) return false;
+                    if (libFatVal === 'sim' && item._vlLiberado <= 0) return false;
+                    if (libFatVal === 'nao' && item._vlLiberado > 0) return false;
                 }
 
-                // Período Previsão Entrega
-                const prevEntrega = item['Prev. entrega(original)'] || item['Dt. Negociada'] || '';
-                if (prevEntrega) {
-                    const dtItem = String(prevEntrega).substring(0, 10);
+                // Período
+                if (item._prevEntrega) {
+                    const dtItem = item._prevEntrega.substring(0, 10);
                     if (dtFrom && dtItem < dtFrom) return false;
                     if (dtTo && dtItem > dtTo) return false;
                 }
 
-                if (search) {
-                    const textStr = `${item['Nº Orçamento']||''} ${item.Cliente||''} ${item.Código||''} ${item.Item||''} ${item['Nº Pedido']||''} ${item['Nº OS']||''} ${item.Empresa||''}`.toLowerCase();
-                    if (!textStr.includes(search)) return false;
-                }
+                if (search && !item._searchStr.includes(search)) return false;
 
                 return true;
             });
 
-            // Lógica de Ordenação
+            // Ordenação Ultra-rápida
             filtered.sort((a, b) => {
                 let valA = a[sortColumn];
                 let valB = b[sortColumn];
@@ -606,38 +640,41 @@
                 if (valA < valB) return sortAsc ? -1 : 1;
                 if (valA > valB) return sortAsc ? 1 : -1;
 
-                const prevA = String(a['Prev. entrega(original)'] || '');
-                const prevB = String(b['Prev. entrega(original)'] || '');
-                return prevA.localeCompare(prevB);
+                return a._prevEntrega.localeCompare(b._prevEntrega);
             });
 
             return filtered;
         }
 
         function renderCarteiraView() {
-            const data = getFilteredCarteira();
+            currentFilteredData = getFilteredCarteira();
+            currentRenderLimit = BATCH_SIZE; // Reset limite na nova filtragem
+            
             const tbody = document.getElementById('carteiraTableBody');
             const emptyState = document.getElementById('emptyState');
 
             updateSortIndicators();
 
-            // KPIs
-            const totalItens = data.length;
-            const saldoEntregar = data.reduce((a, i) => a + parseNum(i['Saldo a entregar']), 0);
-            const vlTotal = data.reduce((a, i) => a + parseNum(i['Vl. Total']), 0);
-            const vlAFaturar = data.reduce((a, i) => a + parseNum(i['Vl. a faturar']), 0);
-            const vlLiberado = data.reduce((a, i) => a + parseNum(i['Vl. Liberado']), 0);
-
-            // DESDUPLICAÇÃO DO VALOR FALTA COMPRAR POR Nº OS
+            // KPIs Rápidos
+            const totalItens = currentFilteredData.length;
+            let saldoEntregar = 0, vlTotal = 0, vlAFaturar = 0, vlLiberado = 0;
             const osComprarMap = {};
-            data.forEach(item => {
-                const osKey = item['Nº OS'] ? String(item['Nº OS']).trim() : `SEM_OS_${Math.random()}`;
-                const valFalta = parseNum(item['Valor falta comprar']);
-                if (valFalta > 0 && !osComprarMap[osKey]) {
-                    osComprarMap[osKey] = valFalta;
+
+            for (let i = 0; i < totalItens; i++) {
+                const item = currentFilteredData[i];
+                saldoEntregar += item._saldo;
+                vlTotal += item._vlTotal;
+                vlAFaturar += item._vlAFaturar;
+                vlLiberado += item._vlLiberado;
+
+                if (item._vlFaltaComp > 0) {
+                    const osKey = item['Nº OS'] ? String(item['Nº OS']).trim() : `SEM_OS_${item._id}`;
+                    if (!osComprarMap[osKey]) osComprarMap[osKey] = item._vlFaltaComp;
                 }
-            });
-            const vlFaltaComprarUnico = Object.values(osComprarMap).reduce((a, b) => a + b, 0);
+            }
+
+            let vlFaltaComprarUnico = 0;
+            for (let k in osComprarMap) vlFaltaComprarUnico += osComprarMap[k];
 
             document.getElementById('kpiTotalItens').textContent = totalItens;
             document.getElementById('kpiSaldoEntregar').textContent = saldoEntregar.toLocaleString('pt-BR');
@@ -646,7 +683,7 @@
             document.getElementById('kpiValorLiberado').textContent = fmtBRL(vlLiberado);
             document.getElementById('kpiValorFaltaComprar').textContent = fmtBRL(vlFaltaComprarUnico);
 
-            if (data.length === 0) {
+            if (totalItens === 0) {
                 tbody.innerHTML = '';
                 emptyState.classList.remove('hidden');
                 emptyState.classList.add('flex');
@@ -656,15 +693,23 @@
             emptyState.classList.add('hidden');
             emptyState.classList.remove('flex');
 
-            tbody.innerHTML = data.map((item, idx) => {
-                const dtAprov = fmtDate(item['Dt. aprovação']);
-                const prevEnt = fmtDate(item['Prev. entrega(original)'] || item['Dt. Negociada']);
-                const isParcial = parseNum(item['Qtde. Entregue']) > 0 && parseNum(item['Saldo a entregar']) > 0;
+            // Renderiza apenas o primeiro lote
+            renderTableBatch();
+        }
+
+        function renderTableBatch() {
+            const tbody = document.getElementById('carteiraTableBody');
+            const itemsToRender = currentFilteredData.slice(0, currentRenderLimit);
+
+            tbody.innerHTML = itemsToRender.map((item, idx) => {
+                const dtAprov = fmtDate(item._dtAprov);
+                const prevEnt = fmtDate(item._prevEntrega);
+                const isParcial = item._entregue > 0 && item._saldo > 0;
 
                 return `
                     <tr class="${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'} hover:bg-pstec-50/60 transition-colors">
                         <td class="p-3">
-                            <button onclick="openModal(${idx})" class="p-1.5 bg-pstec-700 hover:bg-pstec-800 text-white rounded-lg font-bold text-[10px] transition" title="Ver Detalhes">
+                            <button onclick="openModal(${item._id})" class="p-1.5 bg-pstec-700 hover:bg-pstec-800 text-white rounded-lg font-bold text-[10px] transition" title="Ver Detalhes">
                                 <i data-lucide="eye" class="w-3.5 h-3.5"></i>
                             </button>
                         </td>
@@ -681,12 +726,12 @@
                         </td>
                         <td class="p-3 text-center font-semibold text-slate-600">${dtAprov}</td>
                         <td class="p-3 text-center font-bold text-slate-700">${prevEnt}</td>
-                        <td class="p-3 text-right font-mono">${parseNum(item['Qtde. Total']).toLocaleString('pt-BR')}</td>
-                        <td class="p-3 text-right font-mono ${isParcial ? 'text-amber-600 font-bold' : ''}">${parseNum(item['Qtde. Entregue']).toLocaleString('pt-BR')}</td>
-                        <td class="p-3 text-right font-mono font-bold text-pstec-700">${parseNum(item['Saldo a entregar']).toLocaleString('pt-BR')}</td>
-                        <td class="p-3 text-right font-mono">${fmtBRL(parseNum(item['Vl. Unitário']))}</td>
-                        <td class="p-3 text-right font-mono font-bold text-slate-800">${fmtBRL(parseNum(item['Vl. Total']))}</td>
-                        <td class="p-3 text-right font-mono font-bold text-blue-600">${fmtBRL(parseNum(item['Vl. a faturar']))}</td>
+                        <td class="p-3 text-right font-mono">${item._total.toLocaleString('pt-BR')}</td>
+                        <td class="p-3 text-right font-mono ${isParcial ? 'text-amber-600 font-bold' : ''}">${item._entregue.toLocaleString('pt-BR')}</td>
+                        <td class="p-3 text-right font-mono font-bold text-pstec-700">${item._saldo.toLocaleString('pt-BR')}</td>
+                        <td class="p-3 text-right font-mono">${fmtBRL(item._vlUnit)}</td>
+                        <td class="p-3 text-right font-mono font-bold text-slate-800">${fmtBRL(item._vlTotal)}</td>
+                        <td class="p-3 text-right font-mono font-bold text-blue-600">${fmtBRL(item._vlAFaturar)}</td>
                         <td class="p-3">
                             <span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${item['Disponibilidade Material'] === 'Total disponível' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${item['Disponibilidade Material'] || '-'}</span>
                         </td>
@@ -699,9 +744,21 @@
             lucide.createIcons();
         }
 
-        function openModal(index) {
-            const data = getFilteredCarteira();
-            const item = data[index];
+        function handleScroll() {
+            const container = document.getElementById('tableScrollContainer');
+            if (!container) return;
+
+            // Se rolou até próximo do final, carrega o próximo lote de 50 itens
+            if (container.scrollTop + container.clientHeight >= container.scrollHeight - 100) {
+                if (currentRenderLimit < currentFilteredData.length) {
+                    currentRenderLimit += BATCH_SIZE;
+                    renderTableBatch();
+                }
+            }
+        }
+
+        function openModal(rawId) {
+            const item = rawCarteira.find(i => i._id === rawId);
             if (!item) return;
 
             document.getElementById('mOrcamentoBadge').textContent = `Orçamento Nº ${item['Nº Orçamento'] || 'N/A'}`;
@@ -709,7 +766,8 @@
 
             const grid = document.getElementById('mContentGrid');
             
-            const entries = Object.entries(item);
+            // Constrói modal sob demanda no clique
+            const entries = Object.entries(item).filter(([k]) => !k.startsWith('_'));
             let html = `<div class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">`;
 
             entries.forEach(([key, val]) => {
