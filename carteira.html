@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="LOGO MINIMALISTA.png">
+    <link rel="apple-touch-icon" href="LOGO MINIMALISTA.png">
+
+    <!-- Meta Tags -->
+    <meta property="og:title" content="Carteira de Produção | Consultoria RF">
+    <meta property="og:description" content="Dashboard de acompanhamento da carteira de produção PSTEC.">
+    <meta property="og:image" content="https://consultoriarf.net/producao_pstec/LOGO MINIMALISTA.png">
+    <meta property="og:type" content="website">
+
+    <title>Carteira de Produção - PSTEC V1.0</title>
+
+    <!-- Autenticação Token -->
+    <script>
+        if (!localStorage.getItem('pstec_token')) {
+            window.location.href = 'login-pstec.html';
+        }
+    </script>
+
+    <!-- Tailwind CSS & Lucide Icons -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        pstec: {
+                            50: '#f0f5ff',
+                            100: '#e0ebff',
+                            500: '#1a5ce6',
+                            600: '#0047cc',
+                            700: '#003B96',
+                            800: '#002b70',
+                            900: '#001b4a',
+                        },
+                        pstecgreen: {
+                            500: '#7CBD20',
+                            600: '#68a318',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background-color: #f8fafc; color: #0f172a; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-100 text-slate-800">
+
+    <!-- HEADER -->
+    <header class="bg-pstec-700 text-white sticky top-0 z-50 shadow-md">
+        <div class="max-w-[96%] mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
+            
+            <div class="flex items-center gap-4">
+                <div class="flex items-center justify-center p-1.5 bg-white rounded-xl shadow-sm cursor-pointer" onclick="window.location.href='index.html'">
+                    <img src="./logo.png" alt="PSTEC" class="h-9 max-h-10 w-auto object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="hidden p-1.5 bg-pstec-700 rounded-lg text-white font-bold items-center justify-center">
+                        <i data-lucide="factory" class="w-6 h-6 text-pstecgreen-500"></i>
+                    </div>
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold tracking-wide text-white">GRUPO PSTEC</h1>
+                    <p class="text-xs text-pstec-100">Carteira de Produção V1.0</p>
+                </div>
+            </div>
+
+            <!-- Botões Header -->
+            <div class="flex items-center gap-2">
+                <div class="hidden md:flex items-center gap-1.5 px-3 py-2 bg-pstec-800 border border-pstec-600 rounded-xl text-xs font-bold text-slate-200">
+                    <i data-lucide="user-check" class="w-4 h-4 text-pstecgreen-500"></i>
+                    <span id="userDisplayName">Usuário</span>
+                </div>
+
+                <a href="index.html" class="flex items-center gap-1.5 px-3 py-2 bg-pstec-800 hover:bg-pstec-900 text-white font-extrabold rounded-xl text-xs transition shadow-md">
+                    <i data-lucide="calendar" class="w-4 h-4"></i>
+                    <span>Programação OS</span>
+                </a>
+
+                <button id="btnRefresh" onclick="fetchCarteiraData(false)" class="flex items-center gap-2 px-3.5 py-2 bg-pstecgreen-500 hover:bg-pstecgreen-600 text-slate-950 font-bold text-xs transition-all shadow-md rounded-xl" title="Atualizar Carteira">
+                    <i data-lucide="refresh-cw" class="w-4 h-4" id="refreshIcon"></i>
+                    <span class="hidden sm:inline">Atualizar</span>
+                </button>
+
+                <button onclick="efetuarLogout()" class="flex items-center gap-1.5 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-xs transition shadow-md" title="Sair do Sistema">
+                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">Sair</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- METRICS / CARDS DE KPI (Substituindo o resumo do Power BI) -->
+    <div id="metricsBar" class="bg-white border-b border-slate-200 text-slate-800 shadow-sm py-3">
+        <div class="max-w-[96%] mx-auto px-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                <span class="text-[9px] text-slate-500 font-bold uppercase block">Itens Registrados</span>
+                <span id="kpiTotalItens" class="text-lg font-black text-pstec-700">0</span>
+            </div>
+            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                <span class="text-[9px] text-slate-500 font-bold uppercase block">Saldo a Entregar</span>
+                <span id="kpiSaldoEntregar" class="text-lg font-black text-slate-800">0</span>
+            </div>
+            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                <span class="text-[9px] text-slate-500 font-bold uppercase block">Valor Total</span>
+                <span id="kpiValorTotal" class="text-lg font-black text-pstecgreen-600">R$ 0,00</span>
+            </div>
+            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                <span class="text-[9px] text-slate-500 font-bold uppercase block">Valor a Faturar</span>
+                <span id="kpiValorAFaturar" class="text-lg font-black text-blue-600">R$ 0,00</span>
+            </div>
+            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                <span class="text-[9px] text-slate-500 font-bold uppercase block">Valor Liberado</span>
+                <span id="kpiValorLiberado" class="text-lg font-black text-emerald-600">R$ 0,00</span>
+            </div>
+            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                <span class="text-[9px] text-slate-500 font-bold uppercase block">Valor Falta Comprar</span>
+                <span id="kpiValorFaltaComprar" class="text-lg font-black text-red-600">R$ 0,00</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAINEL DE CONTROLES E FILTROS -->
+    <main class="max-w-[96%] w-full mx-auto p-4 flex flex-col gap-4 flex-1">
+        
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 flex flex-col gap-3 shadow-sm">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                <div class="flex items-center gap-2 text-pstec-700 font-bold text-xs">
+                    <i data-lucide="filter" class="w-4 h-4"></i>
+                    <span>Filtros Avançados de Carteira</span>
+                </div>
+                <button onclick="clearAllFilters()" class="text-[11px] text-red-600 font-bold hover:underline flex items-center gap-1">
+                    <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+                    <span>Limpar Filtros</span>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2.5 text-xs">
+                <!-- Busca Universal -->
+                <div class="col-span-1 sm:col-span-2 md:col-span-2 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 flex items-center gap-2">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+                    <input type="text" id="searchInput" oninput="renderCarteiraView()" placeholder="Buscar (Orçamento, Cliente, Código, Item, OS, Pedido...)" class="w-full bg-transparent text-slate-800 focus:outline-none font-medium">
+                </div>
+
+                <!-- Período Previsão Entrega -->
+                <div class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 flex items-center gap-1.5">
+                    <span class="text-[10px] text-slate-400 font-bold">De:</span>
+                    <input type="date" id="dateFrom" onchange="renderCarteiraView()" class="bg-transparent w-full text-slate-800 focus:outline-none font-medium">
+                </div>
+                <div class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 flex items-center gap-1.5">
+                    <span class="text-[10px] text-slate-400 font-bold">Até:</span>
+                    <input type="date" id="dateTo" onchange="renderCarteiraView()" class="bg-transparent w-full text-slate-800 focus:outline-none font-medium">
+                </div>
+
+                <!-- Empresa -->
+                <select id="filterEmpresa" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-2 font-medium focus:outline-none">
+                    <option value="">Empresa (Todas)</option>
+                </select>
+
+                <!-- Cliente -->
+                <select id="filterCliente" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-2 font-medium focus:outline-none">
+                    <option value="">Cliente (Todos)</option>
+                </select>
+
+                <!-- Status OS -->
+                <select id="filterStatusOS" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-2 font-medium focus:outline-none">
+                    <option value="">Status OS (Todos)</option>
+                </select>
+
+                <!-- Disponibilidade Material -->
+                <select id="filterDispMat" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-2 font-medium focus:outline-none">
+                    <option value="">Disp. Material (Todas)</option>
+                </select>
+
+                <!-- Ordem de Compra -->
+                <select id="filterOrdemCompra" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-2 font-medium focus:outline-none">
+                    <option value="">Ordem de Compra (Todas)</option>
+                </select>
+
+                <!-- Prata -->
+                <select id="filterPrata" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-2 font-medium focus:outline-none">
+                    <option value="">Prata (Todos)</option>
+                </select>
+
+                <!-- Tipo -->
+                <select id="filterTipo" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-2 font-medium focus:outline-none">
+                    <option value="">Tipo (Todos)</option>
+                </select>
+
+                <!-- Prioridade -->
+                <select id="filterPrioridade" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-2 font-medium focus:outline-none">
+                    <option value="">Prioridade (Todas)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- TABELA PRINCIPAL DE CARTEIRA -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+            <div class="overflow-x-auto custom-scroll max-h-[68vh]">
+                <table class="w-full text-left text-[11px] border-collapse whitespace-nowrap">
+                    <thead class="sticky top-0 z-20 bg-pstec-700 text-white font-extrabold uppercase text-[10px] tracking-wider">
+                        <tr>
+                            <th class="p-3">Ação</th>
+                            <th class="p-3">Orçamento</th>
+                            <th class="p-3">Cliente</th>
+                            <th class="p-3">Código / Item</th>
+                            <th class="p-3">Nº Pedido</th>
+                            <th class="p-3">Nº OS / Status</th>
+                            <th class="p-3 text-center">Prev. Entrega</th>
+                            <th class="p-3 text-right">Qtde Total</th>
+                            <th class="p-3 text-right">Entregue</th>
+                            <th class="p-3 text-right">Saldo Entregar</th>
+                            <th class="p-3 text-right">Vl. Unitário</th>
+                            <th class="p-3 text-right">Vl. Total</th>
+                            <th class="p-3 text-right">Vl. a Faturar</th>
+                            <th class="p-3">Disp. Material</th>
+                            <th class="p-3">Prata</th>
+                            <th class="p-3">Empresa</th>
+                        </tr>
+                    </thead>
+                    <tbody id="carteiraTableBody" class="divide-y divide-slate-100 font-medium text-slate-700">
+                        <!-- Renderizado via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div id="emptyState" class="hidden p-12 text-center text-slate-400 flex-col items-center gap-2">
+                <i data-lucide="folder-search" class="w-10 h-10 stroke-1 text-slate-300"></i>
+                <p class="text-xs font-semibold">Nenhum registro de carteira encontrado com os filtros selecionados.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-white border-t border-slate-200 py-3 mt-auto">
+        <div class="max-w-[96%] mx-auto px-4 flex justify-between items-center text-xs text-slate-500">
+            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção</span>
+            <span id="lastUpdateLabel">Atualizado: -</span>
+        </div>
+    </footer>
+
+    <!-- MODAL DE DETALHES COMPLETO -->
+    <div id="detailsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-white text-slate-800 rounded-2xl shadow-2xl max-w-4xl w-full flex flex-col max-h-[90vh] overflow-hidden border border-slate-200">
+            <div class="bg-pstec-700 px-6 py-3.5 flex justify-between items-center text-white shrink-0">
+                <div>
+                    <span id="mOrcamentoBadge" class="text-xs font-bold bg-pstec-900 text-pstec-100 px-2.5 py-0.5 rounded uppercase"></span>
+                    <h3 id="mItemTitle" class="font-bold text-sm mt-1 text-white truncate max-w-xl"></h3>
+                </div>
+                <button onclick="closeModal()" class="text-pstec-100 hover:text-white p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            
+            <div id="mContentGrid" class="p-6 space-y-4 text-xs overflow-y-auto custom-scroll flex-1">
+                <!-- Preenchido via JavaScript com todos os 47 campos -->
+            </div>
+
+            <div class="bg-slate-50 px-6 py-3 border-t border-slate-200 flex justify-end shrink-0">
+                <button onclick="closeModal()" class="px-4 py-1.5 bg-pstec-700 text-white rounded-xl font-semibold hover:bg-pstec-800 transition">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGICA JS -->
+    <script>
+        const API_CARTEIRA = 'https://pstec.consultoriarf.net/CARTEIRA';
+        let rawCarteira = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const nomeUser = localStorage.getItem('pstec_usuario_nome');
+            if (nomeUser) {
+                document.getElementById('userDisplayName').textContent = nomeUser;
+            }
+            lucide.createIcons();
+            fetchCarteiraData();
+
+            setInterval(() => {
+                const isModalOpen = !document.getElementById('detailsModal').classList.contains('hidden');
+                if (!isModalOpen) fetchCarteiraData(true);
+            }, 60000);
+        });
+
+        async function fetchCarteiraData(isSilent = false) {
+            const refreshIcon = document.getElementById('refreshIcon');
+            const btnRefresh = document.getElementById('btnRefresh');
+            
+            if (!isSilent && refreshIcon) refreshIcon.classList.add('animate-spin');
+            if (!isSilent && btnRefresh) btnRefresh.disabled = true;
+
+            try {
+                const response = await fetch(`${API_CARTEIRA}?_t=${Date.now()}`, { cache: 'no-store' });
+                if (!response.ok) throw new Error(`Erro na API: ${response.status}`);
+                
+                rawCarteira = await response.json();
+                
+                populateFilters();
+                renderCarteiraView();
+
+                document.getElementById('lastUpdateLabel').textContent = `Atualizado: ${new Date().toLocaleTimeString('pt-BR')}`;
+            } catch (error) {
+                console.error('Erro ao buscar dados da Carteira:', error);
+                if (!isSilent) alert('Não foi possível atualizar a Carteira de Produção.');
+            } finally {
+                if (refreshIcon) refreshIcon.classList.remove('animate-spin');
+                if (btnRefresh) btnRefresh.disabled = false;
+                lucide.createIcons();
+            }
+        }
+
+        function populateFilters() {
+            const getUnique = (key) => {
+                const vals = rawCarteira.map(i => i[key]).filter(v => v !== null && v !== undefined && String(v).trim() !== '');
+                return [...new Set(vals)].sort();
+            };
+
+            const fill = (id, options, label) => {
+                const sel = document.getElementById(id);
+                if (!sel) return;
+                const currVal = sel.value;
+                sel.innerHTML = `<option value="">${label}</option>`;
+                options.forEach(opt => {
+                    const el = document.createElement('option');
+                    el.value = opt;
+                    el.textContent = opt;
+                    sel.appendChild(el);
+                });
+                sel.value = currVal;
+            };
+
+            fill('filterEmpresa', getUnique('Empresa'), 'Empresa (Todas)');
+            fill('filterCliente', getUnique('Cliente'), 'Cliente (Todos)');
+            fill('filterStatusOS', getUnique('Status OS'), 'Status OS (Todos)');
+            fill('filterDispMat', getUnique('Disponibilidade Material'), 'Disp. Material (Todas)');
+            fill('filterOrdemCompra', getUnique('Ordem de compra'), 'Ordem de Compra (Todas)');
+            fill('filterPrata', getUnique('Prata'), 'Prata (Todos)');
+            fill('filterTipo', getUnique('Tipo'), 'Tipo (Todos)');
+            fill('filterPrioridade', getUnique('Prioridade'), 'Prioridade (Todas)');
+        }
+
+        function parseNum(val) {
+            if (val === null || val === undefined) return 0;
+            if (typeof val === 'number') return val;
+            let str = String(val).replace('R$', '').replace(/\s/g, '');
+            if (str.includes(',') && str.includes('.')) str = str.replace(/\./g, '').replace(',', '.');
+            else if (str.includes(',')) str = str.replace(',', '.');
+            const n = parseFloat(str);
+            return isNaN(n) ? 0 : n;
+        }
+
+        function fmtBRL(val) {
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
+        }
+
+        function fmtDate(dtStr) {
+            if (!dtStr || dtStr === 'NaT' || dtStr === 'None' || dtStr === 'null') return '-';
+            const clean = String(dtStr).trim().substring(0, 10);
+            const p = clean.split('-');
+            return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : clean;
+        }
+
+        function getFilteredCarteira() {
+            const search = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+            const dtFrom = document.getElementById('dateFrom')?.value || '';
+            const dtTo = document.getElementById('dateTo')?.value || '';
+
+            const emp = document.getElementById('filterEmpresa')?.value || '';
+            const cli = document.getElementById('filterCliente')?.value || '';
+            const stOS = document.getElementById('filterStatusOS')?.value || '';
+            const dispM = document.getElementById('filterDispMat')?.value || '';
+            const ordC = document.getElementById('filterOrdemCompra')?.value || '';
+            const prata = document.getElementById('filterPrata')?.value || '';
+            const tipo = document.getElementById('filterTipo')?.value || '';
+            const prio = document.getElementById('filterPrioridade')?.value || '';
+
+            return rawCarteira.filter(item => {
+                if (emp && String(item.Empresa || '') !== emp) return false;
+                if (cli && String(item.Cliente || '') !== cli) return false;
+                if (stOS && String(item['Status OS'] || '') !== stOS) return false;
+                if (dispM && String(item['Disponibilidade Material'] || '') !== dispM) return false;
+                if (ordC && String(item['Ordem de compra'] || '') !== ordC) return false;
+                if (prata && String(item.Prata || '') !== prata) return false;
+                if (tipo && String(item.Tipo || '') !== tipo) return false;
+                if (prio && String(item.Prioridade || '') !== prio) return false;
+
+                // Período Previsão Entrega
+                const prevEntrega = item['Prev. entrega(original)'] || item['Dt. Negociada'] || '';
+                if (prevEntrega) {
+                    const dtItem = String(prevEntrega).substring(0, 10);
+                    if (dtFrom && dtItem < dtFrom) return false;
+                    if (dtTo && dtItem > dtTo) return false;
+                }
+
+                if (search) {
+                    const textStr = `${item['Nº Orçamento']||''} ${item.Cliente||''} ${item.Código||''} ${item.Item||''} ${item['Nº Pedido']||''} ${item['Nº OS']||''} ${item.Empresa||''}`.toLowerCase();
+                    if (!textStr.includes(search)) return false;
+                }
+
+                return true;
+            });
+        }
+
+        function renderCarteiraView() {
+            const data = getFilteredCarteira();
+            const tbody = document.getElementById('carteiraTableBody');
+            const emptyState = document.getElementById('emptyState');
+
+            // KPIs
+            const totalItens = data.length;
+            const saldoEntregar = data.reduce((a, i) => a + parseNum(i['Saldo a entregar']), 0);
+            const vlTotal = data.reduce((a, i) => a + parseNum(i['Vl. Total']), 0);
+            const vlAFaturar = data.reduce((a, i) => a + parseNum(i['Vl. a faturar']), 0);
+            const vlLiberado = data.reduce((a, i) => a + parseNum(i['Vl. Liberado']), 0);
+            const vlFaltaComprar = data.reduce((a, i) => a + parseNum(i['Valor falta comprar']), 0);
+
+            document.getElementById('kpiTotalItens').textContent = totalItens;
+            document.getElementById('kpiSaldoEntregar').textContent = saldoEntregar.toLocaleString('pt-BR');
+            document.getElementById('kpiValorTotal').textContent = fmtBRL(vlTotal);
+            document.getElementById('kpiValorAFaturar').textContent = fmtBRL(vlAFaturar);
+            document.getElementById('kpiValorLiberado').textContent = fmtBRL(vlLiberado);
+            document.getElementById('kpiValorFaltaComprar').textContent = fmtBRL(vlFaltaComprar);
+
+            if (data.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            emptyState.classList.remove('flex');
+
+            tbody.innerHTML = data.map((item, idx) => {
+                const prevEnt = fmtDate(item['Prev. entrega(original)'] || item['Dt. Negociada']);
+                const isParcial = parseNum(item['Qtde. Entregue']) > 0 && parseNum(item['Saldo a entregar']) > 0;
+
+                return `
+                    <tr class="${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'} hover:bg-pstec-50/60 transition-colors">
+                        <td class="p-3">
+                            <button onclick="openModal(${idx})" class="p-1.5 bg-pstec-700 hover:bg-pstec-800 text-white rounded-lg font-bold text-[10px] transition" title="Ver Detalhes">
+                                <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </td>
+                        <td class="p-3 font-bold font-mono text-pstec-700">${item['Nº Orçamento'] || '-'}</td>
+                        <td class="p-3 font-bold text-slate-800 uppercase max-w-[140px] truncate" title="${item.Cliente||''}">${item.Cliente || '-'}</td>
+                        <td class="p-3 max-w-[220px] truncate" title="${item.Item||''}">
+                            <span class="font-bold text-slate-700 font-mono block text-[10px]">${item.Código || '-'}</span>
+                            <span class="text-slate-500 font-medium">${item.Item || '-'}</span>
+                        </td>
+                        <td class="p-3 font-mono text-slate-600">${item['Nº Pedido'] || '-'}</td>
+                        <td class="p-3">
+                            <span class="font-bold font-mono text-slate-800 block">${item['Nº OS'] ? 'OS ' + item['Nº OS'] : '-'}</span>
+                            <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded ${item['Status OS'] === 'APROVADO' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}">${item['Status OS'] || 'SEM OS'}</span>
+                        </td>
+                        <td class="p-3 text-center font-bold text-slate-700">${prevEnt}</td>
+                        <td class="p-3 text-right font-mono">${parseNum(item['Qtde. Total']).toLocaleString('pt-BR')}</td>
+                        <td class="p-3 text-right font-mono ${isParcial ? 'text-amber-600 font-bold' : ''}">${parseNum(item['Qtde. Entregue']).toLocaleString('pt-BR')}</td>
+                        <td class="p-3 text-right font-mono font-bold text-pstec-700">${parseNum(item['Saldo a entregar']).toLocaleString('pt-BR')}</td>
+                        <td class="p-3 text-right font-mono">${fmtBRL(parseNum(item['Vl. Unitário']))}</td>
+                        <td class="p-3 text-right font-mono font-bold text-slate-800">${fmtBRL(parseNum(item['Vl. Total']))}</td>
+                        <td class="p-3 text-right font-mono font-bold text-blue-600">${fmtBRL(parseNum(item['Vl. a faturar']))}</td>
+                        <td class="p-3">
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${item['Disponibilidade Material'] === 'Total disponível' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${item['Disponibilidade Material'] || '-'}</span>
+                        </td>
+                        <td class="p-3 font-bold">${item.Prata || '-'}</td>
+                        <td class="p-3 text-slate-500 uppercase max-w-[150px] truncate" title="${item.Empresa||''}">${item.Empresa || '-'}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        function openModal(index) {
+            const data = getFilteredCarteira();
+            const item = data[index];
+            if (!item) return;
+
+            document.getElementById('mOrcamentoBadge').textContent = `Orçamento Nº ${item['Nº Orçamento'] || 'N/A'}`;
+            document.getElementById('mItemTitle').textContent = item.Item || 'Sem Descrição do Item';
+
+            const grid = document.getElementById('mContentGrid');
+            
+            const entries = Object.entries(item);
+            let html = `<div class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">`;
+
+            entries.forEach(([key, val]) => {
+                let formattedVal = val === null || val === undefined || String(val).trim() === '' ? '-' : val;
+
+                if (key.toLowerCase().includes('vl.') || key.toLowerCase().includes('valor')) {
+                    formattedVal = fmtBRL(parseNum(val));
+                } else if (key.toLowerCase().includes('dt.') || key.toLowerCase().includes('prev.') || key.toLowerCase().includes('dts.')) {
+                    formattedVal = fmtDate(val);
+                }
+
+                html += `
+                    <div class="bg-white p-2.5 rounded-lg border border-slate-200">
+                        <span class="text-[10px] text-slate-400 font-bold uppercase block">${key}</span>
+                        <span class="text-xs font-extrabold text-slate-800 break-words">${formattedVal}</span>
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+            grid.innerHTML = html;
+
+            const modal = document.getElementById('detailsModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('detailsModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function clearAllFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('dateFrom').value = '';
+            document.getElementById('dateTo').value = '';
+            document.getElementById('filterEmpresa').value = '';
+            document.getElementById('filterCliente').value = '';
+            document.getElementById('filterStatusOS').value = '';
+            document.getElementById('filterDispMat').value = '';
+            document.getElementById('filterOrdemCompra').value = '';
+            document.getElementById('filterPrata').value = '';
+            document.getElementById('filterTipo').value = '';
+            document.getElementById('filterPrioridade').value = '';
+            renderCarteiraView();
+        }
+
+        function efetuarLogout() {
+            localStorage.removeItem('pstec_token');
+            localStorage.removeItem('pstec_usuario_nome');
+            window.location.href = 'login-pstec.html';
+        }
+    </script>
+</body>
+</html>
