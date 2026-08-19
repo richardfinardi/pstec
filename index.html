@@ -23,7 +23,7 @@
     <!-- VERIFICAÇÃO DE AUTENTICAÇÃO ANTES DE RENDERIZAR A PÁGINA -->
     <script>
         if (!localStorage.getItem('pstec_token')) {
-            window.location.href = 'login.html';
+            window.location.href = 'login-pstec.html';
         }
     </script>
 
@@ -645,7 +645,7 @@
             localStorage.removeItem('pstec_usuario_nome');
             localStorage.removeItem('pstec_perm_faturamento');
             localStorage.removeItem('pstec_perm_finalizacao');
-            window.location.href = 'login.html';
+            window.location.href = 'login-pstec.html';
         }
 
         function initializeCurrentDate() {
