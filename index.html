@@ -4,25 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- Favicon (Ícone da Aba do Navegador) -->
+    <!-- Favicon -->
     <link rel="icon" type="image/png" href="LOGO MINIMALISTA.png">
     <link rel="apple-touch-icon" href="LOGO MINIMALISTA.png">
 
     <!-- Meta Tags para Prévia no WhatsApp / Redes Sociais (Open Graph) -->
     <meta property="og:title" content="Controle Semanal de Produção | Consultoria RF">
     <meta property="og:description" content="Dashboard de acompanhamento e controle de produção.">
-    <meta property="og:image" content="https://consultoriarf.net/producao_columbia/LOGO MINIMALISTA.png">
+    <meta property="og:image" content="https://consultoriarf.net/producao_pstec/LOGO MINIMALISTA.png">
     <meta property="og:image:type" content="image/png">
     <meta property="og:image:width" content="500">
     <meta property="og:image:height" content="500">
-    <meta property="og:url" content="https://consultoriarf.net/producao_columbia/">
+    <meta property="og:url" content="https://consultoriarf.net/producao_pstec/">
     <meta property="og:type" content="website">
     
-    <title>Programação de Produção - Columbia V5.6.0</title>
+    <title>Programação de Produção - PSTEC V5.6.0</title>
 
     <!-- VERIFICAÇÃO DE AUTENTICAÇÃO ANTES DE RENDERIZAR A PÁGINA -->
     <script>
-        if (!localStorage.getItem('columbia_token')) {
+        if (!localStorage.getItem('pstec_token')) {
             window.location.href = 'login.html';
         }
     </script>
@@ -34,14 +34,18 @@
             theme: {
                 extend: {
                     colors: {
-                        columbia: {
-                            50: '#f0f7ff',
-                            100: '#e0effe',
-                            500: '#1d72b8',
-                            600: '#155b96',
-                            700: '#003e7e',
-                            800: '#002e61',
-                            900: '#001e40',
+                        pstec: {
+                            50: '#f0f5ff',
+                            100: '#e0ebff',
+                            500: '#1a5ce6',
+                            600: '#0047cc',
+                            700: '#003B96', // Azul Marinho Principal PSTEC
+                            800: '#002b70',
+                            900: '#001b4a',
+                        },
+                        pstecgreen: {
+                            500: '#7CBD20', // Verde Limão PSTEC
+                            600: '#68a318',
                         }
                     }
                 }
@@ -60,33 +64,33 @@
 <body class="min-h-screen flex flex-col bg-slate-100 text-slate-800">
 
     <!-- HEADER -->
-    <header class="bg-columbia-700 text-white sticky top-0 z-50 shadow-md">
+    <header class="bg-pstec-700 text-white sticky top-0 z-50 shadow-md">
         <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
             
-            <!-- Título & Logo Columbia -->
+            <!-- Título & Logo PSTEC -->
             <div class="flex items-center gap-4">
                 <div class="flex items-center justify-center p-1.5 bg-white rounded-xl shadow-sm cursor-pointer" onclick="setAbaAtiva('dashboard')">
-                    <img src="./logo.png" alt="Columbia Machine" class="h-9 max-h-10 w-auto object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                    <div class="hidden p-1.5 bg-columbia-700 rounded-lg text-white font-bold items-center justify-center">
-                        <i data-lucide="factory" class="w-6 h-6"></i>
+                    <img src="./logo.png" alt="PSTEC" class="h-9 max-h-10 w-auto object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="hidden p-1.5 bg-pstec-700 rounded-lg text-white font-bold items-center justify-center">
+                        <i data-lucide="factory" class="w-6 h-6 text-pstecgreen-500"></i>
                     </div>
                 </div>
                 <div>
-                    <h1 class="text-xl font-extrabold tracking-wide text-white">Columbia Machine Brasil</h1>
-                    <p class="text-xs text-columbia-100">Controle de Produção V5.6.0</p>
+                    <h1 class="text-xl font-extrabold tracking-wide text-white">PSTEC Brasil</h1>
+                    <p class="text-xs text-pstec-100">Controle de Produção V5.6.0</p>
                 </div>
             </div>
 
             <!-- Botões de Ação do Topo -->
             <div class="flex items-center gap-2">
                 <!-- Identificação do Usuário Logado -->
-                <div class="hidden md:flex items-center gap-1.5 px-3 py-2 bg-columbia-800 border border-columbia-600 rounded-xl text-xs font-bold text-slate-200">
-                    <i data-lucide="user-check" class="w-4 h-4 text-emerald-400"></i>
+                <div class="hidden md:flex items-center gap-1.5 px-3 py-2 bg-pstec-800 border border-pstec-600 rounded-xl text-xs font-bold text-slate-200">
+                    <i data-lucide="user-check" class="w-4 h-4 text-pstecgreen-500"></i>
                     <span id="userDisplayName">Usuário</span>
                 </div>
 
                 <!-- ABAS DE NAVEGAÇÃO INTERNA NO HEADER -->
-                <button id="btnAbaDashboard" onclick="setAbaAtiva('dashboard')" class="flex items-center gap-1.5 px-3 py-2 bg-columbia-900 text-white font-extrabold rounded-xl text-xs transition shadow-md border border-columbia-500">
+                <button id="btnAbaDashboard" onclick="setAbaAtiva('dashboard')" class="flex items-center gap-1.5 px-3 py-2 bg-pstec-900 text-white font-extrabold rounded-xl text-xs transition shadow-md border border-pstecgreen-500">
                     <i data-lucide="calendar" class="w-4 h-4"></i>
                     <span>Produção</span>
                 </button>
@@ -110,13 +114,13 @@
                 </button>
 
                 <!-- Botão Trava / Exibir Valores -->
-                <button id="btnToggleValues" onclick="handleValueVisibility()" class="flex items-center gap-2 px-3 py-2 bg-columbia-800 hover:bg-columbia-900 border border-columbia-600 text-white rounded-xl font-bold text-xs transition shadow">
+                <button id="btnToggleValues" onclick="handleValueVisibility()" class="flex items-center gap-2 px-3 py-2 bg-pstec-800 hover:bg-pstec-900 border border-pstec-600 text-white rounded-xl font-bold text-xs transition shadow">
                     <i data-lucide="eye-off" class="w-4 h-4 text-amber-400" id="iconValueVisibility"></i>
                     <span id="txtValueVisibility">Exibir Valores</span>
                 </button>
 
                 <!-- Botão Atualizar Manual -->
-                <button id="btnRefresh" onclick="fetchData(false)" class="flex items-center gap-2 px-3.5 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold text-xs transition-all shadow" title="Atualizar Dados">
+                <button id="btnRefresh" onclick="fetchData(false)" class="flex items-center gap-2 px-3.5 py-2 bg-pstecgreen-500 hover:bg-pstecgreen-600 text-slate-950 font-bold text-xs transition-all shadow" title="Atualizar Dados">
                     <i data-lucide="refresh-cw" class="w-4 h-4" id="refreshIcon"></i>
                 </button>
 
@@ -134,7 +138,7 @@
         <div class="max-w-7xl mx-auto px-4 py-3 grid grid-cols-2 md:grid-cols-4 gap-3">
             <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
                 <span class="text-[10px] text-slate-500 font-bold uppercase block">Total de OS (Filtrado)</span>
-                <span id="metricTotalOS" class="text-xl font-extrabold text-columbia-700">0</span>
+                <span id="metricTotalOS" class="text-xl font-extrabold text-pstec-700">0</span>
             </div>
             <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
                 <span class="text-[10px] text-slate-500 font-bold uppercase block">OS Atrasadas</span>
@@ -142,7 +146,7 @@
             </div>
             <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
                 <span class="text-[10px] text-slate-500 font-bold uppercase block">Valor Geral Total</span>
-                <span id="metricValorTotal" class="text-xl font-extrabold text-emerald-600">R$ *****</span>
+                <span id="metricValorTotal" class="text-xl font-extrabold text-pstecgreen-600">R$ *****</span>
             </div>
             <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
                 <span class="text-[10px] text-slate-500 font-bold uppercase block">Sem Orçamento</span>
@@ -236,12 +240,12 @@
             <!-- BOTÕES DE FILTRO SEPARADOS -->
             <div id="extraButtonsContainer" class="flex items-center gap-2">
                 <button id="btnToggleMonth" onclick="toggleMonthFilter()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
-                    <i data-lucide="calendar-range" class="w-3.5 h-3.5 text-columbia-600"></i>
+                    <i data-lucide="calendar-range" class="w-3.5 h-3.5 text-pstec-600"></i>
                     <span id="txtToggleMonth">Exibir todas as semanas</span>
                 </button>
 
                 <button id="btnToggleOrcamento" onclick="toggleOrcamentoFilter()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
-                    <i data-lucide="dollar-sign" class="w-3.5 h-3.5 text-emerald-600"></i>
+                    <i data-lucide="dollar-sign" class="w-3.5 h-3.5 text-pstecgreen-600"></i>
                     <span id="txtToggleOrcamento">Exibir somente com Orçamentos</span>
                 </button>
 
@@ -257,23 +261,23 @@
         <div id="navigationBar" class="bg-white p-3 rounded-2xl border border-slate-200 flex flex-wrap items-center justify-between gap-3 shadow-sm">
             
             <!-- Navegação de Data -->
-            <div class="flex items-center bg-columbia-700 text-white rounded-xl px-2 py-1 shadow-sm">
-                <button onclick="navigateDate(-1)" class="p-1 hover:bg-columbia-800 rounded-lg text-columbia-100 hover:text-white transition">
+            <div class="flex items-center bg-pstec-700 text-white rounded-xl px-2 py-1 shadow-sm">
+                <button onclick="navigateDate(-1)" class="p-1 hover:bg-pstec-800 rounded-lg text-pstec-100 hover:text-white transition">
                     <i data-lucide="chevron-left" class="w-4 h-4"></i>
                 </button>
                 
                 <div class="flex items-center gap-2 px-3">
-                    <i data-lucide="calendar" class="w-4 h-4 text-columbia-100"></i>
+                    <i data-lucide="calendar" class="w-4 h-4 text-pstec-100"></i>
                     <span id="currentDateLabel" class="font-bold text-xs capitalize tracking-wide min-w-[160px] text-center">
                         Carregando...
                     </span>
                 </div>
 
-                <button onclick="navigateDate(1)" class="p-1 hover:bg-columbia-800 rounded-lg text-columbia-100 hover:text-white transition">
+                <button onclick="navigateDate(1)" class="p-1 hover:bg-pstec-800 rounded-lg text-pstec-100 hover:text-white transition">
                     <i data-lucide="chevron-right" class="w-4 h-4"></i>
                 </button>
 
-                <button onclick="resetToToday()" class="ml-2 px-2.5 py-0.5 bg-white hover:bg-slate-100 rounded-lg text-xs font-bold text-columbia-800 transition shadow-sm">
+                <button onclick="resetToToday()" class="ml-2 px-2.5 py-0.5 bg-white hover:bg-slate-100 rounded-lg text-xs font-bold text-pstec-800 transition shadow-sm">
                     Hoje
                 </button>
             </div>
@@ -296,8 +300,8 @@
     <footer class="bg-white border-t border-slate-200 py-4 mt-8">
         <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
             <div class="flex items-center gap-2 font-medium">
-                <i data-lucide="code-2" class="w-4 h-4 text-columbia-600"></i>
-                <span>© 2026 Columbia Machine Brasil — Sistema de Gestão de Produção</span>
+                <i data-lucide="code-2" class="w-4 h-4 text-pstec-600"></i>
+                <span>© 2026 PSTEC Brasil — Sistema de Gestão de Produção</span>
             </div>
         </div>
     </footer>
@@ -305,12 +309,12 @@
     <!-- MODAL CUSTOMIZADO DE SENHA DE VALORES -->
     <div id="passwordModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-white text-slate-800 rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden border border-slate-200">
-            <div class="bg-columbia-700 px-5 py-3.5 flex justify-between items-center text-white">
+            <div class="bg-pstec-700 px-5 py-3.5 flex justify-between items-center text-white">
                 <div class="flex items-center gap-2 font-bold text-sm">
                     <i data-lucide="lock" class="w-4 h-4 text-amber-400"></i>
                     <span>Acesso Restrito</span>
                 </div>
-                <button onclick="closePasswordModal()" class="text-columbia-100 hover:text-white p-1"><i data-lucide="x" class="w-4 h-4"></i></button>
+                <button onclick="closePasswordModal()" class="text-pstec-100 hover:text-white p-1"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
             
             <div class="p-5 space-y-4 text-xs">
@@ -318,7 +322,7 @@
                 
                 <div class="relative">
                     <input type="password" id="inputPassword" onkeydown="checkPasswordKey(event)" placeholder="Digite a senha..." 
-                           class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 pr-10 text-slate-800 text-xs focus:outline-none focus:border-columbia-600 font-medium">
+                           class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 pr-10 text-slate-800 text-xs focus:outline-none focus:border-pstec-600 font-medium">
                     <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none">
                         <i data-lucide="eye" id="eyeIcon" class="w-4 h-4"></i>
                     </button>
@@ -329,7 +333,7 @@
 
             <div class="bg-slate-50 px-5 py-3 border-t border-slate-200 flex justify-end gap-2">
                 <button onclick="closePasswordModal()" class="px-3.5 py-1.5 bg-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-300 transition">Cancelar</button>
-                <button onclick="validatePassword()" class="px-4 py-1.5 bg-columbia-700 text-white rounded-xl font-bold hover:bg-columbia-800 shadow-sm transition">Confirmar</button>
+                <button onclick="validatePassword()" class="px-4 py-1.5 bg-pstec-700 text-white rounded-xl font-bold hover:bg-pstec-800 shadow-sm transition">Confirmar</button>
             </div>
         </div>
     </div>
@@ -376,12 +380,12 @@
     <div id="osModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-white text-slate-800 rounded-2xl shadow-2xl max-w-lg w-full flex flex-col max-h-[90vh] overflow-hidden border border-slate-200">
             <!-- CABEÇALHO DO MODAL (FIXO) -->
-            <div class="bg-columbia-700 px-6 py-3.5 flex justify-between items-center text-white shrink-0">
+            <div class="bg-pstec-700 px-6 py-3.5 flex justify-between items-center text-white shrink-0">
                 <div>
-                    <span id="mOS" class="text-xs font-bold bg-columbia-900 text-white px-2 py-0.5 rounded uppercase"></span>
+                    <span id="mOS" class="text-xs font-bold bg-pstec-900 text-white px-2 py-0.5 rounded uppercase"></span>
                     <h3 id="mTitulo" class="font-bold text-sm mt-1 text-white"></h3>
                 </div>
-                <button onclick="closeModal()" class="text-columbia-100 hover:text-white p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button onclick="closeModal()" class="text-pstec-100 hover:text-white p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             
             <!-- CORPO DO MODAL -->
@@ -389,14 +393,14 @@
                 <div class="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
                     <div><span class="text-slate-500 block font-semibold">Nº Pedido</span><span id="mPedido" class="font-bold text-slate-800"></span></div>
                     <div><span class="text-slate-500 block font-semibold">Cliente</span><span id="mCliente" class="font-bold text-slate-800"></span></div>
-                    <div><span class="text-slate-500 block font-semibold">Segmento</span><span id="mSegmento" class="font-bold text-columbia-700"></span></div>
+                    <div><span class="text-slate-500 block font-semibold">Segmento</span><span id="mSegmento" class="font-bold text-pstec-700"></span></div>
                     <div><span class="text-slate-500 block font-semibold">Código Interno</span><span id="mCodInterno" class="font-bold text-slate-800 font-mono"></span></div>
                     <div><span class="text-slate-500 block font-semibold">Origem</span><span id="mOrigem" class="font-bold text-slate-800"></span></div>
                     <div><span class="text-slate-500 block font-semibold">Engenharia Status</span><span id="mEngenhariaStatus" class="font-bold text-slate-800"></span></div>
-                    <div><span class="text-slate-500 block font-semibold">OS Filhos (Quais)</span><span id="mOsFilhosQuais" class="font-bold text-columbia-700 font-mono"></span></div>
+                    <div><span class="text-slate-500 block font-semibold">OS Filhos (Quais)</span><span id="mOsFilhosQuais" class="font-bold text-pstec-700 font-mono"></span></div>
                     <div><span class="text-slate-500 block font-semibold">Possui Orçamento</span><span id="mPossuiOrcamento" class="font-bold text-slate-800"></span></div>
-                    <div><span class="text-slate-500 block font-semibold">Preço Geral / Valor</span><span id="mPreco" class="font-bold text-emerald-600"></span></div>
-                    <div><span class="text-slate-500 block font-semibold">Nº do Orçamento</span><span id="mNumOrcamento" class="font-bold text-columbia-700"></span></div>
+                    <div><span class="text-slate-500 block font-semibold">Preço Geral / Valor</span><span id="mPreco" class="font-bold text-pstecgreen-600"></span></div>
+                    <div><span class="text-slate-500 block font-semibold">Nº do Orçamento</span><span id="mNumOrcamento" class="font-bold text-pstec-700"></span></div>
                 </div>
 
                 <!-- STATUS OPERAÇÃO -->
@@ -405,7 +409,7 @@
                     <div class="grid grid-cols-2 gap-2">
                         <div class="bg-slate-50 p-2 rounded-lg border border-slate-200"><span class="text-slate-500 block">Compras</span><span id="mCompras" class="font-semibold text-slate-800"></span></div>
                         <div class="bg-slate-50 p-2 rounded-lg border border-slate-200"><span class="text-slate-500 block">Terceiros</span><span id="mTerceiros" class="font-semibold text-slate-800"></span></div>
-                        <div class="bg-slate-50 p-2 rounded-lg border border-slate-200"><span class="text-slate-500 block">Produção</span><span id="mProducao" class="font-semibold text-columbia-600"></span></div>
+                        <div class="bg-slate-50 p-2 rounded-lg border border-slate-200"><span class="text-slate-500 block">Produção</span><span id="mProducao" class="font-semibold text-pstec-600"></span></div>
                         <div class="bg-slate-50 p-2 rounded-lg border border-slate-200"><span class="text-slate-500 block">Atrasada</span><span id="mAtrasada" class="font-bold"></span></div>
                     </div>
                 </div>
@@ -436,8 +440,8 @@
                     <div class="grid grid-cols-2 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-[11px]">
                         <div><span class="text-slate-500 block">Abertura OS:</span> <span id="mAbertura" class="font-semibold text-slate-700"></span></div>
                         <div><span class="text-slate-500 block">Data Renegociada:</span> <span id="mDtRenegociada" class="font-bold text-purple-700"></span></div>
-                        <div><span class="text-slate-500 block">Prev. Entrega Orçamento:</span> <span id="mPrevEntregaOrcamento" class="font-semibold text-columbia-700"></span></div>
-                        <div><span class="text-slate-500 block">Prev. Entrega OS:</span> <span id="mPrevEntregaOS" class="font-semibold text-columbia-700"></span></div>
+                        <div><span class="text-slate-500 block">Prev. Entrega Orçamento:</span> <span id="mPrevEntregaOrcamento" class="font-semibold text-pstec-700"></span></div>
+                        <div><span class="text-slate-500 block">Prev. Entrega OS:</span> <span id="mPrevEntregaOS" class="font-semibold text-pstec-700"></span></div>
                         <div><span class="text-slate-500 block">Último Apontamento:</span> <span id="mApontamento" class="font-semibold text-slate-700"></span></div>
                         <div><span class="text-slate-500 block">Entrega Normalizada:</span> <span id="mEntregaNorm" class="font-bold text-amber-600"></span></div>
                     </div>
@@ -467,16 +471,16 @@
                     </button>
                 </div>
 
-                <button onclick="closeModal()" class="px-4 py-1.5 bg-columbia-700 text-white rounded-xl font-semibold hover:bg-columbia-800 shadow-sm transition">Fechar</button>
+                <button onclick="closeModal()" class="px-4 py-1.5 bg-pstec-700 text-white rounded-xl font-semibold hover:bg-pstec-800 shadow-sm transition">Fechar</button>
             </div>
         </div>
     </div>
 
     <!-- JAVASCRIPT LÓGICA E RENDERIZAÇÃO -->
     <script>
-        const API_URL = 'https://columbia.consultoriarf.net/producao';
-        const API_HR_A_MAIS = 'https://columbia.consultoriarf.net/hr-a-mais';
-        const API_FATURAMENTO = 'https://columbia.consultoriarf.net/faturamento_prod';
+        const API_URL = 'https://pstec.consultoriarf.net/producao';
+        const API_HR_A_MAIS = 'https://pstec.consultoriarf.net/hr-a-mais';
+        const API_FATURAMENTO = 'https://pstec.consultoriarf.net/faturamento_prod';
 
         let rawData = [];
         let rawConferenciaData = [];
@@ -484,7 +488,7 @@
         let currentDate = new Date();
         let selectedItemModal = null; 
 
-        let currentView = localStorage.getItem('columbia_preferred_view') || 'week';
+        let currentView = localStorage.getItem('pstec_preferred_view') || 'week';
         
         // GERENCIADOR DE ABA ATIVA DO SISTEMA ('dashboard', 'faturamento', 'conferencia', 'limbo')
         let abaAtiva = 'dashboard';
@@ -494,7 +498,7 @@
         let isValuesUnlocked = false;
 
         document.addEventListener('DOMContentLoaded', () => {
-            const nomeUser = localStorage.getItem('columbia_usuario_nome');
+            const nomeUser = localStorage.getItem('pstec_usuario_nome');
             if (nomeUser) {
                 const displayEl = document.getElementById('userDisplayName');
                 if (displayEl) displayEl.textContent = nomeUser;
@@ -525,8 +529,8 @@
 
         // VALIDA AS PERMISSÕES COM TRAVA ESTRITA (OCULTA OBRIGATORIAMENTE CASO NÃO SEJA "1")
         function configurarVisibilidadeAbas() {
-            const valFaturamento = localStorage.getItem('columbia_perm_faturamento');
-            const valFinalizacao = localStorage.getItem('columbia_perm_finalizacao');
+            const valFaturamento = localStorage.getItem('pstec_perm_faturamento');
+            const valFinalizacao = localStorage.getItem('pstec_perm_finalizacao');
 
             const permFaturamento = valFaturamento !== null && String(valFaturamento).trim() === '1';
             const permFinalizacao = valFinalizacao !== null && String(valFinalizacao).trim() === '1';
@@ -575,7 +579,7 @@
             const viewModeContainer = document.getElementById('viewModeContainer');
 
             // Reset estilos dos botões
-            if (btnDashboard) btnDashboard.className = "flex items-center gap-1.5 px-3 py-2 bg-columbia-800 hover:bg-columbia-900 text-white font-extrabold rounded-xl text-xs transition shadow-md";
+            if (btnDashboard) btnDashboard.className = "flex items-center gap-1.5 px-3 py-2 bg-pstec-800 hover:bg-pstec-900 text-white font-extrabold rounded-xl text-xs transition shadow-md";
             if (btnFaturamento) btnFaturamento.className = "flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl text-xs transition shadow-md";
             if (btnConferencia) btnConferencia.className = "flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold rounded-xl text-xs transition shadow-md";
             if (btnLimbo) btnLimbo.className = "flex items-center gap-1.5 px-3 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl text-xs transition shadow-md";
@@ -583,7 +587,7 @@
             configurarVisibilidadeAbas();
 
             if (abaAtiva === 'dashboard') {
-                if (btnDashboard) btnDashboard.className = "flex items-center gap-1.5 px-3 py-2 bg-columbia-900 border border-emerald-400 text-white font-black rounded-xl text-xs transition shadow-md";
+                if (btnDashboard) btnDashboard.className = "flex items-center gap-1.5 px-3 py-2 bg-pstec-900 border border-pstecgreen-500 text-white font-black rounded-xl text-xs transition shadow-md";
                 if (metricsBar) metricsBar.classList.remove('hidden');
                 if (filtersBar) filtersBar.classList.remove('hidden');
                 if (navigationBar) navigationBar.classList.remove('hidden');
@@ -629,7 +633,7 @@
                 if (navigationBar) navigationBar.classList.add('hidden');
 
                 if (abaAtiva === 'limbo' && btnLimbo) {
-                    btnLimbo.className = "flex items-center gap-1.5 px-3 py-2 bg-columbia-900 border border-amber-400 text-amber-400 font-black rounded-xl text-xs transition shadow-md";
+                    btnLimbo.className = "flex items-center gap-1.5 px-3 py-2 bg-pstec-900 border border-amber-400 text-amber-400 font-black rounded-xl text-xs transition shadow-md";
                 }
             }
 
@@ -637,10 +641,10 @@
         }
 
         function efetuarLogout() {
-            localStorage.removeItem('columbia_token');
-            localStorage.removeItem('columbia_usuario_nome');
-            localStorage.removeItem('columbia_perm_faturamento');
-            localStorage.removeItem('columbia_perm_finalizacao');
+            localStorage.removeItem('pstec_token');
+            localStorage.removeItem('pstec_usuario_nome');
+            localStorage.removeItem('pstec_perm_faturamento');
+            localStorage.removeItem('pstec_perm_finalizacao');
             window.location.href = 'login.html';
         }
 
@@ -842,14 +846,14 @@
 
         function setViewMode(mode, triggerRender = true) {
             currentView = mode;
-            localStorage.setItem('columbia_preferred_view', mode);
+            localStorage.setItem('pstec_preferred_view', mode);
 
             const btnM = document.getElementById('viewBtnMonth');
             const btnW = document.getElementById('viewBtnWeek');
             const btnD = document.getElementById('viewBtnDay');
 
-            const activeClass = "bg-columbia-700 text-white shadow-sm";
-            const inactiveClass = "text-slate-600 hover:text-columbia-700 hover:bg-slate-200";
+            const activeClass = "bg-pstec-700 text-white shadow-sm";
+            const inactiveClass = "text-slate-600 hover:text-pstec-700 hover:bg-slate-200";
 
             if (btnM) btnM.className = `px-3 py-1 rounded-lg text-xs font-bold transition ${mode === 'month' ? activeClass : inactiveClass}`;
             if (btnW) btnW.className = `px-3 py-1 rounded-lg text-xs font-bold transition ${mode === 'week' ? activeClass : inactiveClass}`;
@@ -1154,11 +1158,11 @@
 
                 html += `
                     <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-                        <div class="bg-columbia-700 text-white px-4 py-3 flex justify-between items-center flex-wrap gap-2">
+                        <div class="bg-pstec-700 text-white px-4 py-3 flex justify-between items-center flex-wrap gap-2">
                             <div class="flex items-center gap-2 font-bold text-xs tracking-wide">
-                                <i data-lucide="calendar-days" class="w-4 h-4 text-columbia-100"></i>
+                                <i data-lucide="calendar-days" class="w-4 h-4 text-pstec-100"></i>
                                 <span class="capitalize">${formatDate(dateKey)}</span>
-                                <span class="bg-columbia-900 text-columbia-100 px-2 py-0.5 rounded-lg border border-columbia-600 text-[10px]">
+                                <span class="bg-pstec-900 text-pstec-100 px-2 py-0.5 rounded-lg border border-pstec-600 text-[10px]">
                                     ${dayItems.length} registro${dayItems.length === 1 ? '' : 's'}
                                 </span>
                             </div>
@@ -1195,7 +1199,7 @@
 
                     <div>
                         <div class="flex justify-between items-center mb-1.5 pl-1">
-                            <span class="font-mono text-xs font-extrabold text-columbia-700 bg-columbia-50 px-2 py-0.5 rounded-lg border border-columbia-100">
+                            <span class="font-mono text-xs font-extrabold text-pstec-700 bg-pstec-50 px-2 py-0.5 rounded-lg border border-pstec-100">
                                 OS ${osCod}
                             </span>
                             <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-red-50 text-red-700 border border-red-200 font-mono">
@@ -1216,7 +1220,7 @@
                     <div class="space-y-2 pl-1">
                         <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-[10px] space-y-1 font-medium">
                             <div class="flex justify-between items-center"><span class="text-slate-400 font-bold">Máquina:</span> <span class="font-bold text-slate-700 truncate max-w-[140px]" title="${maquina}">${maquina}</span></div>
-                            <div class="flex justify-between items-center"><span class="text-slate-400 font-bold">Serviço:</span> <span class="font-bold text-columbia-700 truncate max-w-[140px]" title="${servico}">${servico}</span></div>
+                            <div class="flex justify-between items-center"><span class="text-slate-400 font-bold">Serviço:</span> <span class="font-bold text-pstec-700 truncate max-w-[140px]" title="${servico}">${servico}</span></div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-1.5 text-[10px] bg-red-50/60 p-2 rounded-xl border border-red-100 font-mono">
@@ -1377,14 +1381,14 @@
                     <div class="flex items-center gap-3 flex-wrap">
                         <div class="bg-slate-50 px-3.5 py-2 rounded-xl border border-slate-200 text-right">
                             <span class="text-[9px] uppercase font-bold text-slate-400 block">Total Faturado</span>
-                            <span class="text-sm font-black text-emerald-600 font-mono">${formatBRL(totalFaturadoVal)}</span>
+                            <span class="text-sm font-black text-pstecgreen-600 font-mono">${formatBRL(totalFaturadoVal)}</span>
                         </div>
                         <div class="bg-slate-50 px-3.5 py-2 rounded-xl border border-slate-200 text-right">
                             <span class="text-[9px] uppercase font-bold text-slate-400 block">A Faturar</span>
                             <span class="text-sm font-black text-blue-600 font-mono">${formatBRL(totalAFaturarVal)}</span>
                         </div>
-                        <div class="bg-columbia-700 text-white px-4 py-2 rounded-xl text-right shadow-xs">
-                            <span class="text-[9px] uppercase font-bold text-columbia-100 block">Total Geral</span>
+                        <div class="bg-pstec-700 text-white px-4 py-2 rounded-xl text-right shadow-xs">
+                            <span class="text-[9px] uppercase font-bold text-pstec-100 block">Total Geral</span>
                             <span class="text-base font-extrabold text-amber-300 font-mono">${formatBRL(totalGeralVal)}</span>
                         </div>
                     </div>
@@ -1417,15 +1421,15 @@
                 html += `
                     <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
                         <!-- CABEÇALHO DA SEMANA -->
-                        <div class="bg-columbia-800 text-white px-4 py-2.5 flex justify-between items-center flex-wrap gap-2 border-b border-columbia-900">
+                        <div class="bg-pstec-800 text-white px-4 py-2.5 flex justify-between items-center flex-wrap gap-2 border-b border-pstec-900">
                             <div class="flex items-center gap-2 font-bold text-xs">
-                                <i data-lucide="layers" class="w-4 h-4 text-columbia-100"></i>
+                                <i data-lucide="layers" class="w-4 h-4 text-pstec-100"></i>
                                 <span class="uppercase tracking-wider font-extrabold">${weekGroup.name}</span>
-                                <span class="bg-columbia-900 text-columbia-100 px-2 py-0.5 rounded-md text-[10px] font-mono">
+                                <span class="bg-pstec-900 text-pstec-100 px-2 py-0.5 rounded-md text-[10px] font-mono">
                                     ${items.length} orçamento${items.length === 1 ? '' : 's'}
                                 </span>
                             </div>
-                            <div class="text-xs font-extrabold text-emerald-300 font-mono">
+                            <div class="text-xs font-extrabold text-pstecgreen-500 font-mono">
                                 TOTAL: ${formatBRL(subtotalSemana)}
                             </div>
                         </div>
@@ -1458,7 +1462,7 @@
 
                                         return `
                                             <tr class="${isFaturado ? 'bg-emerald-50/80 hover:bg-emerald-100/70' : 'hover:bg-slate-50'} transition-colors">
-                                                <td class="p-2.5 font-bold font-mono text-columbia-700">${item.n_orcamento}</td>
+                                                <td class="p-2.5 font-bold font-mono text-pstec-700">${item.n_orcamento}</td>
                                                 <td class="p-2.5 font-bold text-slate-800 uppercase">${item.cliente}</td>
                                                 <td class="p-2.5 font-mono text-slate-600">${item.cod_interno !== '-' ? item.cod_interno : ''}</td>
                                                 <td class="p-2.5 font-mono font-bold text-slate-700">${osListStr}</td>
@@ -1514,7 +1518,7 @@
                             <span class="text-xs font-black text-amber-900 bg-amber-100 border border-amber-300 px-3 py-1.5 rounded-xl">
                                 Total: ${limboItems.length} OS${limboItems.length === 1 ? '' : 's'}
                             </span>
-                            <span class="text-xs font-extrabold text-emerald-600 font-mono bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
+                            <span class="text-xs font-extrabold text-pstecgreen-600 font-mono bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
                                 ${formatBRL(totalValorLimbo)}
                             </span>
                         </div>
@@ -1551,12 +1555,12 @@
                 <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
                     <div class="flex flex-wrap justify-between items-center border-b border-slate-100 pb-3 mb-4 gap-2">
                         <div class="flex items-center gap-2">
-                            <i data-lucide="search-check" class="w-5 h-5 text-columbia-700"></i>
+                            <i data-lucide="search-check" class="w-5 h-5 text-pstec-700"></i>
                             <h3 class="font-extrabold text-slate-800 text-sm">
                                 Resultado da Busca Global (${filtered.length} OS${filtered.length === 1 ? '' : 's'} Encontradas)
                             </h3>
                         </div>
-                        <span class="text-xs font-extrabold text-emerald-600 font-mono">
+                        <span class="text-xs font-extrabold text-pstecgreen-600 font-mono">
                             Total: ${formatBRL(totalValorBusca)}
                         </span>
                     </div>
@@ -1599,12 +1603,12 @@
             const dtUltimoApontamento = formatDate(item.ultimo_apontamento);
 
             return `
-                <div onclick="openModal('${item.n_os}')" class="group bg-white border border-slate-200 hover:border-columbia-500 hover:shadow-md p-3.5 rounded-2xl cursor-pointer transition-all duration-200 flex flex-col justify-between gap-2.5 relative overflow-hidden">
+                <div onclick="openModal('${item.n_os}')" class="group bg-white border border-slate-200 hover:border-pstec-500 hover:shadow-md p-3.5 rounded-2xl cursor-pointer transition-all duration-200 flex flex-col justify-between gap-2.5 relative overflow-hidden">
                     <div class="absolute left-0 top-0 bottom-0 w-1.5 ${isAtrasado ? 'bg-red-500' : 'bg-emerald-500'}"></div>
 
                     <div>
                         <div class="flex justify-between items-center mb-1 pl-1">
-                            <span class="font-mono text-xs font-extrabold text-columbia-700 bg-columbia-50 px-2 py-0.5 rounded-lg border border-columbia-100">
+                            <span class="font-mono text-xs font-extrabold text-pstec-700 bg-pstec-50 px-2 py-0.5 rounded-lg border border-pstec-100">
                                 OS ${item.n_os}
                             </span>
                             <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full ${isAtrasado ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-emerald-50 text-emerald-600 border border-emerald-200'}">
@@ -1613,7 +1617,7 @@
                         </div>
 
                         <div class="pl-1 space-y-0.5">
-                            <p class="text-xs font-black text-slate-800 tracking-tight group-hover:text-columbia-600 transition-colors uppercase">
+                            <p class="text-xs font-black text-slate-800 tracking-tight group-hover:text-pstec-600 transition-colors uppercase">
                                 <span class="text-[9px] text-slate-400 font-normal">Origem:</span> ${origem}
                             </p>
                             <p class="text-[11px] font-bold text-slate-700 line-clamp-2 leading-snug" title="${osNome}">${osNome}</p>
@@ -1630,7 +1634,7 @@
                             <div class="flex justify-between items-center"><span class="text-slate-400 font-bold">Compras:</span> <span class="font-bold text-slate-700 truncate max-w-[140px]">${compras}</span></div>
                             <div class="flex justify-between items-center"><span class="text-slate-400 font-bold">Terceiros:</span> <span class="font-bold text-slate-700 truncate max-w-[140px]">${terceiros}</span></div>
                             <div class="flex justify-between items-center"><span class="text-slate-400 font-bold">Engenharia:</span> <span class="font-bold text-slate-700 truncate max-w-[140px]">${engenharia}</span></div>
-                            <div class="flex justify-between items-center pt-1 border-t border-slate-200/60 mt-0.5"><span class="text-slate-500 font-extrabold">Produção:</span> <span class="font-black text-columbia-700 font-mono text-xs">${prodStatus}</span></div>
+                            <div class="flex justify-between items-center pt-1 border-t border-slate-200/60 mt-0.5"><span class="text-slate-500 font-extrabold">Produção:</span> <span class="font-black text-pstec-700 font-mono text-xs">${prodStatus}</span></div>
                         </div>
 
                         <!-- EXIBIÇÃO DE PP PENDENTES -->
@@ -1740,7 +1744,7 @@
 
             let calendarHTML = `
                 <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-                    <div class="grid grid-cols-7 bg-columbia-700 text-white text-center text-xs font-bold py-2 border-b border-columbia-800">
+                    <div class="grid grid-cols-7 bg-pstec-700 text-white text-center text-xs font-bold py-2 border-b border-pstec-800">
                         <div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div><div>Dom</div>
                     </div>
                     <div class="grid grid-cols-7 auto-rows-fr bg-slate-200 gap-px">
@@ -1775,18 +1779,18 @@
                         }
 
                         calendarHTML += `
-                            <div onclick="selectDayView('${dateKey}')" class="bg-white min-h-[125px] p-2 flex flex-col justify-between hover:bg-columbia-50/60 cursor-pointer transition">
+                            <div onclick="selectDayView('${dateKey}')" class="bg-white min-h-[125px] p-2 flex flex-col justify-between hover:bg-pstec-50/60 cursor-pointer transition">
                                 <div>
                                     <div class="flex justify-between items-start mb-1.5">
-                                        <span class="text-xs font-extrabold rounded-full w-6 h-6 flex items-center justify-center ${isToday ? 'bg-columbia-700 text-white shadow-sm' : 'text-slate-800'}">${day}</span>
-                                        ${dayItems.length > 0 ? `<span class="bg-columbia-50 text-columbia-800 border border-columbia-200 text-[10px] font-mono font-extrabold px-1.5 py-0.5 rounded-md">OS's: ${dayItems.length}</span>` : ''}
+                                        <span class="text-xs font-extrabold rounded-full w-6 h-6 flex items-center justify-center ${isToday ? 'bg-pstec-700 text-white shadow-sm' : 'text-slate-800'}">${day}</span>
+                                        ${dayItems.length > 0 ? `<span class="bg-pstec-50 text-pstec-800 border border-pstec-200 text-[10px] font-mono font-extrabold px-1.5 py-0.5 rounded-md">OS's: ${dayItems.length}</span>` : ''}
                                     </div>
                                     ${topSegments.length > 0 ? `
                                         <div class="space-y-0.5 my-1">
                                             ${topSegments.map(([segName, count]) => `
                                                 <div class="flex justify-between items-center bg-slate-50 border border-slate-100 rounded px-1.5 py-0.5 text-[9px]">
                                                     <span class="font-bold text-slate-700 truncate max-w-[70px]" title="${segName}">${segName}</span>
-                                                    <span class="font-extrabold text-columbia-700">${count}</span>
+                                                    <span class="font-extrabold text-pstec-700">${count}</span>
                                                 </div>
                                             `).join('')}
                                         </div>
@@ -1794,7 +1798,7 @@
                                 </div>
                                 ${dayItems.length > 0 ? `
                                     <div class="mt-1 pt-1 border-t border-slate-100 flex items-center justify-center">
-                                        <span class="${valFontSizeClass} font-extrabold text-emerald-600 tracking-tight text-center break-all leading-tight">
+                                        <span class="${valFontSizeClass} font-extrabold text-pstecgreen-600 tracking-tight text-center break-all leading-tight">
                                             ${formattedValStr}
                                         </span>
                                     </div>
@@ -1849,23 +1853,23 @@
 
             let html = `
                 <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-md flex flex-col">
-                    <div class="bg-columbia-700 text-white p-4 flex flex-wrap justify-between items-center gap-3">
+                    <div class="bg-pstec-700 text-white p-4 flex flex-wrap justify-between items-center gap-3">
                         <div class="flex items-center gap-3">
-                            <span class="bg-columbia-900 border border-columbia-500 text-white font-extrabold text-sm px-3 py-1 rounded-xl shadow-xs">
+                            <span class="bg-pstec-900 border border-pstec-500 text-white font-extrabold text-sm px-3 py-1 rounded-xl shadow-xs">
                                 Semana ${weekNum}
                             </span>
                             <div>
                                 <h4 class="font-extrabold text-sm tracking-wide">Programação Semanal</h4>
-                                <p class="text-xs text-columbia-100 font-medium">${rangeText}</p>
+                                <p class="text-xs text-pstec-100 font-medium">${rangeText}</p>
                             </div>
                         </div>
 
                         <div class="flex items-center gap-4">
                             <div class="text-right">
-                                <span class="text-[10px] uppercase font-bold text-columbia-200 block">Total Previsto na Semana</span>
-                                <span class="text-base font-extrabold text-emerald-300 font-mono">${formatBRL(weekTotalVal)}</span>
+                                <span class="text-[10px] uppercase font-bold text-pstec-200 block">Total Previsto na Semana</span>
+                                <span class="text-base font-extrabold text-pstecgreen-500 font-mono">${formatBRL(weekTotalVal)}</span>
                             </div>
-                            <span class="bg-columbia-800 text-white text-xs font-bold px-3 py-1.5 rounded-xl border border-columbia-600">
+                            <span class="bg-pstec-800 text-white text-xs font-bold px-3 py-1.5 rounded-xl border border-pstec-600">
                                 ${weekItems.length} OS${weekItems.length === 1 ? '' : 's'}
                             </span>
                         </div>
@@ -1906,7 +1910,7 @@
                 <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
                     <div class="flex justify-between items-center border-b border-slate-100 pb-3 mb-4">
                         <h3 class="font-extrabold text-slate-800 text-sm">Ordens de Serviço do Dia (${dayItems.length})</h3>
-                        <span class="text-xs font-extrabold text-emerald-600 font-mono">${formatBRL(dayItems.reduce((acc, i) => acc + parseValue(i.preco_geral_a_vista || i.orcamento), 0))}</span>
+                        <span class="text-xs font-extrabold text-pstecgreen-600 font-mono">${formatBRL(dayItems.reduce((acc, i) => acc + parseValue(i.preco_geral_a_vista || i.orcamento), 0))}</span>
                     </div>
                     ${dayItems.length === 0 ? `
                         <p class="text-xs text-slate-400 italic text-center py-12">Nenhuma Ordem de Serviço agendada para este dia.</p>
@@ -1935,7 +1939,7 @@
                 btn.className = "px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-xl text-xs font-semibold transition flex items-center gap-1.5";
             } else {
                 txt.textContent = 'Ocultar semanas passadas';
-                btn.className = "px-3 py-2 bg-columbia-700 text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-sm";
+                btn.className = "px-3 py-2 bg-pstec-700 text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-sm";
             }
             renderView();
         }
@@ -1949,7 +1953,7 @@
                 btn.className = "px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-xl text-xs font-semibold transition flex items-center gap-1.5";
             } else {
                 txt.textContent = 'Exibir todas as OS';
-                btn.className = "px-3 py-2 bg-emerald-600 text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-sm";
+                btn.className = "px-3 py-2 bg-pstecgreen-600 text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-sm";
             }
             renderView();
         }
@@ -2169,7 +2173,7 @@
                 return;
             }
 
-            const usuarioLogado = localStorage.getItem('columbia_usuario_nome') || 'SISTEMA';
+            const usuarioLogado = localStorage.getItem('pstec_usuario_nome') || 'SISTEMA';
             const justificativaComUsuario = `[${usuarioLogado.toUpperCase()}] ${userTexto}`;
 
             try {
