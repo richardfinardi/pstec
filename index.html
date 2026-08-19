@@ -18,7 +18,7 @@
     <meta property="og:url" content="https://consultoriarf.net/producao_pstec/">
     <meta property="og:type" content="website">
     
-    <title>Programação de Produção - PSTEC V1.3</title>
+    <title>Programação de Produção - PSTEC V1.4</title>
 
     <!-- VERIFICAÇÃO DE AUTENTICAÇÃO ANTES DE RENDERIZAR A PÁGINA -->
     <script>
@@ -77,7 +77,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-extrabold tracking-wide text-white">GRUPO PSTEC</h1>
-                    <p class="text-xs text-pstec-100">Controle de Produção V1.3</p>
+                    <p class="text-xs text-pstec-100">Controle de Produção V1.4</p>
                 </div>
             </div>
 
@@ -298,7 +298,7 @@
         <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
             <div class="flex items-center gap-2 font-medium">
                 <i data-lucide="code-2" class="w-4 h-4 text-pstec-600"></i>
-                <span>© 2026 PSTEC Brasil — Sistema de Gestão de Produção V1.3</span>
+                <span>© 2026 PSTEC Brasil — Sistema de Gestão de Produção V1.4</span>
             </div>
         </div>
     </footer>
@@ -726,7 +726,8 @@
                 if (!isSilent) {
                     alert('Não foi possível atualizar os dados de produção. Verifique a conexão com o servidor.');
                 }
-            } finally {
+            } font-medium;
+            finally {
                 if (refreshIcon) {
                     refreshIcon.classList.remove('animate-spin');
                 }
@@ -2047,6 +2048,7 @@
             }
         }
 
+        // SUBMIT RENEGOCIAÇÃO + NOTIFICAÇÃO DE E-MAIL
         async function submitAltRenegociation() {
             if (!selectedItemModal) return;
 
@@ -2070,12 +2072,19 @@
 
                 const patchUrl = `${API_URL}/${selectedItemModal.n_os}/alterar-renegociacao`;
 
+                // Envia alteração + dados para envio de e-mail no backend Python
                 const response = await fetch(patchUrl, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         u_data_renegociacao: newDate || null,
-                        U_JUST_ALT_DT_REN: justificativaComUsuario
+                        U_JUST_ALT_DT_REN: justificativaComUsuario,
+                        enviar_email: true,
+                        email_destino: 'richard@consultoriarf.net',
+                        usuario_alteracao: usuarioLogado,
+                        n_os: selectedItemModal.n_os,
+                        nova_data: formatDate(newDate),
+                        justificativa: userTexto
                     })
                 });
 
