@@ -143,16 +143,33 @@
         <!-- LISTA DE PEDIDOS / OS DA EMPRESA -->
         <main class="max-w-7xl w-full mx-auto p-4 space-y-4 flex-1">
             <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
+                <!-- Busca Universal -->
                 <div class="flex items-center gap-2 flex-1 min-w-[200px] bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs">
                     <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
                     <input type="text" id="clientSearch" oninput="renderClientOrders()" placeholder="Pesquisar pedido por título, código interno ou número de OS..." class="w-full bg-transparent text-slate-800 focus:outline-none font-medium">
                 </div>
 
+                <!-- Filtro por Status -->
                 <select id="filterStatus" onchange="renderClientOrders()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 focus:outline-none">
                     <option value="">Status (Todos)</option>
                     <option value="em_andamento">Em Andamento (&lt;100%)</option>
                     <option value="100%">Finalizados (100%)</option>
                 </select>
+
+                <!-- NOVO: Seletor de Ordenação Inteligente -->
+                <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs">
+                    <i data-lucide="arrow-up-down" class="w-3.5 h-3.5 text-pstec-600"></i>
+                    <select id="sortOrders" onchange="renderClientOrders()" class="bg-transparent font-bold text-slate-700 focus:outline-none cursor-pointer">
+                        <option value="prev_entrega_asc">Previsão Conclusão (Mais próximas)</option>
+                        <option value="prev_entrega_desc">Previsão Conclusão (Mais distantes)</option>
+                        <option value="abertura_desc">Abertura OS (Mais recentes)</option>
+                        <option value="abertura_asc">Abertura OS (Mais antigas)</option>
+                        <option value="os_asc">Número OS (Crescente)</option>
+                        <option value="os_desc">Número OS (Decrescente)</option>
+                        <option value="progresso_desc">Maior Evolução (%)</option>
+                        <option value="valor_desc">Maior Valor (R$)</option>
+                    </select>
+                </div>
             </div>
 
             <div id="ordersGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -161,7 +178,7 @@
 
             <div id="emptyClientState" class="hidden bg-white rounded-3xl border border-slate-200 p-12 text-center text-slate-400 flex-col items-center gap-2 shadow-sm">
                 <i data-lucide="package-x" class="w-12 h-12 text-slate-300 stroke-1"></i>
-                <p class="text-xs font-bold text-slate-600">Nenhum pedido encontrado para a sua empresa no momento.</p>
+                <p class="text-xs font-bold text-slate-600">Nenhum pedido encontrado para a sua empresa com os filtros atuais.</p>
             </div>
         </main>
     </div>
@@ -178,7 +195,6 @@
         let authenticatedCNPJ = '';
         let authenticatedClientItems = [];
 
-        // Mapeamento idêntico ao do index.html
         const charMap = {
             '0': '0',
             '1': 'I',
@@ -196,7 +212,6 @@
             const clean = String(cnpj || '').replace(/\D/g, '');
             if (clean.length < 8) return '';
             
-            // 6 dígitos antes da barra (index 2 a 8 no CNPJ limpo de 14 dígitos)
             const sixDigits = clean.substring(2, 8);
             const inverted = sixDigits.split('').reverse().join('');
             
@@ -234,7 +249,6 @@
                 return;
             }
 
-            // Calcula a senha esperada para o CNPJ digitado
             const expectedPassword = calculateCustomClientPassword(cleanInput);
 
             if (inputSenha !== expectedPassword) {
@@ -252,7 +266,6 @@
                 
                 rawData = await response.json();
 
-                // Procura os pedidos pertencentes ao CNPJ raiz (8 primeiros dígitos)
                 const clientItems = rawData.filter(item => {
                     const cnpjItem = cleanCNPJ(item.cnpj);
                     return cnpjItem && cnpjItem.substring(0, 8) === cleanInput.substring(0, 8);
@@ -341,6 +354,20 @@
             return isNaN(num) ? 0 : num;
         }
 
+        function parseValue(val) {
+            if (val === null || val === undefined) return 0;
+            if (typeof val === 'number') return val;
+            let str = String(val).trim().replace('R$', '').replace(/\s/g, '');
+            if (str.includes(',') && str.includes('.')) str = str.replace(/\./g, '').replace(',', '.');
+            else if (str.includes(',')) str = str.replace(',', '.');
+            const parsed = parseFloat(str);
+            return isNaN(parsed) ? 0 : parsed;
+        }
+
+        function formatBRL(value) {
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
+        }
+
         function formatDate(dtStr) {
             if (!dtStr || dtStr === 'NaT' || dtStr === 'None' || dtStr === 'null') return '-';
             const cleanStr = String(dtStr).trim();
@@ -350,11 +377,17 @@
             return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : cleanStr;
         }
 
+        function getDateSortKey(dtStr) {
+            if (!dtStr || dtStr === 'NaT' || dtStr === 'None' || dtStr === 'null') return '9999-99-99';
+            return String(dtStr).trim().substring(0, 10);
+        }
+
         function renderClientOrders() {
             const search = (document.getElementById('clientSearch')?.value || '').toLowerCase().trim();
             const statusFilter = document.getElementById('filterStatus')?.value || '';
+            const sortMode = document.getElementById('sortOrders')?.value || 'prev_entrega_asc';
 
-            const filtered = authenticatedClientItems.filter(item => {
+            let filtered = authenticatedClientItems.filter(item => {
                 const prodPct = parsePercent(item.status_producao);
 
                 if (statusFilter === '100%' && prodPct < 100) return false;
@@ -365,12 +398,39 @@
                     const mTitulo = String(item.titulo || '').toLowerCase().includes(search);
                     const mCod = String(item.cod_interno || '').toLowerCase().includes(search);
                     const mPed = String(item.n_pedido || '').toLowerCase().includes(search);
-                    if (!mOS && !mTitulo && !mCod && !mPed) return false;
+                    const mOrc = String(item.orcamento || '').toLowerCase().includes(search);
+                    if (!mOS && !mTitulo && !mCod && !mPed && !mOrc) return false;
                 }
 
                 return true;
             });
 
+            // APLICAÇÃO DA ORDENAÇÃO SELECIONADA
+            filtered.sort((a, b) => {
+                const prevA = getDateSortKey(a.dt_renegociada || a.entrega_normalizada || a.prev_entrega_os);
+                const prevB = getDateSortKey(b.dt_renegociada || b.entrega_normalizada || b.prev_entrega_os);
+                const abertA = getDateSortKey(a.abertura_os);
+                const abertB = getDateSortKey(b.abertura_os);
+                const osA = parseInt(a.n_os) || 0;
+                const osB = parseInt(b.n_os) || 0;
+                const valA = parseValue(a.preco_geral_a_vista || a.orcamento);
+                const valB = parseValue(b.preco_geral_a_vista || b.orcamento);
+                const pctA = parsePercent(a.status_producao);
+                const pctB = parsePercent(b.status_producao);
+
+                if (sortMode === 'prev_entrega_asc') return prevA.localeCompare(prevB) || abertB.localeCompare(abertA);
+                if (sortMode === 'prev_entrega_desc') return prevB.localeCompare(prevA) || abertB.localeCompare(abertA);
+                if (sortMode === 'abertura_desc') return abertB.localeCompare(abertA);
+                if (sortMode === 'abertura_asc') return abertA.localeCompare(abertB);
+                if (sortMode === 'os_asc') return osA - osB;
+                if (sortMode === 'os_desc') return osB - osA;
+                if (sortMode === 'progresso_desc') return pctB - pctA;
+                if (sortMode === 'valor_desc') return valB - valA;
+
+                return prevA.localeCompare(prevB);
+            });
+
+            // KPIs
             const totalOS = filtered.length;
             const finalizados = filtered.filter(i => parsePercent(i.status_producao) >= 100).length;
             const emAndamento = totalOS - finalizados;
@@ -399,35 +459,52 @@
             grid.innerHTML = filtered.map(item => {
                 const pct = parsePercent(item.status_producao);
                 const isConcluido = pct >= 100;
+                
+                const valorExibir = formatBRL(parseValue(item.preco_geral_a_vista || item.orcamento));
+                const dtAbertura = formatDate(item.abertura_os);
                 const dtPrevisao = formatDate(item.dt_renegociada || item.entrega_normalizada || item.prev_entrega_os);
+                
+                const qtdeRestante = item.qtde_restante_orcamento !== undefined && item.qtde_restante_orcamento !== null && item.qtde_restante_orcamento !== '' 
+                    ? item.qtde_restante_orcamento 
+                    : (item.qtde_restante_estoque || '-');
 
                 return `
                     <div class="bg-white border border-slate-200 hover:border-pstec-500 rounded-3xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-4 relative overflow-hidden">
                         <div class="absolute left-0 top-0 bottom-0 w-1.5 ${isConcluido ? 'bg-emerald-500' : 'bg-amber-500'}"></div>
 
-                        <div class="space-y-2 pl-1">
-                            <div class="flex justify-between items-center">
+                        <div class="space-y-2.5 pl-1">
+                            <!-- TOP CABEÇALHO DO CARD -->
+                            <div class="flex justify-between items-center flex-wrap gap-1">
                                 <span class="font-mono text-xs font-extrabold text-pstec-700 bg-pstec-50 px-2.5 py-0.5 rounded-lg border border-pstec-100">
                                     OS ${item.n_os}
                                 </span>
-                                <span class="text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase ${isConcluido ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
-                                    ${isConcluido ? 'Finalizado' : 'Em Produção'}
-                                </span>
+                                
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-xs font-black text-pstecgreen-600 font-mono bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">
+                                        ${valorExibir}
+                                    </span>
+                                    <span class="text-[10px] font-black px-2 py-0.5 rounded-full uppercase ${isConcluido ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                                        ${isConcluido ? 'Finalizado' : 'Em Produção'}
+                                    </span>
+                                </div>
                             </div>
 
+                            <!-- TÍTULO DO ITEM -->
                             <h3 class="font-bold text-xs text-slate-800 line-clamp-2 leading-snug" title="${item.titulo || ''}">
                                 ${item.titulo || 'Sem descrição'}
                             </h3>
 
-                            <div class="text-[10px] text-slate-400 font-mono space-y-0.5">
-                                <p>Cód. Item: <strong class="text-slate-700">${item.cod_interno || '-'}</strong></p>
-                                <p>Nº Pedido: <strong class="text-slate-700">${item.n_pedido || '-'}</strong></p>
-                                <p>Orçamento: <strong class="text-pstec-700">${item.orcamento || '-'}</strong></p>
+                            <!-- BLOCO DE INFORMAÇÕES ADICIONADAS -->
+                            <div class="grid grid-cols-2 gap-1.5 bg-slate-50/80 p-2.5 rounded-xl border border-slate-100 text-[10px] font-mono">
+                                <div><span class="text-slate-400 block font-sans text-[9px]">Cód. Item:</span><strong class="text-slate-700">${item.cod_interno || '-'}</strong></div>
+                                <div><span class="text-slate-400 block font-sans text-[9px]">Nº Pedido:</span><strong class="text-slate-700">${item.n_pedido || '-'}</strong></div>
+                                <div><span class="text-slate-400 block font-sans text-[9px]">Orçamento:</span><strong class="text-pstec-700">${item.orcamento || '-'}</strong></div>
+                                <div><span class="text-slate-400 block font-sans text-[9px]">Qtde Pendente:</span><strong class="text-amber-700 font-extrabold">${qtdeRestante}</strong></div>
                             </div>
                         </div>
 
-                        <!-- BARRA DE PROGRESSO VISUAL -->
-                        <div class="pl-1 space-y-1.5">
+                        <!-- BARRA DE PROGRESSO & DATAS -->
+                        <div class="pl-1 space-y-2">
                             <div class="flex justify-between items-center text-xs font-extrabold">
                                 <span class="text-slate-500 text-[10px] uppercase">Evolução do Item</span>
                                 <span class="font-mono ${isConcluido ? 'text-emerald-600' : 'text-pstec-700'}">${pct}%</span>
@@ -437,9 +514,9 @@
                                 <div class="h-full rounded-full transition-all duration-500 ${isConcluido ? 'bg-emerald-500' : 'bg-pstecgreen-500'}" style="width: ${pct}%"></div>
                             </div>
 
-                            <div class="pt-2 border-t border-slate-100 flex justify-between items-center text-[10px]">
-                                <span class="text-slate-400 font-medium">Previsão de Conclusão:</span>
-                                <span class="font-bold text-pstec-700 font-mono">${dtPrevisao}</span>
+                            <div class="pt-2 border-t border-slate-100 grid grid-cols-2 gap-1 text-[10px]">
+                                <div><span class="text-slate-400 block">Abertura OS:</span><strong class="text-slate-700 font-mono">${dtAbertura}</strong></div>
+                                <div class="text-right"><span class="text-slate-400 block">Prev. Conclusão:</span><strong class="text-pstec-700 font-mono font-bold">${dtPrevisao}</strong></div>
                             </div>
                         </div>
                     </div>
