@@ -2056,32 +2056,34 @@
         }
 
         // GERADOR DE CÓDIGO DE ACESSO DO CLIENTE
-        function gerarCodigoClienteAcesso() {
-            if (!selectedItemModal) return;
+// GERADOR DE CÓDIGO DE ACESSO DO CLIENTE
+function gerarCodigoClienteAcesso() {
+    if (!selectedItemModal) return;
 
-            const cnpjRaw = String(selectedItemModal.cnpj || '').replace(/\D/g, '');
-            if (!cnpjRaw || cnpjRaw.length < 8) {
-                alert('Esta OS não possui um CNPJ de cliente válido cadastrado.');
-                return;
-            }
+    const cnpjRaw = String(selectedItemModal.cnpj || '').replace(/\D/g, '');
+    if (!cnpjRaw || cnpjRaw.length < 8) {
+        alert('Esta OS não possui um CNPJ de cliente válido cadastrado.');
+        return;
+    }
 
-            const clientCode = calculateCustomClientPassword(cnpjRaw);
-            const clienteNome = selectedItemModal.cliente || selectedItemModal.empresa || 'Cliente';
-            const cnpjFormatted = selectedItemModal.cnpj;
-            const portalUrl = `https://consultoriarf.net/pstec/cliente.html`;
+    const clientCode = calculateCustomClientPassword(cnpjRaw);
+    const cnpjFormatted = selectedItemModal.cnpj;
+    
+    // Link direto com Login Automático
+    const directLink = `https://consultoriarf.net/pstec/cliente.html?cnpj=${encodeURIComponent(cnpjFormatted)}&code=${clientCode}`;
 
-            const mensagemPronta = `Olá, *${clienteNome}*!\n\nAcompanhe o status e a evolução da produção dos seus pedidos em tempo real no nosso portal:\n\n🔗 *Acesse:* ${portalUrl}\n🏢 *CNPJ:* ${cnpjFormatted}\n🔑 *Senha de Acesso:* ${clientCode}\n\nQualquer dúvida, estamos à disposição!\n*PSTEC Brasil*`;
+    const mensagemPronta = `Prezado(a) Cliente,\n\nAcompanhe o status e a evolução da produção dos seus pedidos em tempo real no nosso portal:\n\n🔗 *Acesse o Portal (Login Automático):*\n${directLink}\n\n---\nCaso prefira acessar manualmente:\n🏢 *CNPJ:* ${cnpjFormatted}\n🔑 *Senha:* ${clientCode}\n\nQualquer dúvida, estamos à disposição!\n*PSTEC Brasil*`;
 
-            document.getElementById('caClientName').textContent = clienteNome;
-            document.getElementById('caClientCNPJ').textContent = cnpjFormatted;
-            document.getElementById('caClientCode').textContent = clientCode;
-            document.getElementById('caMessageText').value = mensagemPronta;
+    document.getElementById('caClientName').textContent = selectedItemModal.cliente || selectedItemModal.empresa || 'Cliente';
+    document.getElementById('caClientCNPJ').textContent = cnpjFormatted;
+    document.getElementById('caClientCode').textContent = clientCode;
+    document.getElementById('caMessageText').value = mensagemPronta;
 
-            const modal = document.getElementById('clientAccessModal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            lucide.createIcons();
-        }
+    const modal = document.getElementById('clientAccessModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    lucide.createIcons();
+}
 
         function closeClientAccessModal() {
             const modal = document.getElementById('clientAccessModal');
