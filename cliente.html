@@ -44,7 +44,7 @@
 </head>
 <body class="min-h-screen flex flex-col justify-between bg-slate-100 text-slate-800">
 
-    <!-- CONTAINER DE LOGIN DO CLIENTE (Exibido por Padrão) -->
+    <!-- TELA DE LOGIN DO CLIENTE -->
     <div id="loginSection" class="flex-1 flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-md w-full p-8 space-y-6 relative overflow-hidden">
             <div class="absolute top-0 left-0 right-0 h-3 bg-gradient-to-r from-pstec-700 via-pstec-500 to-pstecgreen-500"></div>
@@ -54,8 +54,8 @@
                     <img src="./logo.png" alt="PSTEC" class="h-10 w-auto object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                     <i data-lucide="factory" class="w-8 h-8 text-pstec-700 hidden"></i>
                 </div>
-                <h2 class="text-xl font-extrabold text-pstec-900 tracking-tight">Portal de Acompanhamento</h2>
-                <p class="text-xs text-slate-500 font-medium">Acompanhe o status e a evolução dos seus pedidos em tempo real.</p>
+                <h2 class="text-xl font-extrabold text-pstec-900 tracking-tight">Portal do Cliente PSTEC</h2>
+                <p class="text-xs text-slate-500 font-medium">Acompanhe a produção dos seus pedidos em tempo real.</p>
             </div>
 
             <form onsubmit="autenticarCliente(event)" class="space-y-4">
@@ -69,16 +69,16 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Senha de Acesso</label>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Senha de Acesso Exclusiva</label>
                     <div class="relative">
                         <i data-lucide="key-round" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
-                        <input type="password" id="inputSenha" required placeholder="••••••••" 
+                        <input type="password" id="inputSenha" required placeholder="Digite sua senha informada pela PSTEC..." 
                                class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-pstec-600 focus:bg-white transition">
                     </div>
                 </div>
 
                 <div id="loginError" class="hidden text-xs font-bold text-red-600 bg-red-50 p-3 rounded-xl border border-red-200 text-center">
-                    CNPJ ou senha inválidos. Verifique as credenciais.
+                    CNPJ ou senha incorretos. Solicite o acesso ao suporte comercial.
                 </div>
 
                 <button type="submit" id="btnLogin" class="w-full py-3 bg-pstec-700 hover:bg-pstec-800 text-white font-extrabold text-xs rounded-xl shadow-lg transition flex items-center justify-center gap-2">
@@ -86,17 +86,10 @@
                     <span>Acessar Meus Pedidos</span>
                 </button>
             </form>
-
-            <div class="pt-2 border-t border-slate-100 text-center">
-                <button onclick="toggleHelpModal()" class="text-[11px] font-bold text-pstec-600 hover:underline inline-flex items-center gap-1">
-                    <i data-lucide="help-circle" class="w-3.5 h-3.5"></i>
-                    <span>Primeiro acesso? Veja como obter sua senha</span>
-                </button>
-            </div>
         </div>
     </div>
 
-    <!-- PAINEL DASHBOARD DO CLIENTE (Exibido após Login com Sucesso) -->
+    <!-- PAINEL DASHBOARD DO CLIENTE -->
     <div id="dashboardSection" class="hidden flex-1 flex-col">
         <!-- HEADER DO CLIENTE -->
         <header class="bg-pstec-700 text-white sticky top-0 z-40 shadow-md">
@@ -178,25 +171,6 @@
         <span>© 2026 PSTEC Brasil — Portal Transparência de Produção</span>
     </footer>
 
-    <!-- MODAL DE AJUDA COM SENHA DE PRIMEIRO ACESSO -->
-    <div id="helpModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 space-y-4 text-xs border border-slate-200">
-            <div class="flex justify-between items-center border-b pb-2">
-                <h3 class="font-extrabold text-pstec-900 text-sm">Regra da Senha do Primeiro Acesso</h3>
-                <button onclick="toggleHelpModal()" class="text-slate-400 hover:text-slate-700"><i data-lucide="x" class="w-4 h-4"></i></button>
-            </div>
-            <p class="text-slate-600 leading-relaxed">Sua senha é calculada de forma segura com base no CNPJ da empresa:</p>
-            <div class="bg-pstec-50 p-3 rounded-xl border border-pstec-100 font-mono text-[11px] text-pstec-900 space-y-1">
-                <p><strong>Fórmula:</strong> <span class="text-pstecgreen-600 font-bold">pstec</span> + <span class="text-purple-700 font-bold">4 primeiros dígitos do CNPJ invertidos</span></p>
-                <hr class="border-pstec-200">
-                <p class="text-[10px] text-slate-500">Exemplo CNPJ: <u>44.01</u>3.159/0031-31</p>
-                <p class="text-[10px] text-slate-500">Dígitos iniciais: <strong>4401</strong> $\rightarrow$ Invertido: <strong>1044</strong></p>
-                <p class="font-bold text-pstec-700">Sua senha será: <span class="bg-pstecgreen-500 text-slate-950 px-1.5 py-0.5 rounded">pstec1044</span></p>
-            </div>
-            <button onclick="toggleHelpModal()" class="w-full py-2 bg-pstec-700 text-white font-bold rounded-xl hover:bg-pstec-800 transition">Entendi</button>
-        </div>
-    </div>
-
     <!-- LÓGICA JAVASCRIPT DO PORTAL DO CLIENTE -->
     <script>
         const API_URL = 'https://pstec.consultoriarf.net/producao';
@@ -204,10 +178,34 @@
         let authenticatedCNPJ = '';
         let authenticatedClientItems = [];
 
+        // Mapeamento de dígitos para senhas aleatórias
+        const charMap = {
+            '0': '0',
+            '1': 'I',
+            '2': 'b',
+            '3': 'c',
+            '4': 'd',
+            '5': 'h',
+            '6': 'F',
+            '7': 'g',
+            '8': 'H',
+            '9': 'I'
+        };
+
+        function calculateCustomClientPassword(cnpj) {
+            const clean = String(cnpj || '').replace(/\D/g, '');
+            if (clean.length < 8) return '';
+            
+            // 6 dígitos antes da barra
+            const sixDigits = clean.substring(2, 8);
+            const inverted = sixDigits.split('').reverse().join('');
+            
+            return inverted.split('').map(d => charMap[d] || d).join('');
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
             
-            // Verifica se o cliente já está logado
             const savedCNPJ = sessionStorage.getItem('pstec_client_cnpj');
             if (savedCNPJ) {
                 authenticatedCNPJ = savedCNPJ;
@@ -219,34 +217,57 @@
             return String(str || '').replace(/\D/g, '');
         }
 
-        // FÓRMULA DE SENHA MATEMÁTICA
-        function generatePasswordFromCNPJ(cnpjStr) {
-            const clean = cleanCNPJ(cnpjStr);
-            if (clean.length < 8) return '';
-            const first4 = clean.substring(0, 4);
-            const inverted4 = first4.split('').reverse().join('');
-            return `pstec${inverted4}`;
-        }
-
-        function autenticarCliente(e) {
+        async function autenticarCliente(e) {
             e.preventDefault();
             const inputCNPJ = document.getElementById('inputCNPJ').value.trim();
             const inputSenha = document.getElementById('inputSenha').value.trim();
             const errDiv = document.getElementById('loginError');
 
             errDiv.classList.add('hidden');
-
             const cleanInput = cleanCNPJ(inputCNPJ);
-            const expectedPassword = generatePasswordFromCNPJ(cleanInput);
 
-            if (!cleanInput || cleanInput.length < 8 || inputSenha !== expectedPassword) {
+            if (!cleanInput || cleanInput.length < 8) {
+                errDiv.textContent = "Digite um CNPJ válido.";
                 errDiv.classList.remove('hidden');
                 return;
             }
 
-            authenticatedCNPJ = cleanInput;
-            sessionStorage.setItem('pstec_client_cnpj', authenticatedCNPJ);
-            showDashboard();
+            const expectedPassword = calculateCustomClientPassword(cleanInput);
+
+            if (inputSenha !== expectedPassword) {
+                errDiv.textContent = "Senha de acesso incorreta.";
+                errDiv.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}?_t=${Date.now()}`, { cache: 'no-store' });
+                if (!response.ok) throw new Error('Erro na comunicação com a API');
+                
+                rawData = await response.json();
+
+                const clientItems = rawData.filter(item => {
+                    const cnpjItem = cleanCNPJ(item.cnpj);
+                    return cnpjItem && cnpjItem.substring(0, 8) === cleanInput.substring(0, 8);
+                });
+
+                if (clientItems.length === 0) {
+                    errDiv.textContent = "Nenhum pedido encontrado para o CNPJ informado.";
+                    errDiv.classList.remove('hidden');
+                    return;
+                }
+
+                authenticatedCNPJ = cleanInput;
+                authenticatedClientItems = clientItems;
+                sessionStorage.setItem('pstec_client_cnpj', authenticatedCNPJ);
+                
+                showDashboard();
+
+            } catch (err) {
+                console.error('Erro na autenticação:', err);
+                errDiv.textContent = "Erro ao conectar com o servidor. Tente novamente.";
+                errDiv.classList.remove('hidden');
+            }
         }
 
         function logoutCliente() {
@@ -282,7 +303,6 @@
                 
                 rawData = await response.json();
 
-                // Filtra apenas os itens da empresa cliente logada pelo CNPJ limpo
                 authenticatedClientItems = rawData.filter(item => {
                     const cnpjItem = cleanCNPJ(item.cnpj);
                     return cnpjItem && cnpjItem.substring(0, 8) === authenticatedCNPJ.substring(0, 8);
@@ -341,7 +361,6 @@
                 return true;
             });
 
-            // Atualiza os KPIs
             const totalOS = filtered.length;
             const finalizados = filtered.filter(i => parsePercent(i.status_producao) >= 100).length;
             const emAndamento = totalOS - finalizados;
@@ -393,6 +412,7 @@
                             <div class="text-[10px] text-slate-400 font-mono space-y-0.5">
                                 <p>Cód. Item: <strong class="text-slate-700">${item.cod_interno || '-'}</strong></p>
                                 <p>Nº Pedido: <strong class="text-slate-700">${item.n_pedido || '-'}</strong></p>
+                                <p>Orçamento: <strong class="text-pstec-700">${item.orcamento || '-'}</strong></p>
                             </div>
                         </div>
 
@@ -417,12 +437,6 @@
             }).join('');
 
             lucide.createIcons();
-        }
-
-        function toggleHelpModal() {
-            const modal = document.getElementById('helpModal');
-            modal.classList.toggle('hidden');
-            modal.classList.toggle('flex');
         }
     </script>
 </body>
