@@ -156,7 +156,7 @@
                     <option value="100%">Finalizados (100%)</option>
                 </select>
 
-                <!-- NOVO: Seletor de Ordenação Inteligente -->
+                <!-- Seletor de Ordenação -->
                 <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs">
                     <i data-lucide="arrow-up-down" class="w-3.5 h-3.5 text-pstec-600"></i>
                     <select id="sortOrders" onchange="renderClientOrders()" class="bg-transparent font-bold text-slate-700 focus:outline-none cursor-pointer">
@@ -173,7 +173,7 @@
             </div>
 
             <div id="ordersGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <!-- Cards dos Pedidos Inseridos via JS -->
+                <!-- Cards Inseridos via JS -->
             </div>
 
             <div id="emptyClientState" class="hidden bg-white rounded-3xl border border-slate-200 p-12 text-center text-slate-400 flex-col items-center gap-2 shadow-sm">
@@ -222,34 +222,38 @@
             return String(str || '').replace(/\D/g, '');
         }
 
-document.addEventListener('DOMContentLoaded', () => {
-    lucide.createIcons();
-    
-    // 1. Verifica se veio pelo Link Mágico do WhatsApp
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlCNPJ = urlParams.get('cnpj');
-    const urlCode = urlParams.get('code');
+        document.addEventListener('DOMContentLoaded', async () => {
+            lucide.createIcons();
+            
+            // 1. CAPTURA PARÂMETROS DA URL SE VIER PELO LINK MÁGICO DO WHATSAPP
+            const urlParams = new URLSearchParams(window.location.search);
+            const rawUrlCNPJ = urlParams.get('cnpj');
+            const rawUrlCode = urlParams.get('code');
 
-    if (urlCNPJ && urlCode) {
-        document.getElementById('inputCNPJ').value = urlCNPJ;
-        document.getElementById('inputSenha').value = urlCode;
-        
-        // Dispara o login automático
-        const fakeEvent = { preventDefault: () => {} };
-        autenticarCliente(fakeEvent);
-        return;
-    }
+            if (rawUrlCNPJ && rawUrlCode) {
+                const decodedCNPJ = decodeURIComponent(rawUrlCNPJ);
+                const decodedCode = decodeURIComponent(rawUrlCode);
 
-    // 2. Se não veio por URL, verifica se já tem sessão salva
-    const savedCNPJ = sessionStorage.getItem('pstec_client_cnpj');
-    if (savedCNPJ) {
-        authenticatedCNPJ = savedCNPJ;
-        showDashboard();
-    }
-});
+                document.getElementById('inputCNPJ').value = decodedCNPJ;
+                document.getElementById('inputSenha').value = decodedCode;
+                
+                // Dispara a autenticação automática
+                const fakeEvent = { preventDefault: () => {} };
+                await autenticarCliente(fakeEvent);
+                return;
+            }
+
+            // 2. SE NÃO VEIO POR URL, VERIFICA SESSÃO SALVA
+            const savedCNPJ = sessionStorage.getItem('pstec_client_cnpj');
+            if (savedCNPJ) {
+                authenticatedCNPJ = savedCNPJ;
+                showDashboard();
+            }
+        });
 
         async function autenticarCliente(e) {
-            e.preventDefault();
+            if (e && e.preventDefault) e.preventDefault();
+            
             const inputCNPJ = document.getElementById('inputCNPJ').value.trim();
             const inputSenha = document.getElementById('inputSenha').value.trim();
             const errDiv = document.getElementById('loginError');
@@ -265,10 +269,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            // Normaliza para comparar sem conflito de maiúsculas/minúsculas
             const expectedPassword = calculateCustomClientPassword(cleanInput);
 
-            if (inputSenha !== expectedPassword) {
-                errDiv.textContent = "Senha de acesso incorreta. Verifique os dados.";
+            if (inputSenha.toLowerCase() !== expectedPassword.toLowerCase()) {
+                errDiv.textContent = "Senha de acesso incorreta.";
                 errDiv.classList.remove('hidden');
                 return;
             }
@@ -314,6 +319,9 @@ document.addEventListener('DOMContentLoaded', () => {
             authenticatedCNPJ = '';
             authenticatedClientItems = [];
             
+            // Limpa query params da URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+
             document.getElementById('dashboardSection').classList.add('hidden');
             document.getElementById('dashboardSection').classList.remove('flex');
             document.getElementById('loginSection').classList.remove('hidden');
@@ -421,7 +429,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 return true;
             });
 
-            // APLICAÇÃO DA ORDENAÇÃO SELECIONADA
             filtered.sort((a, b) => {
                 const prevA = getDateSortKey(a.dt_renegociada || a.entrega_normalizada || a.prev_entrega_os);
                 const prevB = getDateSortKey(b.dt_renegociada || b.entrega_normalizada || b.prev_entrega_os);
@@ -446,7 +453,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 return prevA.localeCompare(prevB);
             });
 
-            // KPIs
             const totalOS = filtered.length;
             const finalizados = filtered.filter(i => parsePercent(i.status_producao) >= 100).length;
             const emAndamento = totalOS - finalizados;
@@ -489,7 +495,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="absolute left-0 top-0 bottom-0 w-1.5 ${isConcluido ? 'bg-emerald-500' : 'bg-amber-500'}"></div>
 
                         <div class="space-y-2.5 pl-1">
-                            <!-- TOP CABEÇALHO DO CARD -->
                             <div class="flex justify-between items-center flex-wrap gap-1">
                                 <span class="font-mono text-xs font-extrabold text-pstec-700 bg-pstec-50 px-2.5 py-0.5 rounded-lg border border-pstec-100">
                                     OS ${item.n_os}
@@ -505,12 +510,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                 </div>
                             </div>
 
-                            <!-- TÍTULO DO ITEM -->
                             <h3 class="font-bold text-xs text-slate-800 line-clamp-2 leading-snug" title="${item.titulo || ''}">
                                 ${item.titulo || 'Sem descrição'}
                             </h3>
 
-                            <!-- BLOCO DE INFORMAÇÕES ADICIONADAS -->
                             <div class="grid grid-cols-2 gap-1.5 bg-slate-50/80 p-2.5 rounded-xl border border-slate-100 text-[10px] font-mono">
                                 <div><span class="text-slate-400 block font-sans text-[9px]">Cód. Item:</span><strong class="text-slate-700">${item.cod_interno || '-'}</strong></div>
                                 <div><span class="text-slate-400 block font-sans text-[9px]">Nº Pedido:</span><strong class="text-slate-700">${item.n_pedido || '-'}</strong></div>
@@ -519,7 +522,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                         </div>
 
-                        <!-- BARRA DE PROGRESSO & DATAS -->
                         <div class="pl-1 space-y-2">
                             <div class="flex justify-between items-center text-xs font-extrabold">
                                 <span class="text-slate-500 text-[10px] uppercase">Evolução do Item</span>
