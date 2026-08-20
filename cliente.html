@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Favicon & Meta Tags -->
+    <link rel="icon" type="image/png" href="LOGO MINIMALISTA.png">
+    <link rel="apple-touch-icon" href="LOGO MINIMALISTA.png">
+    <title>Portal do Cliente - Acompanhamento de Pedidos | PSTEC</title>
+
+    <!-- Tailwind CSS & Lucide Icons -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        pstec: {
+                            50: '#f0f5ff',
+                            100: '#e0ebff',
+                            500: '#1a5ce6',
+                            600: '#0047cc',
+                            700: '#003B96',
+                            800: '#002b70',
+                            900: '#001b4a',
+                        },
+                        pstecgreen: {
+                            500: '#7CBD20',
+                            600: '#68a318',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background-color: #f8fafc; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between bg-slate-100 text-slate-800">
+
+    <!-- CONTAINER DE LOGIN DO CLIENTE (Exibido por Padrão) -->
+    <div id="loginSection" class="flex-1 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-md w-full p-8 space-y-6 relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-3 bg-gradient-to-r from-pstec-700 via-pstec-500 to-pstecgreen-500"></div>
+
+            <div class="text-center space-y-2">
+                <div class="inline-flex p-3 bg-pstec-50 rounded-2xl mb-1 border border-pstec-100">
+                    <img src="./logo.png" alt="PSTEC" class="h-10 w-auto object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <i data-lucide="factory" class="w-8 h-8 text-pstec-700 hidden"></i>
+                </div>
+                <h2 class="text-xl font-extrabold text-pstec-900 tracking-tight">Portal de Acompanhamento</h2>
+                <p class="text-xs text-slate-500 font-medium">Acompanhe o status e a evolução dos seus pedidos em tempo real.</p>
+            </div>
+
+            <form onsubmit="autenticarCliente(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">CNPJ da Empresa</label>
+                    <div class="relative">
+                        <i data-lucide="building-2" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
+                        <input type="text" id="inputCNPJ" required placeholder="00.000.000/0000-00" 
+                               class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-pstec-600 focus:bg-white transition">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Senha de Acesso</label>
+                    <div class="relative">
+                        <i data-lucide="key-round" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
+                        <input type="password" id="inputSenha" required placeholder="••••••••" 
+                               class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-pstec-600 focus:bg-white transition">
+                    </div>
+                </div>
+
+                <div id="loginError" class="hidden text-xs font-bold text-red-600 bg-red-50 p-3 rounded-xl border border-red-200 text-center">
+                    CNPJ ou senha inválidos. Verifique as credenciais.
+                </div>
+
+                <button type="submit" id="btnLogin" class="w-full py-3 bg-pstec-700 hover:bg-pstec-800 text-white font-extrabold text-xs rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+                    <i data-lucide="log-in" class="w-4 h-4"></i>
+                    <span>Acessar Meus Pedidos</span>
+                </button>
+            </form>
+
+            <div class="pt-2 border-t border-slate-100 text-center">
+                <button onclick="toggleHelpModal()" class="text-[11px] font-bold text-pstec-600 hover:underline inline-flex items-center gap-1">
+                    <i data-lucide="help-circle" class="w-3.5 h-3.5"></i>
+                    <span>Primeiro acesso? Veja como obter sua senha</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAINEL DASHBOARD DO CLIENTE (Exibido após Login com Sucesso) -->
+    <div id="dashboardSection" class="hidden flex-1 flex-col">
+        <!-- HEADER DO CLIENTE -->
+        <header class="bg-pstec-700 text-white sticky top-0 z-40 shadow-md">
+            <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-white rounded-xl shadow-sm">
+                        <img src="./logo.png" alt="PSTEC" class="h-8 w-auto object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        <i data-lucide="factory" class="w-6 h-6 text-pstec-700 hidden"></i>
+                    </div>
+                    <div>
+                        <h1 id="clientNameHeader" class="text-base font-black tracking-wide text-white uppercase">NOME DO CLIENTE</h1>
+                        <p id="clientCNPJHeader" class="text-xs text-pstec-100 font-mono">CNPJ: 00.000.000/0000-00</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button onclick="fetchClientData()" class="flex items-center gap-1.5 px-3 py-2 bg-pstecgreen-500 hover:bg-pstecgreen-600 text-slate-950 font-bold text-xs rounded-xl transition shadow">
+                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5" id="refreshClientIcon"></i>
+                        <span>Atualizar</span>
+                    </button>
+                    <button onclick="logoutCliente()" class="flex items-center gap-1.5 px-3 py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl transition shadow">
+                        <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                        <span>Sair</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- CARDS RESUMO DO CLIENTE -->
+        <div class="bg-white border-b border-slate-200 py-4 shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                    <span class="text-[10px] text-slate-400 font-extrabold uppercase block">Ordens de Serviço</span>
+                    <span id="kpiTotalOS" class="text-xl font-black text-pstec-700">0</span>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                    <span class="text-[10px] text-slate-400 font-extrabold uppercase block">Em Produção</span>
+                    <span id="kpiEmAndamento" class="text-xl font-black text-amber-600">0</span>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                    <span class="text-[10px] text-slate-400 font-extrabold uppercase block">Finalizados (100%)</span>
+                    <span id="kpiFinalizados" class="text-xl font-black text-emerald-600">0</span>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                    <span class="text-[10px] text-slate-400 font-extrabold uppercase block">Progresso Médio Geral</span>
+                    <span id="kpiProgressoMedio" class="text-xl font-black text-pstecgreen-600">0%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- LISTA DE PEDIDOS / OS DA EMPRESA -->
+        <main class="max-w-7xl w-full mx-auto p-4 space-y-4 flex-1">
+            <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
+                <div class="flex items-center gap-2 flex-1 min-w-[200px] bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+                    <input type="text" id="clientSearch" oninput="renderClientOrders()" placeholder="Pesquisar pedido por título, código interno ou número de OS..." class="w-full bg-transparent text-slate-800 focus:outline-none font-medium">
+                </div>
+
+                <select id="filterStatus" onchange="renderClientOrders()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 focus:outline-none">
+                    <option value="">Status (Todos)</option>
+                    <option value="em_andamento">Em Andamento (&lt;100%)</option>
+                    <option value="100%">Finalizados (100%)</option>
+                </select>
+            </div>
+
+            <div id="ordersGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Cards dos Pedidos Inseridos via JS -->
+            </div>
+
+            <div id="emptyClientState" class="hidden bg-white rounded-3xl border border-slate-200 p-12 text-center text-slate-400 flex-col items-center gap-2 shadow-sm">
+                <i data-lucide="package-x" class="w-12 h-12 text-slate-300 stroke-1"></i>
+                <p class="text-xs font-bold text-slate-600">Nenhum pedido encontrado para a sua empresa no momento.</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="bg-white border-t border-slate-200 py-3 text-center text-xs text-slate-400">
+        <span>© 2026 PSTEC Brasil — Portal Transparência de Produção</span>
+    </footer>
+
+    <!-- MODAL DE AJUDA COM SENHA DE PRIMEIRO ACESSO -->
+    <div id="helpModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 space-y-4 text-xs border border-slate-200">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="font-extrabold text-pstec-900 text-sm">Regra da Senha do Primeiro Acesso</h3>
+                <button onclick="toggleHelpModal()" class="text-slate-400 hover:text-slate-700"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <p class="text-slate-600 leading-relaxed">Sua senha é calculada de forma segura com base no CNPJ da empresa:</p>
+            <div class="bg-pstec-50 p-3 rounded-xl border border-pstec-100 font-mono text-[11px] text-pstec-900 space-y-1">
+                <p><strong>Fórmula:</strong> <span class="text-pstecgreen-600 font-bold">pstec</span> + <span class="text-purple-700 font-bold">4 primeiros dígitos do CNPJ invertidos</span></p>
+                <hr class="border-pstec-200">
+                <p class="text-[10px] text-slate-500">Exemplo CNPJ: <u>44.01</u>3.159/0031-31</p>
+                <p class="text-[10px] text-slate-500">Dígitos iniciais: <strong>4401</strong> $\rightarrow$ Invertido: <strong>1044</strong></p>
+                <p class="font-bold text-pstec-700">Sua senha será: <span class="bg-pstecgreen-500 text-slate-950 px-1.5 py-0.5 rounded">pstec1044</span></p>
+            </div>
+            <button onclick="toggleHelpModal()" class="w-full py-2 bg-pstec-700 text-white font-bold rounded-xl hover:bg-pstec-800 transition">Entendi</button>
+        </div>
+    </div>
+
+    <!-- LÓGICA JAVASCRIPT DO PORTAL DO CLIENTE -->
+    <script>
+        const API_URL = 'https://pstec.consultoriarf.net/producao';
+        let rawData = [];
+        let authenticatedCNPJ = '';
+        let authenticatedClientItems = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            
+            // Verifica se o cliente já está logado
+            const savedCNPJ = sessionStorage.getItem('pstec_client_cnpj');
+            if (savedCNPJ) {
+                authenticatedCNPJ = savedCNPJ;
+                showDashboard();
+            }
+        });
+
+        function cleanCNPJ(str) {
+            return String(str || '').replace(/\D/g, '');
+        }
+
+        // FÓRMULA DE SENHA MATEMÁTICA
+        function generatePasswordFromCNPJ(cnpjStr) {
+            const clean = cleanCNPJ(cnpjStr);
+            if (clean.length < 8) return '';
+            const first4 = clean.substring(0, 4);
+            const inverted4 = first4.split('').reverse().join('');
+            return `pstec${inverted4}`;
+        }
+
+        function autenticarCliente(e) {
+            e.preventDefault();
+            const inputCNPJ = document.getElementById('inputCNPJ').value.trim();
+            const inputSenha = document.getElementById('inputSenha').value.trim();
+            const errDiv = document.getElementById('loginError');
+
+            errDiv.classList.add('hidden');
+
+            const cleanInput = cleanCNPJ(inputCNPJ);
+            const expectedPassword = generatePasswordFromCNPJ(cleanInput);
+
+            if (!cleanInput || cleanInput.length < 8 || inputSenha !== expectedPassword) {
+                errDiv.classList.remove('hidden');
+                return;
+            }
+
+            authenticatedCNPJ = cleanInput;
+            sessionStorage.setItem('pstec_client_cnpj', authenticatedCNPJ);
+            showDashboard();
+        }
+
+        function logoutCliente() {
+            sessionStorage.removeItem('pstec_client_cnpj');
+            authenticatedCNPJ = '';
+            authenticatedClientItems = [];
+            
+            document.getElementById('dashboardSection').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.remove('flex');
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('loginSection').classList.add('flex');
+            document.getElementById('inputSenha').value = '';
+        }
+
+        function showDashboard() {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('loginSection').classList.remove('flex');
+            
+            const dash = document.getElementById('dashboardSection');
+            dash.classList.remove('hidden');
+            dash.classList.add('flex');
+
+            fetchClientData();
+        }
+
+        async function fetchClientData() {
+            const refreshIcon = document.getElementById('refreshClientIcon');
+            if (refreshIcon) refreshIcon.classList.add('animate-spin');
+
+            try {
+                const response = await fetch(`${API_URL}?_t=${Date.now()}`, { cache: 'no-store' });
+                if (!response.ok) throw new Error('Erro na requisição da API');
+                
+                rawData = await response.json();
+
+                // Filtra apenas os itens da empresa cliente logada pelo CNPJ limpo
+                authenticatedClientItems = rawData.filter(item => {
+                    const cnpjItem = cleanCNPJ(item.cnpj);
+                    return cnpjItem && cnpjItem.substring(0, 8) === authenticatedCNPJ.substring(0, 8);
+                });
+
+                if (authenticatedClientItems.length > 0) {
+                    const sample = authenticatedClientItems[0];
+                    document.getElementById('clientNameHeader').textContent = sample.cliente || sample.empresa || 'CLIENTE';
+                    document.getElementById('clientCNPJHeader').textContent = `CNPJ: ${sample.cnpj || authenticatedCNPJ}`;
+                }
+
+                renderClientOrders();
+
+            } catch (err) {
+                console.error('Erro ao buscar pedidos do cliente:', err);
+            } finally {
+                if (refreshIcon) refreshIcon.classList.remove('animate-spin');
+                lucide.createIcons();
+            }
+        }
+
+        function parsePercent(valStr) {
+            if (!valStr) return 0;
+            const clean = String(valStr).replace('%', '').trim();
+            const num = parseFloat(clean);
+            return isNaN(num) ? 0 : num;
+        }
+
+        function formatDate(dtStr) {
+            if (!dtStr || dtStr === 'NaT' || dtStr === 'None' || dtStr === 'null') return '-';
+            const cleanStr = String(dtStr).trim();
+            if (cleanStr.length < 10) return '-';
+            const yyyyMmDd = cleanStr.substring(0, 10);
+            const parts = yyyyMmDd.split('-');
+            return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : cleanStr;
+        }
+
+        function renderClientOrders() {
+            const search = (document.getElementById('clientSearch')?.value || '').toLowerCase().trim();
+            const statusFilter = document.getElementById('filterStatus')?.value || '';
+
+            const filtered = authenticatedClientItems.filter(item => {
+                const prodPct = parsePercent(item.status_producao);
+
+                if (statusFilter === '100%' && prodPct < 100) return false;
+                if (statusFilter === 'em_andamento' && prodPct >= 100) return false;
+
+                if (search) {
+                    const mOS = String(item.n_os || '').toLowerCase().includes(search);
+                    const mTitulo = String(item.titulo || '').toLowerCase().includes(search);
+                    const mCod = String(item.cod_interno || '').toLowerCase().includes(search);
+                    const mPed = String(item.n_pedido || '').toLowerCase().includes(search);
+                    if (!mOS && !mTitulo && !mCod && !mPed) return false;
+                }
+
+                return true;
+            });
+
+            // Atualiza os KPIs
+            const totalOS = filtered.length;
+            const finalizados = filtered.filter(i => parsePercent(i.status_producao) >= 100).length;
+            const emAndamento = totalOS - finalizados;
+            const progressoMedio = totalOS > 0 
+                ? Math.round(filtered.reduce((acc, i) => acc + parsePercent(i.status_producao), 0) / totalOS) 
+                : 0;
+
+            document.getElementById('kpiTotalOS').textContent = totalOS;
+            document.getElementById('kpiEmAndamento').textContent = emAndamento;
+            document.getElementById('kpiFinalizados').textContent = finalizados;
+            document.getElementById('kpiProgressoMedio').textContent = `${progressoMedio}%`;
+
+            const grid = document.getElementById('ordersGrid');
+            const emptyState = document.getElementById('emptyClientState');
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            emptyState.classList.remove('flex');
+
+            grid.innerHTML = filtered.map(item => {
+                const pct = parsePercent(item.status_producao);
+                const isConcluido = pct >= 100;
+                const dtPrevisao = formatDate(item.dt_renegociada || item.entrega_normalizada || item.prev_entrega_os);
+
+                return `
+                    <div class="bg-white border border-slate-200 hover:border-pstec-500 rounded-3xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-4 relative overflow-hidden">
+                        <div class="absolute left-0 top-0 bottom-0 w-1.5 ${isConcluido ? 'bg-emerald-500' : 'bg-amber-500'}"></div>
+
+                        <div class="space-y-2 pl-1">
+                            <div class="flex justify-between items-center">
+                                <span class="font-mono text-xs font-extrabold text-pstec-700 bg-pstec-50 px-2.5 py-0.5 rounded-lg border border-pstec-100">
+                                    OS ${item.n_os}
+                                </span>
+                                <span class="text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase ${isConcluido ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                                    ${isConcluido ? 'Finalizado' : 'Em Produção'}
+                                </span>
+                            </div>
+
+                            <h3 class="font-bold text-xs text-slate-800 line-clamp-2 leading-snug" title="${item.titulo || ''}">
+                                ${item.titulo || 'Sem descrição'}
+                            </h3>
+
+                            <div class="text-[10px] text-slate-400 font-mono space-y-0.5">
+                                <p>Cód. Item: <strong class="text-slate-700">${item.cod_interno || '-'}</strong></p>
+                                <p>Nº Pedido: <strong class="text-slate-700">${item.n_pedido || '-'}</strong></p>
+                            </div>
+                        </div>
+
+                        <!-- BARRA DE PROGRESSO VISUAL -->
+                        <div class="pl-1 space-y-1.5">
+                            <div class="flex justify-between items-center text-xs font-extrabold">
+                                <span class="text-slate-500 text-[10px] uppercase">Evolução do Item</span>
+                                <span class="font-mono ${isConcluido ? 'text-emerald-600' : 'text-pstec-700'}">${pct}%</span>
+                            </div>
+
+                            <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden p-0.5 border border-slate-200">
+                                <div class="h-full rounded-full transition-all duration-500 ${isConcluido ? 'bg-emerald-500' : 'bg-pstecgreen-500'}" style="width: ${pct}%"></div>
+                            </div>
+
+                            <div class="pt-2 border-t border-slate-100 flex justify-between items-center text-[10px]">
+                                <span class="text-slate-400 font-medium">Previsão de Conclusão:</span>
+                                <span class="font-bold text-pstec-700 font-mono">${dtPrevisao}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        function toggleHelpModal() {
+            const modal = document.getElementById('helpModal');
+            modal.classList.toggle('hidden');
+            modal.classList.toggle('flex');
+        }
+    </script>
+</body>
+</html>
