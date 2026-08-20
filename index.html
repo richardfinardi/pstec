@@ -298,7 +298,7 @@
         <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
             <div class="flex items-center gap-2 font-medium">
                 <i data-lucide="code-2" class="w-4 h-4 text-pstec-600"></i>
-                <span>© 2026 PSTEC Brasil — Sistema de Gestão de Produção V1.4</span>
+                <span>© 2026 PSTEC — Sistema de Gestão de Produção V1.4</span>
             </div>
         </div>
     </footer>
@@ -2072,7 +2072,7 @@ function gerarCodigoClienteAcesso() {
     // Link direto com Login Automático
     const directLink = `https://consultoriarf.net/pstec/cliente.html?cnpj=${encodeURIComponent(cnpjFormatted)}&code=${clientCode}`;
 
-    const mensagemPronta = `Prezado(a) Cliente,\n\nAcompanhe o status e a evolução da produção dos seus pedidos em tempo real no nosso portal:\n\n🔗 *Acesse o Portal (Login Automático):*\n${directLink}\n\n---\nCaso prefira acessar manualmente:\n🏢 *CNPJ:* ${cnpjFormatted}\n🔑 *Senha:* ${clientCode}\n\nQualquer dúvida, estamos à disposição!\n*PSTEC Brasil*`;
+    const mensagemPronta = `Prezado(a) Cliente,\n\nAcompanhe o status e a evolução da produção dos seus pedidos em tempo real no nosso portal:\n\n🔗 *Acesse o Portal (Login Automático):*\n${directLink}\n\n---\nCaso prefira acessar manualmente:\n🏢 *CNPJ:* ${cnpjFormatted}\n🔑 *Senha:* ${clientCode}\n\nQualquer dúvida, estamos à disposição!\n*GRUPO PSTEC*`;
 
     document.getElementById('caClientName').textContent = selectedItemModal.cliente || selectedItemModal.empresa || 'Cliente';
     document.getElementById('caClientCNPJ').textContent = cnpjFormatted;
