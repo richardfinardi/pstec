@@ -72,18 +72,18 @@
                     <label class="block text-xs font-bold text-slate-700 mb-1">Senha de Acesso Exclusiva</label>
                     <div class="relative">
                         <i data-lucide="key-round" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
-                        <input type="password" id="inputSenha" required placeholder="Digite sua senha informada pela PSTEC..." 
+                        <input type="password" id="inputSenha" required placeholder="Digite sua senha de acesso..." 
                                class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-pstec-600 focus:bg-white transition">
                     </div>
                 </div>
 
                 <div id="loginError" class="hidden text-xs font-bold text-red-600 bg-red-50 p-3 rounded-xl border border-red-200 text-center">
-                    CNPJ ou senha incorretos. Solicite o acesso ao suporte comercial.
+                    CNPJ ou senha incorretos.
                 </div>
 
                 <button type="submit" id="btnLogin" class="w-full py-3 bg-pstec-700 hover:bg-pstec-800 text-white font-extrabold text-xs rounded-xl shadow-lg transition flex items-center justify-center gap-2">
                     <i data-lucide="log-in" class="w-4 h-4"></i>
-                    <span>Acessar Meus Pedidos</span>
+                    <span id="btnText">Acessar Meus Pedidos</span>
                 </button>
             </form>
         </div>
@@ -178,7 +178,7 @@
         let authenticatedCNPJ = '';
         let authenticatedClientItems = [];
 
-        // Mapeamento de dígitos para senhas aleatórias
+        // Mapeamento idêntico ao do index.html
         const charMap = {
             '0': '0',
             '1': 'I',
@@ -196,11 +196,15 @@
             const clean = String(cnpj || '').replace(/\D/g, '');
             if (clean.length < 8) return '';
             
-            // 6 dígitos antes da barra
+            // 6 dígitos antes da barra (index 2 a 8 no CNPJ limpo de 14 dígitos)
             const sixDigits = clean.substring(2, 8);
             const inverted = sixDigits.split('').reverse().join('');
             
             return inverted.split('').map(d => charMap[d] || d).join('');
+        }
+
+        function cleanCNPJ(str) {
+            return String(str || '').replace(/\D/g, '');
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -213,15 +217,13 @@
             }
         });
 
-        function cleanCNPJ(str) {
-            return String(str || '').replace(/\D/g, '');
-        }
-
         async function autenticarCliente(e) {
             e.preventDefault();
             const inputCNPJ = document.getElementById('inputCNPJ').value.trim();
             const inputSenha = document.getElementById('inputSenha').value.trim();
             const errDiv = document.getElementById('loginError');
+            const btnText = document.getElementById('btnText');
+            const btnLogin = document.getElementById('btnLogin');
 
             errDiv.classList.add('hidden');
             const cleanInput = cleanCNPJ(inputCNPJ);
@@ -232,20 +234,25 @@
                 return;
             }
 
+            // Calcula a senha esperada para o CNPJ digitado
             const expectedPassword = calculateCustomClientPassword(cleanInput);
 
             if (inputSenha !== expectedPassword) {
-                errDiv.textContent = "Senha de acesso incorreta.";
+                errDiv.textContent = "Senha de acesso incorreta. Verifique os dados.";
                 errDiv.classList.remove('hidden');
                 return;
             }
 
             try {
+                btnText.textContent = "Validando...";
+                btnLogin.disabled = true;
+
                 const response = await fetch(`${API_URL}?_t=${Date.now()}`, { cache: 'no-store' });
                 if (!response.ok) throw new Error('Erro na comunicação com a API');
                 
                 rawData = await response.json();
 
+                // Procura os pedidos pertencentes ao CNPJ raiz (8 primeiros dígitos)
                 const clientItems = rawData.filter(item => {
                     const cnpjItem = cleanCNPJ(item.cnpj);
                     return cnpjItem && cnpjItem.substring(0, 8) === cleanInput.substring(0, 8);
@@ -267,6 +274,9 @@
                 console.error('Erro na autenticação:', err);
                 errDiv.textContent = "Erro ao conectar com o servidor. Tente novamente.";
                 errDiv.classList.remove('hidden');
+            } finally {
+                btnText.textContent = "Acessar Meus Pedidos";
+                btnLogin.disabled = false;
             }
         }
 
