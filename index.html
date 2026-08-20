@@ -39,12 +39,12 @@
                             100: '#e0ebff',
                             500: '#1a5ce6',
                             600: '#0047cc',
-                            700: '#003B96', // Azul Marinho Principal PSTEC
+                            700: '#003B96',
                             800: '#002b70',
                             900: '#001b4a',
                         },
                         pstecgreen: {
-                            500: '#7CBD20', // Verde Limão PSTEC
+                            500: '#7CBD20',
                             600: '#68a318',
                         }
                     }
@@ -473,7 +473,7 @@
                     </div>
 
                     <div class="bg-pstec-50 p-3 rounded-xl border border-pstec-100">
-                        <span class="text-[10px] text-pstec-700 font-bold uppercase block">Código de Acesso</span>
+                        <span class="text-[10px] text-pstec-700 font-bold uppercase block">Senha de Acesso Exclusiva</span>
                         <span id="caClientCode" class="font-black font-mono text-pstecgreen-600 text-sm tracking-wider"></span>
                     </div>
                 </div>
@@ -512,6 +512,31 @@
 
         let onlyWithBudget = false;
         let isValuesUnlocked = true;
+
+        // Mapeamento de dígitos para senhas aleatórias
+        const charMap = {
+            '0': '0',
+            '1': 'I',
+            '2': 'b',
+            '3': 'c',
+            '4': 'd',
+            '5': 'h',
+            '6': 'F',
+            '7': 'g',
+            '8': 'H',
+            '9': 'I'
+        };
+
+        function calculateCustomClientPassword(cnpj) {
+            const clean = String(cnpj || '').replace(/\D/g, '');
+            if (clean.length < 8) return '';
+            
+            // 6 dígitos antes da barra (posição 2 a 8 no CNPJ limpo de 14 dígitos)
+            const sixDigits = clean.substring(2, 8);
+            const inverted = sixDigits.split('').reverse().join('');
+            
+            return inverted.split('').map(d => charMap[d] || d).join('');
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
             const nomeUser = localStorage.getItem('pstec_usuario_nome');
@@ -2030,7 +2055,7 @@
             selectedItemModal = null;
         }
 
-        // GERADOR DE CÓDIGO DE ACESSO DO CLIENTE (OPÇÃO A - VIA ALGORITMO)
+        // GERADOR DE CÓDIGO DE ACESSO DO CLIENTE
         function gerarCodigoClienteAcesso() {
             if (!selectedItemModal) return;
 
@@ -2040,11 +2065,7 @@
                 return;
             }
 
-            // Algoritmo do Token
-            const first4 = cnpjRaw.substring(0, 4);
-            const inverted4 = first4.split('').reverse().join('');
-            const clientCode = `pstec${inverted4}`;
-
+            const clientCode = calculateCustomClientPassword(cnpjRaw);
             const clienteNome = selectedItemModal.cliente || selectedItemModal.empresa || 'Cliente';
             const cnpjFormatted = selectedItemModal.cnpj;
             const portalUrl = `https://consultoriarf.net/pstec/cliente.html`;
