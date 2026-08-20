@@ -222,15 +222,31 @@
             return String(str || '').replace(/\D/g, '');
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            lucide.createIcons();
-            
-            const savedCNPJ = sessionStorage.getItem('pstec_client_cnpj');
-            if (savedCNPJ) {
-                authenticatedCNPJ = savedCNPJ;
-                showDashboard();
-            }
-        });
+document.addEventListener('DOMContentLoaded', () => {
+    lucide.createIcons();
+    
+    // 1. Verifica se veio pelo Link Mágico do WhatsApp
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlCNPJ = urlParams.get('cnpj');
+    const urlCode = urlParams.get('code');
+
+    if (urlCNPJ && urlCode) {
+        document.getElementById('inputCNPJ').value = urlCNPJ;
+        document.getElementById('inputSenha').value = urlCode;
+        
+        // Dispara o login automático
+        const fakeEvent = { preventDefault: () => {} };
+        autenticarCliente(fakeEvent);
+        return;
+    }
+
+    // 2. Se não veio por URL, verifica se já tem sessão salva
+    const savedCNPJ = sessionStorage.getItem('pstec_client_cnpj');
+    if (savedCNPJ) {
+        authenticatedCNPJ = savedCNPJ;
+        showDashboard();
+    }
+});
 
         async function autenticarCliente(e) {
             e.preventDefault();
