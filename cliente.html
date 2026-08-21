@@ -225,7 +225,6 @@
         document.addEventListener('DOMContentLoaded', async () => {
             lucide.createIcons();
             
-            // 1. CAPTURA PARÂMETROS DA URL SE VIER PELO LINK MÁGICO DO WHATSAPP
             const urlParams = new URLSearchParams(window.location.search);
             const rawUrlCNPJ = urlParams.get('cnpj');
             const rawUrlCode = urlParams.get('code');
@@ -237,13 +236,11 @@
                 document.getElementById('inputCNPJ').value = decodedCNPJ;
                 document.getElementById('inputSenha').value = decodedCode;
                 
-                // Dispara a autenticação automática
                 const fakeEvent = { preventDefault: () => {} };
                 await autenticarCliente(fakeEvent);
                 return;
             }
 
-            // 2. SE NÃO VEIO POR URL, VERIFICA SESSÃO SALVA
             const savedCNPJ = sessionStorage.getItem('pstec_client_cnpj');
             if (savedCNPJ) {
                 authenticatedCNPJ = savedCNPJ;
@@ -269,7 +266,6 @@
                 return;
             }
 
-            // Normaliza para comparar sem conflito de maiúsculas/minúsculas
             const expectedPassword = calculateCustomClientPassword(cleanInput);
 
             if (inputSenha.toLowerCase() !== expectedPassword.toLowerCase()) {
@@ -287,9 +283,10 @@
                 
                 rawData = await response.json();
 
+                // FILTRO CORRIGIDO: COMPARA O CNPJ EXATO (14 DÍGITOS DA FILIAL)
                 const clientItems = rawData.filter(item => {
                     const cnpjItem = cleanCNPJ(item.cnpj);
-                    return cnpjItem && cnpjItem.substring(0, 8) === cleanInput.substring(0, 8);
+                    return cnpjItem === cleanInput;
                 });
 
                 if (clientItems.length === 0) {
@@ -319,7 +316,6 @@
             authenticatedCNPJ = '';
             authenticatedClientItems = [];
             
-            // Limpa query params da URL
             window.history.replaceState({}, document.title, window.location.pathname);
 
             document.getElementById('dashboardSection').classList.add('hidden');
@@ -350,13 +346,14 @@
                 
                 rawData = await response.json();
 
+                // COMPARAÇÃO EXATA DE CNPJ COMPLETO
                 authenticatedClientItems = rawData.filter(item => {
                     const cnpjItem = cleanCNPJ(item.cnpj);
-                    return cnpjItem && cnpjItem.substring(0, 8) === authenticatedCNPJ.substring(0, 8);
+                    return cnpjItem === authenticatedCNPJ;
                 });
 
                 if (authenticatedClientItems.length > 0) {
-                    const sample = authenticatedClientItems[0];
+                    const sample = authenticatedClientItems.find(i => i.cliente && i.cliente.trim() !== '') || authenticatedClientItems[0];
                     document.getElementById('clientNameHeader').textContent = sample.cliente || sample.empresa || 'CLIENTE';
                     document.getElementById('clientCNPJHeader').textContent = `CNPJ: ${sample.cnpj || authenticatedCNPJ}`;
                 }
@@ -373,7 +370,9 @@
 
         function parsePercent(valStr) {
             if (!valStr) return 0;
-            const clean = String(valStr).replace('%', '').trim();
+            const str = String(valStr).toLowerCase().trim();
+            if (str === 'finalizado' || str.includes('100%')) return 100;
+            const clean = str.replace('%', '').trim();
             const num = parseFloat(clean);
             return isNaN(num) ? 0 : num;
         }
