@@ -14,7 +14,7 @@
     <meta property="og:image" content="https://consultoriarf.net/producao_pstec/LOGO MINIMALISTA.png">
     <meta property="og:type" content="website">
 
-    <title>Carteira de Produção - PSTEC V1.5</title>
+    <title>Carteira de Produção - PSTEC V1.6</title>
 
     <!-- Autenticação Token -->
     <script>
@@ -71,7 +71,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-extrabold tracking-wide text-white">GRUPO PSTEC</h1>
-                    <p class="text-xs text-pstec-100">Carteira de Produção V1.5</p>
+                    <p class="text-xs text-pstec-100">Carteira de Produção V1.6</p>
                 </div>
             </div>
 
@@ -148,8 +148,7 @@
             <!-- Pesquisa Global Direta -->
             <div class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 flex items-center gap-2 text-xs">
                 <i data-lucide="search" class="w-4 h-4 text-pstec-600"></i>
-                <input type="text" id="searchInput" oninput="debounceRender()" list="searchSuggestions" placeholder="Pesquisa Geral Rápida (Digite qualquer Nº de OS, Orçamento, Cliente, Item ou Pedido...)" class="w-full bg-transparent text-slate-800 focus:outline-none font-bold placeholder-slate-400">
-                <datalist id="searchSuggestions"></datalist>
+                <input type="text" id="searchInput" oninput="debounceRender()" placeholder="Pesquisa Geral Rápida (Digite qualquer Nº de OS, Orçamento, Cliente, Item ou Pedido...)" class="w-full bg-transparent text-slate-800 focus:outline-none font-bold placeholder-slate-400">
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 text-xs">
@@ -237,7 +236,6 @@
                     <option value="">Etapa (Todas)</option>
                 </select>
 
-                <!-- PCP ou PRODUÇÃO (Regra DAX Power BI) -->
                 <select id="filterPCP" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-bold focus:outline-none text-pstec-700 truncate">
                     <option value="">PCP ou PRODUÇÃO (Todos)</option>
                     <option value="PCP">PCP (Sem OS criada)</option>
@@ -343,7 +341,7 @@
         </div>
     </div>
 
-    <!-- LOGICA JS -->
+    <!-- LOGICA JS OTIMIZADA -->
     <script>
         const API_CARTEIRA = 'https://pstec.consultoriarf.net/CARTEIRA';
         let rawCarteira = [];
@@ -355,6 +353,7 @@
         let currentRenderLimit = 50;
         const BATCH_SIZE = 50;
         let debounceTimer = null;
+        let selectsPopulated = false;
 
         document.addEventListener('DOMContentLoaded', () => {
             const nomeUser = localStorage.getItem('pstec_usuario_nome');
@@ -363,11 +362,6 @@
             }
             lucide.createIcons();
             fetchCarteiraData();
-
-            setInterval(() => {
-                const isModalOpen = !document.getElementById('detailsModal').classList.contains('hidden');
-                if (!isModalOpen) fetchCarteiraData(true);
-            }, 60000);
         });
 
         async function fetchCarteiraData(isSilent = false) {
@@ -383,51 +377,45 @@
                 
                 const data = await response.json();
                 
-                // Pré-processamento e Cálculo do Filtro PCP/PRODUÇÃO (DAX Replica)
-                rawCarteira = data.map((item, id) => {
-                    const osVal = item['Nº OS'] !== null && item['Nº OS'] !== undefined ? String(item['Nº OS']).trim() : '';
-                    const posicaoFiltro = (!osVal || osVal === '' || osVal === 'null') ? 'PCP' : 'PRODUCAO';
-
-                    const saldo = parseNum(item['Saldo a entregar']);
-                    const entregue = parseNum(item['Qtde. Entregue']);
-                    const total = parseNum(item['Qtde. Total']);
-                    const vlTotal = parseNum(item['Vl. Total']);
-                    const vlAFaturar = parseNum(item['Vl. a faturar']);
-                    const vlLiberado = parseNum(item['Vl. Liberado']);
-                    const vlUnit = parseNum(item['Vl. Unitário']);
-                    const vlFaltaComp = parseNum(item['Valor falta comprar']);
-                    const capDisp = parseNum(item['Capacidade disponivel']);
-
-                    const searchStr = `${item['Nº Orçamento']||''} ${item.Cliente||''} ${item.Código||''} ${item.Item||''} ${item['Nº Pedido']||''} ${item['Nº OS']||''} ${item.Empresa||''}`.toLowerCase();
-
-                    return {
+                // Mapeamento ultrarrápido dos objetos
+                rawCarteira = new Array(data.length);
+                for (let id = 0; id < data.length; id++) {
+                    const item = data[id];
+                    const osVal = item['Nº OS'] ? String(item['Nº OS']).trim() : '';
+                    
+                    rawCarteira[id] = {
                         ...item,
                         _id: id,
-                        _posicaoFiltro: posicaoFiltro,
-                        _saldo: saldo,
-                        _entregue: entregue,
-                        _total: total,
-                        _vlTotal: vlTotal,
-                        _vlAFaturar: vlAFaturar,
-                        _vlLiberado: vlLiberado,
-                        _vlUnit: vlUnit,
-                        _vlFaltaComp: vlFaltaComp,
-                        _capDisp: capDisp,
-                        _searchStr: searchStr,
+                        _posicaoFiltro: (!osVal || osVal === 'null') ? 'PCP' : 'PRODUCAO',
+                        _saldo: parseNum(item['Saldo a entregar']),
+                        _entregue: parseNum(item['Qtde. Entregue']),
+                        _total: parseNum(item['Qtde. Total']),
+                        _vlTotal: parseNum(item['Vl. Total']),
+                        _vlAFaturar: parseNum(item['Vl. a faturar']),
+                        _vlLiberado: parseNum(item['Vl. Liberado']),
+                        _vlUnit: parseNum(item['Vl. Unitário']),
+                        _vlFaltaComp: parseNum(item['Valor falta comprar']),
+                        _capDisp: parseNum(item['Capacidade disponivel']),
+                        _searchStr: `${item['Nº Orçamento']||''} ${item.Cliente||''} ${item.Código||''} ${item.Item||''} ${item['Nº Pedido']||''} ${item['Nº OS']||''} ${item.Empresa||''}`.toLowerCase(),
                         _dtAprov: item['Dt. aprovação'] ? String(item['Dt. aprovação']) : '',
                         _prevEntrega: item['Prev. entrega(original)'] || item['Dt. Negociada'] ? String(item['Prev. entrega(original)'] || item['Dt. Negociada']) : ''
                     };
-                });
-
-                populateNativeSelects();
-                populateSearchSuggestions();
+                }
 
                 const selStatusOS = document.getElementById('filterStatusOS');
-                if (selStatusOS && !selStatusOS.value) {
+                if (selStatusOS && !selStatusOS.value && !selectsPopulated) {
                     selStatusOS.value = 'APROVADO';
                 }
 
                 renderCarteiraView();
+
+                // Preenche os selects em segundo plano para não travar a abertura inicial
+                if (!selectsPopulated) {
+                    setTimeout(() => {
+                        populateNativeSelects();
+                        selectsPopulated = true;
+                    }, 50);
+                }
 
                 document.getElementById('lastUpdateLabel').textContent = `Atualizado: ${new Date().toLocaleTimeString('pt-BR')}`;
             } catch (error) {
@@ -442,8 +430,14 @@
 
         function populateNativeSelects() {
             const getUnique = (key) => {
-                const vals = rawCarteira.map(i => i[key]).filter(v => v !== null && v !== undefined && String(v).trim() !== '');
-                return [...new Set(vals)].sort();
+                const set = new Set();
+                for (let i = 0; i < rawCarteira.length; i++) {
+                    const val = rawCarteira[i][key];
+                    if (val !== null && val !== undefined && String(val).trim() !== '') {
+                        set.add(val);
+                    }
+                }
+                return Array.from(set).sort();
             };
 
             const fill = (id, options, label) => {
@@ -478,18 +472,6 @@
             fill('filterPrioridade', getUnique('Prioridade'), 'Prioridade (Todas)');
         }
 
-        function populateSearchSuggestions() {
-            const datalist = document.getElementById('searchSuggestions');
-            if (!datalist) return;
-
-            const osList = [...new Set(rawCarteira.map(i => i['Nº OS']).filter(Boolean))].slice(0, 30);
-            const orcList = [...new Set(rawCarteira.map(i => i['Nº Orçamento']).filter(Boolean))].slice(0, 30);
-            const cliList = [...new Set(rawCarteira.map(i => i.Cliente).filter(Boolean))].slice(0, 30);
-
-            const allSuggestions = [...new Set([...osList, ...orcList, ...cliList])];
-            datalist.innerHTML = allSuggestions.map(s => `<option value="${s}">`).join('');
-        }
-
         function parseNum(val) {
             if (val === null || val === undefined) return 0;
             if (typeof val === 'number') return val;
@@ -515,7 +497,7 @@
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
                 renderCarteiraView();
-            }, 150);
+            }, 100);
         }
 
         function sortByColumn(colKey) {
@@ -564,66 +546,63 @@
             const libFatVal = document.getElementById('filterLiberadoFaturar')?.value || '';
             const prio = document.getElementById('filterPrioridade')?.value || '';
 
-            let filtered = rawCarteira.filter(item => {
-                if (emp && String(item.Empresa || '') !== emp) return false;
-                if (cli && String(item.Cliente || '') !== cli) return false;
-                if (cod && String(item.Código || '') !== cod) return false;
-                if (osVal && String(item['Nº OS'] || '') !== osVal) return false;
-                if (orcVal && String(item['Nº Orçamento'] || '') !== orcVal) return false;
-                if (pedVal && String(item['Nº Pedido'] || '') !== pedVal) return false;
-                if (stOS && String(item['Status OS'] || '') !== stOS) return false;
-                if (listaMatVal && String(item['Lista de Materiais'] || '') !== listaMatVal) return false;
-                if (procLMVal && String(item['Processamento LM'] || '') !== procLMVal) return false;
-                if (dispM && String(item['Disponibilidade Material'] || '') !== dispM) return false;
-                if (ordC && String(item['Ordem de compra'] || '') !== ordC) return false;
-                if (prata && String(item.Prata || '') !== prata) return false;
-                if (tipo && String(item.Tipo || '') !== tipo) return false;
-                if (etapaVal && String(item.Etapa || '') !== etapaVal) return false;
-                if (prio && String(item.Prioridade || '') !== prio) return false;
+            let filtered = [];
 
-                // DAX PCP ou PRODUÇÃO
-                if (pcpVal && item._posicaoFiltro !== pcpVal) return false;
+            for (let i = 0; i < rawCarteira.length; i++) {
+                const item = rawCarteira[i];
 
-                // Análise Crítica
+                if (emp && String(item.Empresa || '') !== emp) continue;
+                if (cli && String(item.Cliente || '') !== cli) continue;
+                if (cod && String(item.Código || '') !== cod) continue;
+                if (osVal && String(item['Nº OS'] || '') !== osVal) continue;
+                if (orcVal && String(item['Nº Orçamento'] || '') !== orcVal) continue;
+                if (pedVal && String(item['Nº Pedido'] || '') !== pedVal) continue;
+                if (stOS && String(item['Status OS'] || '') !== stOS) continue;
+                if (listaMatVal && String(item['Lista de Materiais'] || '') !== listaMatVal) continue;
+                if (procLMVal && String(item['Processamento LM'] || '') !== procLMVal) continue;
+                if (dispM && String(item['Disponibilidade Material'] || '') !== dispM) continue;
+                if (ordC && String(item['Ordem de compra'] || '') !== ordC) continue;
+                if (prata && String(item.Prata || '') !== prata) continue;
+                if (tipo && String(item.Tipo || '') !== tipo) continue;
+                if (etapaVal && String(item.Etapa || '') !== etapaVal) continue;
+                if (prio && String(item.Prioridade || '') !== prio) continue;
+
+                if (pcpVal && item._posicaoFiltro !== pcpVal) continue;
+
                 if (analiseVal) {
                     const hasSim = String(item['Análise critica industrial']||'').toLowerCase()==='sim' || 
                                    String(item['Análise critica estrutura']||'').toLowerCase()==='sim' || 
                                    String(item['Análise critica plano controle']||'').toLowerCase()==='sim';
-                    if (analiseVal === 'sim' && !hasSim) return false;
-                    if (analiseVal === 'nao' && hasSim) return false;
+                    if (analiseVal === 'sim' && !hasSim) continue;
+                    if (analiseVal === 'nao' && hasSim) continue;
                 }
 
-                // Saldo
                 if (saldoVal) {
-                    if (saldoVal === 'com_saldo' && item._saldo <= 0) return false;
-                    if (saldoVal === 'sem_saldo' && item._saldo > 0) return false;
+                    if (saldoVal === 'com_saldo' && item._saldo <= 0) continue;
+                    if (saldoVal === 'sem_saldo' && item._saldo > 0) continue;
                 }
 
-                // Capacidade
                 if (capVal) {
-                    if (capVal === 'sim' && item._capDisp <= 0) return false;
-                    if (capVal === 'nao' && item._capDisp > 0) return false;
+                    if (capVal === 'sim' && item._capDisp <= 0) continue;
+                    if (capVal === 'nao' && item._capDisp > 0) continue;
                 }
 
-                // Liberado para Faturar
                 if (libFatVal) {
-                    if (libFatVal === 'sim' && item._vlLiberado <= 0) return false;
-                    if (libFatVal === 'nao' && item._vlLiberado > 0) return false;
+                    if (libFatVal === 'sim' && item._vlLiberado <= 0) continue;
+                    if (libFatVal === 'nao' && item._vlLiberado > 0) continue;
                 }
 
-                // Período
                 if (item._prevEntrega) {
                     const dtItem = item._prevEntrega.substring(0, 10);
-                    if (dtFrom && dtItem < dtFrom) return false;
-                    if (dtTo && dtItem > dtTo) return false;
+                    if (dtFrom && dtItem < dtFrom) continue;
+                    if (dtTo && dtItem > dtTo) continue;
                 }
 
-                if (search && !item._searchStr.includes(search)) return false;
+                if (search && !item._searchStr.includes(search)) continue;
 
-                return true;
-            });
+                filtered.push(item);
+            }
 
-            // Ordenação
             filtered.sort((a, b) => {
                 let valA = a[sortColumn];
                 let valB = b[sortColumn];
@@ -657,7 +636,6 @@
 
             updateSortIndicators();
 
-            // KPIs
             const totalItens = currentFilteredData.length;
             let saldoEntregar = 0, vlTotal = 0, vlAFaturar = 0, vlLiberado = 0;
             const osComprarMap = {};
