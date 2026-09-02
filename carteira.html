@@ -14,7 +14,7 @@
     <meta property="og:image" content="https://consultoriarf.net/producao_pstec/LOGO MINIMALISTA.png">
     <meta property="og:type" content="website">
 
-    <title>Carteira de Produção - PSTEC V2.1 Pro</title>
+    <title>Carteira de Produção - PSTEC V2.2 Pro</title>
 
     <!-- Autenticação Token -->
     <script>
@@ -72,7 +72,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-extrabold tracking-wide text-white">GRUPO PSTEC</h1>
-                    <p class="text-xs text-pstec-100">Carteira de Produção V2.1 Pro</p>
+                    <p class="text-xs text-pstec-100">Carteira de Produção V2.2 Pro</p>
                 </div>
             </div>
 
@@ -107,9 +107,9 @@
         </div>
     </header>
 
-    <!-- METRICS / CARDS DE KPI -->
+    <!-- METRICS / CARDS DE KPI INCLUINDO VALOR DE LUCRO -->
     <div id="metricsBar" class="bg-white border-b border-slate-200 text-slate-800 shadow-sm py-3">
-        <div class="max-w-[96%] mx-auto px-4 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2.5">
+        <div class="max-w-[96%] mx-auto px-4 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-2.5">
             <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
                 <span class="text-[9px] text-slate-500 font-bold uppercase block">Itens Registrados</span>
                 <span id="kpiTotalItens" class="text-lg font-black text-pstec-700">0</span>
@@ -133,6 +133,11 @@
             <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
                 <span class="text-[9px] text-slate-500 font-bold uppercase block">Valor Fat. Disp.</span>
                 <span id="kpiValorFatDisp" class="text-lg font-black text-purple-600">R$ 0,00</span>
+            </div>
+            <!-- NOVO KPI DE VALOR DE LUCRO -->
+            <div class="bg-emerald-50/70 p-2.5 rounded-xl border border-emerald-200">
+                <span class="text-[9px] text-emerald-700 font-bold uppercase block">Valor Lucro Total</span>
+                <span id="kpiValorLucro" class="text-lg font-black text-emerald-700">R$ 0,00</span>
             </div>
             <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
                 <span class="text-[9px] text-slate-500 font-bold uppercase block">Vl. Falta Comprar</span>
@@ -204,7 +209,7 @@
             </div>
         </div>
 
-        <!-- TABELA PRINCIPAL DE CARTEIRA COM FILTROS CRUZADOS NO ESTILO EXCEL -->
+        <!-- TABELA PRINCIPAL DE CARTEIRA COM AS COLUNAS SOLICITADAS -->
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
             <div id="tableScrollContainer" class="overflow-x-auto custom-scroll max-h-[60vh]">
                 <table class="w-full text-left text-[11px] border-collapse whitespace-nowrap">
@@ -249,7 +254,7 @@
     <!-- FOOTER -->
     <footer class="bg-white border-t border-slate-200 py-3 mt-auto">
         <div class="max-w-[96%] mx-auto px-4 flex justify-between items-center text-xs text-slate-500">
-            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V2.1 Pro</span>
+            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V2.2 Pro</span>
             <span id="lastUpdateLabel">Atualizado: -</span>
         </div>
     </footer>
@@ -290,6 +295,18 @@
                     <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs">
                         <span class="text-[9px] uppercase font-bold text-slate-400 block">Vl. Falta Comprar</span>
                         <span id="mVlFaltaComprar" class="text-sm font-black text-red-600 font-mono">R$ 0,00</span>
+                    </div>
+                </div>
+
+                <!-- SEÇÃO RENTABILIDADE E LUCRO NO MODAL -->
+                <div class="bg-emerald-50/60 p-4 rounded-2xl border border-emerald-200 space-y-2.5 shadow-xs">
+                    <div class="flex items-center gap-2 text-emerald-800 font-extrabold border-b border-emerald-200 pb-1.5 text-xs">
+                        <i data-lucide="trending-up" class="w-4 h-4"></i>
+                        <span>Rentabilidade & Lucro do Item</span>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-2 gap-2.5">
+                        <div><span class="text-emerald-700 block font-bold text-[10px]">Valor do Lucro (R$):</span><strong id="mVlLucro" class="text-emerald-900 font-mono text-sm font-black"></strong></div>
+                        <div><span class="text-emerald-700 block font-bold text-[10px]">Margem de Lucro (%):</span><strong id="mMargemLucro" class="text-emerald-900 font-mono text-sm font-black"></strong></div>
                     </div>
                 </div>
 
@@ -358,7 +375,7 @@
         </div>
     </div>
 
-    <!-- LOGICA JS DE FILTRO CRUZADO SELETIVO E BUSCA CORINGA AVANÇADA -->
+    <!-- LOGICA JS DA V2.2 PRO COM MARGEM E LUCRO -->
     <script>
         const API_CARTEIRA = 'https://pstec.consultoriarf.net/CARTEIRA';
         let rawCarteira = [];
@@ -372,7 +389,6 @@
         let debounceTimer = null;
         let isFiltrosCollapsed = false;
 
-        // Estado dos Filtros de Multisseleção Superiores
         const filterState = {
             Empresa: new Set(),
             Cliente: new Set(),
@@ -394,9 +410,9 @@
             Prioridade: new Set()
         };
 
-        // Estado dos Filtros Individuais do Cabeçalho da Tabela
         const colFilterState = {};
 
+        // CONFIGURAÇÃO DAS COLUNAS DA TABELA PRINCIPAL
         const tableColumnsConfig = [
             { key: 'Nº Orçamento', label: 'Orçamento', align: 'left', sortable: true },
             { key: 'Cliente', label: 'Cliente', align: 'left', sortable: true },
@@ -413,6 +429,8 @@
             { key: 'Vl. a faturar', label: 'Vl. a Faturar', align: 'right', sortable: true },
             { key: 'Vl. Liberado', label: 'Vl. Liberado', align: 'right', sortable: true },
             { key: 'Valor fat. disp.', label: 'Valor fat. disp.', align: 'right', sortable: true },
+            { key: 'Vl. Lucro', label: 'Vl. Lucro', align: 'right', sortable: true },
+            { key: 'Margem Lucro', label: 'Margem Lucro', align: 'right', sortable: true },
             { key: 'Valor falta comprar', label: 'Vl. Falta Comprar', align: 'right', sortable: true },
             { key: 'Disponibilidade Material', label: 'Disp. Material', align: 'left', sortable: false },
             { key: 'Prata', label: 'Prata', align: 'left', sortable: false },
@@ -507,7 +525,6 @@
             }
         }
 
-        // RENDERIZAÇÃO DO CABEÇALHO DA TABELA COM FILTROS INDIVIDUALIZADOS ESTILO EXCEL
         function renderTableHeader() {
             const thead = document.getElementById('mainTableHeader');
             if (!thead) return;
@@ -531,7 +548,6 @@
                             </button>
                         </div>
 
-                        <!-- POPOVER FILTRO EXCEL DA COLUNA COM FILTRAGEM CRUZADA SELETIVA -->
                         <div id="col_popover_${col.key}" class="hidden absolute left-0 top-full mt-1 w-64 bg-white text-slate-800 border border-slate-200 rounded-2xl shadow-2xl z-40 p-3 text-xs normal-case font-normal col-filter-popover">
                             <div class="flex justify-between items-center pb-2 border-b border-slate-100 mb-2 font-bold">
                                 <span>Filtro: ${col.label}</span>
@@ -558,9 +574,7 @@
             lucide.createIcons();
         }
 
-        // NOVO: FILTRO CRUZADO SELETIVO (SÓ EXIBE NO DROPDOWN O QUE PERTENCE AOS DADOS JÁ FILTRADOS)
         function renderColOptionsListHTML(key) {
-            // Obtém os dados ignorando apenas o filtro da própria coluna para permitir remarcar opções
             const availableData = getFilteredCarteira(key);
             
             const set = new Set();
@@ -588,7 +602,6 @@
             e.stopPropagation();
             const popoverId = `col_popover_${key}`;
             
-            // Re-renderiza as opções com o filtro cruzado atualizado no momento que abre
             const container = document.getElementById(`col_opts_${key}`);
             if (container) {
                 container.innerHTML = renderColOptionsListHTML(key);
@@ -601,7 +614,6 @@
             if (popover) popover.classList.toggle('hidden');
         }
 
-        // SUPORTE COMPLETO A WILDCARD (%) E NEGAÇÃO (-) NOS FILTROS DE CABEÇALHO DA TABELA
         function filterColOptionsUI(inputEl, key) {
             const term = inputEl.value.trim().toLowerCase();
             const container = document.getElementById(`col_opts_${key}`);
@@ -771,7 +783,7 @@
         function parseNum(val) {
             if (!val) return 0;
             if (typeof val === 'number') return val;
-            let str = String(val).replace('R$', '').replace(/\s/g, '');
+            let str = String(val).replace('R$', '').replace('%', '').replace(/\s/g, '');
             if (str.includes(',') && str.includes('.')) str = str.replace(/\./g, '').replace(',', '.');
             else if (str.includes(',')) str = str.replace(',', '.');
             const n = parseFloat(str);
@@ -780,6 +792,12 @@
 
         function fmtBRL(val) {
             return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
+        }
+
+        function fmtPct(val) {
+            if (val === null || val === undefined || String(val).trim() === '' || String(val) === 'None') return '-';
+            const num = parseNum(val);
+            return `${num.toFixed(2).replace('.', ',')}%`;
         }
 
         function fmtDate(dtStr) {
@@ -807,7 +825,7 @@
         }
 
         function updateSortIndicators() {
-            const cols = ['Nº Orçamento', 'Cliente', 'Nº Pedido', 'Nº OS', 'Dt. aprovação', 'Prev. entrega(original)', 'Qtde. Total', 'Saldo a entregar', 'Vl. Total', 'Vl. a faturar', 'Vl. Liberado', 'Valor fat. disp.', 'Valor falta comprar'];
+            const cols = ['Nº Orçamento', 'Cliente', 'Nº Pedido', 'Nº OS', 'Dt. aprovação', 'Prev. entrega(original)', 'Qtde. Total', 'Saldo a entregar', 'Vl. Total', 'Vl. a faturar', 'Vl. Liberado', 'Valor fat. disp.', 'Vl. Lucro', 'Margem Lucro', 'Valor falta comprar'];
             for (let i = 0; i < cols.length; i++) {
                 const col = cols[i];
                 const el = document.getElementById(`sort_${col}`);
@@ -840,7 +858,6 @@
             return true;
         }
 
-        // FILTRAGEM DE CARTEIRA COM SUPORTE A EXCLUSÃO DE COLUNA ATUAL (PARA FILTRO SELETIVO CRUZADO)
         function getFilteredCarteira(ignoreColKey = null) {
             const search = (document.getElementById('searchInput')?.value || '').trim();
             const dtFrom = document.getElementById('dateFrom')?.value || '';
@@ -852,7 +869,6 @@
             for (let i = 0; i < rawCarteira.length; i++) {
                 const item = rawCarteira[i];
 
-                // FILTROS DE CABEÇALHO DA TABELA (ESTILO EXCEL)
                 let colFilterMatch = true;
                 for (const colKey in colFilterState) {
                     if (ignoreColKey && colKey === ignoreColKey) continue;
@@ -868,7 +884,6 @@
                 }
                 if (!colFilterMatch) continue;
 
-                // FILTROS SUPERIORES MULTISSELEÇÃO
                 if (filterState.Empresa.size > 0 && !filterState.Empresa.has(String(item.Empresa || '').trim())) continue;
                 if (filterState.Cliente.size > 0 && !filterState.Cliente.has(String(item.Cliente || '').trim())) continue;
                 if (filterState.Código.size > 0 && !filterState.Código.has(String(item.Código || '').trim())) continue;
@@ -904,7 +919,6 @@
                     if (!filterState.Capacidade.has(statusCap)) continue;
                 }
 
-                // FILTRAGEM RÍGIDA POR 'Dt. Pesquisa'
                 const rawDtPesquisa = item['Dt. Pesquisa'];
                 const dtPesquisa = (rawDtPesquisa && rawDtPesquisa !== 'NaT' && rawDtPesquisa !== 'None' && rawDtPesquisa !== 'null') ? String(rawDtPesquisa).substring(0, 10) : '';
 
@@ -929,7 +943,7 @@
                 if (sortColumn.includes('Dt.') || sortColumn.includes('Prev.')) {
                     valA = valA ? String(valA) : '';
                     valB = valB ? String(valB) : '';
-                } else if (sortColumn.includes('Qtde') || sortColumn.includes('Saldo') || sortColumn.includes('Vl.') || sortColumn.includes('Nº') || sortColumn.includes('Valor')) {
+                } else if (sortColumn.includes('Qtde') || sortColumn.includes('Saldo') || sortColumn.includes('Vl.') || sortColumn.includes('Nº') || sortColumn.includes('Valor') || sortColumn.includes('Margem')) {
                     valA = parseNum(valA);
                     valB = parseNum(valB);
                 } else {
@@ -956,7 +970,7 @@
             updateSortIndicators();
 
             const totalItens = currentFilteredData.length;
-            let saldoEntregar = 0, vlTotal = 0, vlAFaturar = 0, vlLiberado = 0, vlFatDispTotal = 0;
+            let saldoEntregar = 0, vlTotal = 0, vlAFaturar = 0, vlLiberado = 0, vlFatDispTotal = 0, vlLucroTotal = 0;
             const osComprarMap = {};
 
             for (let i = 0; i < totalItens; i++) {
@@ -966,6 +980,7 @@
                 vlAFaturar += parseNum(item['Vl. a faturar']);
                 vlLiberado += parseNum(item['Vl. Liberado']);
                 vlFatDispTotal += parseNum(item['Valor fat. disp.']);
+                vlLucroTotal += parseNum(item['Vl. Lucro']);
 
                 const vlFalta = parseNum(item['Valor falta comprar']);
                 if (vlFalta > 0) {
@@ -977,12 +992,14 @@
             let vlFaltaComprarUnico = 0;
             for (let k in osComprarMap) vlFaltaComprarUnico += osComprarMap[k];
 
+            // ATUALIZAÇÃO DOS KPIS DINO
             document.getElementById('kpiTotalItens').textContent = totalItens;
             document.getElementById('kpiSaldoEntregar').textContent = saldoEntregar.toLocaleString('pt-BR');
             document.getElementById('kpiValorTotal').textContent = fmtBRL(vlTotal);
             document.getElementById('kpiValorAFaturar').textContent = fmtBRL(vlAFaturar);
             document.getElementById('kpiValorLiberado').textContent = fmtBRL(vlLiberado);
             document.getElementById('kpiValorFatDisp').textContent = fmtBRL(vlFatDispTotal);
+            document.getElementById('kpiValorLucro').textContent = fmtBRL(vlLucroTotal);
             document.getElementById('kpiValorFaltaComprar').textContent = fmtBRL(vlFaltaComprarUnico);
 
             if (totalItens === 0) {
@@ -1015,6 +1032,8 @@
                 const vlAFat = parseNum(item['Vl. a faturar']);
                 const vlLib = parseNum(item['Vl. Liberado']);
                 const vlFatDisp = parseNum(item['Valor fat. disp.']);
+                const vlLucro = parseNum(item['Vl. Lucro']);
+                const margemLucroStr = fmtPct(item['Margem Lucro']);
                 const vlFaltaComp = parseNum(item['Valor falta comprar']);
 
                 const isParcial = entregue > 0 && saldo > 0;
@@ -1048,6 +1067,8 @@
                         <td class="p-3 text-right font-mono font-bold text-blue-600">${fmtBRL(vlAFat)}</td>
                         <td class="p-3 text-right font-mono font-bold text-emerald-600">${fmtBRL(vlLib)}</td>
                         <td class="p-3 text-right font-mono font-bold text-purple-700">${fmtBRL(vlFatDisp)}</td>
+                        <td class="p-3 text-right font-mono font-bold text-emerald-700 bg-emerald-50/50">${fmtBRL(vlLucro)}</td>
+                        <td class="p-3 text-right font-mono font-bold text-emerald-700 bg-emerald-50/50">${margemLucroStr}</td>
                         <td class="p-3 text-right font-mono font-bold text-red-600">${fmtBRL(vlFaltaComp)}</td>
 
                         <td class="p-3">
@@ -1117,6 +1138,8 @@
                 'Vl. a Faturar': parseNum(item['Vl. a faturar']),
                 'Vl. Liberado': parseNum(item['Vl. Liberado']),
                 'Valor Fat. Disp.': parseNum(item['Valor fat. disp.']),
+                'Vl. Lucro': parseNum(item['Vl. Lucro']),
+                'Margem Lucro (%)': fmtPct(item['Margem Lucro']),
                 'Vl. Falta Comprar': parseNum(item['Valor falta comprar']),
                 'Disp. Material': item['Disponibilidade Material'] || '',
                 'Prata': item.Prata || '',
@@ -1154,6 +1177,10 @@
             setSafeText('mVlAFaturar', fmtBRL(parseNum(item['Vl. a faturar'])));
             setSafeText('mVlLiberado', fmtBRL(parseNum(item['Vl. Liberado'])));
             setSafeText('mVlFaltaComprar', fmtBRL(parseNum(item['Valor falta comprar'])));
+
+            // SEÇÃO RENTABILIDADE E LUCRO
+            setSafeText('mVlLucro', fmtBRL(parseNum(item['Vl. Lucro'])));
+            setSafeText('mMargemLucro', fmtPct(item['Margem Lucro']));
 
             // SEÇÃO CLIENTE
             setSafeText('mCliente', item.Cliente);
