@@ -14,7 +14,7 @@
     <meta property="og:image" content="https://consultoriarf.net/producao_pstec/LOGO MINIMALISTA.png">
     <meta property="og:type" content="website">
 
-    <title>Carteira de Produção - PSTEC V2.6 Pro</title>
+    <title>Carteira de Produção - PSTEC V2.7 Pro</title>
 
     <!-- Autenticação Token -->
     <script>
@@ -72,7 +72,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-extrabold tracking-wide text-white">GRUPO PSTEC</h1>
-                    <p class="text-xs text-pstec-100">Carteira de Produção V2.6 Pro</p>
+                    <p class="text-xs text-pstec-100">Carteira de Produção V2.7 Pro</p>
                 </div>
             </div>
 
@@ -82,6 +82,12 @@
                     <i data-lucide="user-check" class="w-4 h-4 text-pstecgreen-500"></i>
                     <span id="userDisplayName">Usuário</span>
                 </div>
+
+                <!-- BOTÃO OCULTAR / EXIBIR VALORES -->
+                <button id="btnToggleValues" onclick="toggleValuesVisibility()" class="flex items-center gap-1.5 px-3 py-2 bg-pstec-800 hover:bg-pstec-900 border border-pstec-600 text-amber-300 font-extrabold rounded-xl text-xs transition shadow-md" title="Ocultar ou Exibir Valores Monetários (R$)">
+                    <i data-lucide="eye-off" id="iconToggleValues" class="w-4 h-4"></i>
+                    <span id="lblToggleValues">Exibir Valores</span>
+                </button>
 
                 <a href="index.html" class="flex items-center gap-1.5 px-3 py-2 bg-pstec-800 hover:bg-pstec-900 text-white font-extrabold rounded-xl text-xs transition shadow-md">
                     <i data-lucide="calendar" class="w-4 h-4"></i>
@@ -278,7 +284,7 @@
     <!-- FOOTER -->
     <footer class="bg-white border-t border-slate-200 py-3 mt-auto">
         <div class="max-w-[96%] mx-auto px-4 flex justify-between items-center text-xs text-slate-500">
-            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V2.6 Pro</span>
+            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V2.7 Pro</span>
             <span id="lastUpdateLabel">Atualizado: -</span>
         </div>
     </footer>
@@ -295,8 +301,6 @@
             </div>
 
             <div class="p-6 space-y-4 text-xs overflow-y-auto max-h-[75vh] custom-scroll">
-                
-                <!-- SELEÇÃO DO FORMATO DE CAMPOS -->
                 <div class="space-y-1.5">
                     <label class="font-extrabold text-slate-700 uppercase block text-[10px]">1. Quais colunas do resultado filtrado deseja incluir?</label>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -311,7 +315,6 @@
                     </div>
                 </div>
 
-                <!-- SELEÇÃO PERSONALIZADA DAS COLUNAS -->
                 <div class="space-y-2 pt-2 border-t border-slate-100">
                     <div class="flex justify-between items-center">
                         <label class="font-extrabold text-slate-700 uppercase block text-[10px]">2. Ajuste Fino dos Campos</label>
@@ -326,7 +329,6 @@
                         <!-- Preenchido via JS -->
                     </div>
                 </div>
-
             </div>
 
             <div class="bg-slate-50 px-6 py-3 border-t border-slate-200 flex justify-between items-center shrink-0">
@@ -389,8 +391,6 @@
     <!-- MODAL DE DETALHES COMPLETO -->
     <div id="detailsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-white text-slate-800 rounded-3xl shadow-2xl max-w-4xl w-full flex flex-col max-h-[90vh] overflow-hidden border border-slate-200">
-            
-            <!-- CABEÇALHO DO MODAL -->
             <div class="bg-pstec-700 px-6 py-4 flex justify-between items-center text-white shrink-0">
                 <div class="space-y-1">
                     <div class="flex items-center gap-2">
@@ -402,10 +402,7 @@
                 <button onclick="closeModal()" class="text-pstec-100 hover:text-white p-1 rounded-lg transition hover:bg-pstec-800"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
             
-            <!-- CORPO DO MODAL -->
             <div class="p-6 space-y-4 text-xs overflow-y-auto custom-scroll flex-1 bg-slate-50/60">
-                
-                <!-- CARDS FINANCEIROS -->
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                     <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs">
                         <span class="text-[9px] uppercase font-bold text-slate-400 block">Valor Total</span>
@@ -425,7 +422,6 @@
                     </div>
                 </div>
 
-                <!-- SEÇÃO RENTABILIDADE E LUCRO NO MODAL -->
                 <div class="bg-emerald-50/60 p-4 rounded-2xl border border-emerald-200 space-y-2.5 shadow-xs">
                     <div class="flex items-center gap-2 text-emerald-800 font-extrabold border-b border-emerald-200 pb-1.5 text-xs">
                         <i data-lucide="trending-up" class="w-4 h-4"></i>
@@ -437,7 +433,6 @@
                     </div>
                 </div>
 
-                <!-- SEÇÃO 1: CLIENTE E PEDIDO -->
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-2.5 shadow-xs">
                     <div class="flex items-center gap-2 text-pstec-700 font-extrabold border-b pb-1.5 text-xs">
                         <i data-lucide="building-2" class="w-4 h-4"></i>
@@ -451,7 +446,6 @@
                     </div>
                 </div>
 
-                <!-- SEÇÃO 2: DATAS -->
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-2.5 shadow-xs">
                     <div class="flex items-center gap-2 text-pstec-700 font-extrabold border-b pb-1.5 text-xs">
                         <i data-lucide="calendar-days" class="w-4 h-4"></i>
@@ -465,7 +459,6 @@
                     </div>
                 </div>
 
-                <!-- SEÇÃO 3: QUANTIDADES -->
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-2.5 shadow-xs">
                     <div class="flex items-center gap-2 text-pstec-700 font-extrabold border-b pb-1.5 text-xs">
                         <i data-lucide="boxes" class="w-4 h-4"></i>
@@ -479,7 +472,6 @@
                     </div>
                 </div>
 
-                <!-- SEÇÃO 4: MATERIAIS -->
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-2.5 shadow-xs">
                     <div class="flex items-center gap-2 text-pstec-700 font-extrabold border-b pb-1.5 text-xs">
                         <i data-lucide="layers" class="w-4 h-4"></i>
@@ -492,17 +484,15 @@
                         <div><span class="text-slate-400 block font-bold text-[10px]">Valor Fat. Disp.:</span><strong id="mVlFatDisp" class="text-purple-700 font-mono font-bold"></strong></div>
                     </div>
                 </div>
-
             </div>
 
-            <!-- RODAPÉ DO MODAL -->
             <div class="bg-slate-50 px-6 py-3 border-t border-slate-200 flex justify-end shrink-0">
                 <button onclick="closeModal()" class="px-5 py-2 bg-pstec-700 text-white rounded-xl font-bold hover:bg-pstec-800 shadow-sm transition">Fechar</button>
             </div>
         </div>
     </div>
 
-    <!-- LOGICA JS DA V2.6 PRO -->
+    <!-- LOGICA JS DA V2.7 PRO -->
     <script>
         const API_CARTEIRA = 'https://pstec.consultoriarf.net/CARTEIRA';
         let rawCarteira = [];
@@ -515,6 +505,9 @@
         let batchStep = 50;
         let debounceTimer = null;
         let isFiltrosCollapsed = false;
+
+        // ESTADO DE OCULTAÇÃO DE VALORES (POR PADRÃO NASCE OCULTO 'true')
+        let hideValuesState = localStorage.getItem('pstec_carteira_hide_values') !== 'false';
 
         // Estado das Colunas Ocultas na Tabela
         let hiddenTableCols = new Set();
@@ -542,7 +535,6 @@
 
         const colFilterState = {};
 
-        // TODAS AS COLUNAS POSSÍVEIS DA TABELA PRINCIPAL (INCLUINDO DADOS DO MODAL)
         const tableColumnsConfig = [
             { key: 'Nº Orçamento', label: 'Orçamento', align: 'left', sortable: true },
             { key: 'Cliente', label: 'Cliente', align: 'left', sortable: true },
@@ -576,7 +568,6 @@
             { key: 'Empresa', label: 'Empresa', align: 'left', sortable: false }
         ];
 
-        // MAPEAMENTO DAS COLUNAS EXPORTÁVEIS DO EXCEL
         const exportableColsConfig = [
             { id: 'col_AcaoIndex', label: 'ID Ação / Sequência', tableKey: null },
             { id: 'Nº Orçamento', label: 'Nº Orçamento', tableKey: 'Nº Orçamento' },
@@ -647,13 +638,14 @@
                     hiddenTableCols = new Set(JSON.parse(savedHiddenCols)); 
                 } catch(e){}
             } else {
-                // Se for a primeira vez, oculta por padrão os campos secundários do modal para manter a tabela limpa
                 ['Dt. Negociada', 'Dt. Pesquisa', 'Etapa', 'Lista de Materiais', 'Processamento LM', 'Ordem de compra', 'Capacidade disponivel', 'Tipo', 'Prioridade'].forEach(k => hiddenTableCols.add(k));
             }
 
             if (localStorage.getItem('pstec_carteira_filtros_collapsed') === 'true') {
                 toggleFiltros(true);
             }
+
+            updateValuesBtnUI();
 
             document.addEventListener('click', (e) => {
                 if (!e.target.closest('.custom-dd-container') && !e.target.closest('.col-filter-popover')) {
@@ -664,6 +656,33 @@
             lucide.createIcons();
             fetchCarteiraData();
         });
+
+        // TERNÁRIO DE OCULTAR / EXIBIR VALORES COM PERSISTÊNCIA
+        function toggleValuesVisibility() {
+            hideValuesState = !hideValuesState;
+            localStorage.setItem('pstec_carteira_hide_values', hideValuesState ? 'true' : 'false');
+            updateValuesBtnUI();
+            renderCarteiraView();
+        }
+
+        function updateValuesBtnUI() {
+            const lbl = document.getElementById('lblToggleValues');
+            const icon = document.getElementById('iconToggleValues');
+            
+            if (hideValuesState) {
+                if (lbl) lbl.textContent = 'Exibir Valores';
+                if (icon) icon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                if (lbl) lbl.textContent = 'Ocultar Valores';
+                if (icon) icon.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons();
+        }
+
+        function fmtBRL(val) {
+            if (hideValuesState) return 'R$ ***';
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
+        }
 
         function openSearchHelpModal() {
             const m = document.getElementById('searchHelpModal');
@@ -1041,10 +1060,6 @@
             return isNaN(n) ? 0 : n;
         }
 
-        function fmtBRL(val) {
-            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
-        }
-
         function fmtPct(val) {
             if (val === null || val === undefined || String(val).trim() === '' || String(val) === 'None') return '-';
             const num = parseNum(val);
@@ -1415,7 +1430,6 @@
             renderTableBatch();
         }
 
-        // LÓGICA DO MODAL DE EXPORTAÇÃO EXCEL SINCRONIZADO COM AS COLUNAS DA TABELA
         function openExportModal() {
             const m = document.getElementById('exportModal');
             if (!m) return;
@@ -1435,8 +1449,7 @@
                     if (savedColsSet) {
                         isChecked = savedColsSet.has(col.id);
                     } else {
-                        // Por padrão, se a coluna não está oculta na tabela, ela fica marcada
-                        isChecked = col.tableKey ? !hiddenTableCols.has(col.tableKey) : col.defaultVisible;
+                        isChecked = col.tableKey ? !hiddenTableCols.has(col.tableKey) : true;
                     }
 
                     return `
