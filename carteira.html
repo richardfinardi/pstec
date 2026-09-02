@@ -14,7 +14,7 @@
     <meta property="og:image" content="https://consultoriarf.net/producao_pstec/LOGO MINIMALISTA.png">
     <meta property="og:type" content="website">
 
-    <title>Carteira de Produção - PSTEC V2.2 Pro</title>
+    <title>Carteira de Produção - PSTEC V2.3 Pro</title>
 
     <!-- Autenticação Token -->
     <script>
@@ -72,7 +72,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-extrabold tracking-wide text-white">GRUPO PSTEC</h1>
-                    <p class="text-xs text-pstec-100">Carteira de Produção V2.2 Pro</p>
+                    <p class="text-xs text-pstec-100">Carteira de Produção V2.3 Pro</p>
                 </div>
             </div>
 
@@ -107,7 +107,7 @@
         </div>
     </header>
 
-    <!-- METRICS / CARDS DE KPI INCLUINDO VALOR DE LUCRO -->
+    <!-- METRICS / CARDS DE KPI -->
     <div id="metricsBar" class="bg-white border-b border-slate-200 text-slate-800 shadow-sm py-3">
         <div class="max-w-[96%] mx-auto px-4 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-2.5">
             <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
@@ -134,7 +134,6 @@
                 <span class="text-[9px] text-slate-500 font-bold uppercase block">Valor Fat. Disp.</span>
                 <span id="kpiValorFatDisp" class="text-lg font-black text-purple-600">R$ 0,00</span>
             </div>
-            <!-- NOVO KPI DE VALOR DE LUCRO -->
             <div class="bg-emerald-50/70 p-2.5 rounded-xl border border-emerald-200">
                 <span class="text-[9px] text-emerald-700 font-bold uppercase block">Valor Lucro Total</span>
                 <span id="kpiValorLucro" class="text-lg font-black text-emerald-700">R$ 0,00</span>
@@ -167,10 +166,15 @@
             <!-- ÁREA RECOLHÍVEL DOS FILTROS SUPERIORES -->
             <div id="collapsibleFilterContent" class="flex flex-col gap-3 transition-all duration-300">
                 
-                <!-- Pesquisa Coringa Global -->
-                <div class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 flex items-center gap-2 text-xs">
-                    <i data-lucide="search" class="w-4 h-4 text-pstec-600"></i>
-                    <input type="text" id="searchInput" oninput="debounceRender()" placeholder="Pesquisa Coringa (%PCP%EXPEDIÇÃO% ou use '-' para Excluir, ex: GRID -CANCELADO)" class="w-full bg-transparent text-slate-800 focus:outline-none font-bold placeholder-slate-400">
+                <!-- Pesquisa Coringa Global com Botão de Interrogação HINT -->
+                <div class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 flex items-center gap-2 text-xs">
+                    <i data-lucide="search" class="w-4 h-4 text-pstec-600 shrink-0"></i>
+                    <input type="text" id="searchInput" oninput="debounceRender()" placeholder="Pesquisa Coringa (ex: GRID, MAURI ou %PCP%EXPEDIÇÃO% ou use '-' para Excluir)..." class="w-full bg-transparent text-slate-800 focus:outline-none font-bold placeholder-slate-400 py-1">
+                    
+                    <!-- BOTÃO INTERROGAÇÃO DE AJUDA DO PESQUISAR -->
+                    <button onclick="openSearchHelpModal()" class="p-1.5 bg-pstec-100 hover:bg-pstec-200 text-pstec-700 rounded-lg font-black transition flex items-center justify-center shrink-0 border border-pstec-200" title="Como funciona a pesquisa?">
+                        <i data-lucide="help-circle" class="w-4 h-4 text-pstec-700"></i>
+                    </button>
                 </div>
 
                 <!-- DATES & CHECKBOX FILTERS GRID -->
@@ -209,7 +213,7 @@
             </div>
         </div>
 
-        <!-- TABELA PRINCIPAL DE CARTEIRA COM AS COLUNAS SOLICITADAS -->
+        <!-- TABELA PRINCIPAL DE CARTEIRA COM FILTROS CRUZADOS NO ESTILO EXCEL -->
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
             <div id="tableScrollContainer" class="overflow-x-auto custom-scroll max-h-[60vh]">
                 <table class="w-full text-left text-[11px] border-collapse whitespace-nowrap">
@@ -254,10 +258,54 @@
     <!-- FOOTER -->
     <footer class="bg-white border-t border-slate-200 py-3 mt-auto">
         <div class="max-w-[96%] mx-auto px-4 flex justify-between items-center text-xs text-slate-500">
-            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V2.2 Pro</span>
+            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V2.3 Pro</span>
             <span id="lastUpdateLabel">Atualizado: -</span>
         </div>
     </footer>
+
+    <!-- MODAL DE AJUDA / GUIA DO PESQUISAR (HINT) -->
+    <div id="searchHelpModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[70]">
+        <div class="bg-white text-slate-800 rounded-3xl shadow-2xl max-w-lg w-full p-6 space-y-4 border border-slate-200 relative">
+            <div class="flex justify-between items-center border-b pb-3">
+                <div class="flex items-center gap-2 text-pstec-700 font-extrabold text-sm">
+                    <i data-lucide="help-circle" class="w-5 h-5 text-pstecgreen-600"></i>
+                    <span>Guia de Pesquisa Rápida & Operadores</span>
+                </div>
+                <button onclick="closeSearchHelpModal()" class="text-slate-400 hover:text-slate-700 p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+
+            <div class="space-y-3 text-xs leading-relaxed">
+                <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-1">
+                    <span class="font-extrabold text-pstec-700 uppercase block text-[11px]">1. Buscar Vários Clientes ou Termos ao mesmo tempo (OU)</span>
+                    <p class="text-slate-600">Use <strong>vírgula (,)</strong>, <strong>ponto e vírgula (;)</strong> ou barra vertical <strong>(|)</strong> para trazer registros que tenham qualquer um dos termos.</p>
+                    <p class="font-mono text-xs bg-white p-2 rounded-xl border border-slate-200 font-bold text-slate-800">GRID, MAURI</p>
+                    <p class="text-[10px] text-slate-400 italic">Retorna todas as linhas do cliente GRID + todas as linhas de MAURIZIO.</p>
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-1">
+                    <span class="font-extrabold text-pstec-700 uppercase block text-[11px]">2. Combinar Termos Obrigatórios (E)</span>
+                    <p class="text-slate-600">Use <strong>espaço</strong> ou o sinal de porcentagem <strong>%</strong> para garantir que a linha possua ambos os termos.</p>
+                    <p class="font-mono text-xs bg-white p-2 rounded-xl border border-slate-200 font-bold text-slate-800">%PCP%EXPEDIÇÃO%</p>
+                    <p class="text-[10px] text-slate-400 italic">Retorna itens que tenham PCP e também tenham EXPEDIÇÃO no mesmo registro.</p>
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-1">
+                    <span class="font-extrabold text-pstec-700 uppercase block text-[11px]">3. Ocultar / Excluir Termos (NÃO CONTÉM)</span>
+                    <p class="text-slate-600">Use o sinal de menos <strong>-</strong> antes da palavra para esconder registros indesejados.</p>
+                    <p class="font-mono text-xs bg-white p-2 rounded-xl border border-slate-200 font-bold text-slate-800">GRID, MAURI -CANCELADO</p>
+                    <p class="text-[10px] text-slate-400 italic">Traz tudo da GRID e do MAURIZIO, mas oculta qualquer linha que esteja cancelada.</p>
+                </div>
+
+                <div class="bg-pstec-50 p-3 rounded-2xl border border-pstec-100 text-pstec-900 font-medium text-[11px]">
+                    💡 <strong>Dica:</strong> A pesquisa ignora acentos e maiúsculas/minúsculas automaticamente.
+                </div>
+            </div>
+
+            <div class="flex justify-end pt-2">
+                <button onclick="closeSearchHelpModal()" class="px-5 py-2 bg-pstec-700 text-white font-bold text-xs rounded-xl hover:bg-pstec-800 shadow-sm transition">Entendi</button>
+            </div>
+        </div>
+    </div>
 
     <!-- MODAL DE DETALHES COMPLETO -->
     <div id="detailsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
@@ -375,7 +423,7 @@
         </div>
     </div>
 
-    <!-- LOGICA JS DA V2.2 PRO COM MARGEM E LUCRO -->
+    <!-- LOGICA JS DA V2.3 PRO -->
     <script>
         const API_CARTEIRA = 'https://pstec.consultoriarf.net/CARTEIRA';
         let rawCarteira = [];
@@ -412,7 +460,6 @@
 
         const colFilterState = {};
 
-        // CONFIGURAÇÃO DAS COLUNAS DA TABELA PRINCIPAL
         const tableColumnsConfig = [
             { key: 'Nº Orçamento', label: 'Orçamento', align: 'left', sortable: true },
             { key: 'Cliente', label: 'Cliente', align: 'left', sortable: true },
@@ -477,6 +524,23 @@
             lucide.createIcons();
             fetchCarteiraData();
         });
+
+        function openSearchHelpModal() {
+            const m = document.getElementById('searchHelpModal');
+            if (m) {
+                m.classList.remove('hidden');
+                m.classList.add('flex');
+            }
+            lucide.createIcons();
+        }
+
+        function closeSearchHelpModal() {
+            const m = document.getElementById('searchHelpModal');
+            if (m) {
+                m.classList.add('hidden');
+                m.classList.remove('flex');
+            }
+        }
 
         function toggleFiltros(forceState = null) {
             const content = document.getElementById('collapsibleFilterContent');
@@ -554,7 +618,7 @@
                                 <button onclick="clearColFilter('${col.key}')" class="text-[10px] text-red-600 hover:underline">Limpar</button>
                             </div>
 
-                            <input type="text" placeholder="Filtrar (usar % ou -)..." oninput="filterColOptionsUI(this, '${col.key}')" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 mb-2 text-[11px] focus:outline-none font-medium">
+                            <input type="text" placeholder="Filtrar (ex: GRID, MAURI ou -)..." oninput="filterColOptionsUI(this, '${col.key}')" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 mb-2 text-[11px] focus:outline-none font-medium">
 
                             <div class="flex justify-between items-center text-[10px] font-bold pb-1.5">
                                 <button onclick="setAllColFilter('${col.key}', true)" class="text-pstec-700 hover:underline">Marcar Todos</button>
@@ -712,7 +776,7 @@
                             </div>
 
                             ${options.length > 8 ? `
-                                <input type="text" placeholder="Filtrar (usar % ou -)..." oninput="filterDDList(this, '${conf.id}_opts')" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 mb-1.5 focus:outline-none font-medium text-[11px]">
+                                <input type="text" placeholder="Filtrar (ex: GRID, MAURI ou -)..." oninput="filterDDList(this, '${conf.id}_opts')" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 mb-1.5 focus:outline-none font-medium text-[11px]">
                             ` : ''}
 
                             <div id="${conf.id}_opts" class="max-h-52 overflow-y-auto custom-scroll space-y-0.5">
@@ -800,6 +864,14 @@
             return `${num.toFixed(2).replace('.', ',')}%`;
         }
 
+        function normalizeStr(str) {
+            if (!str) return '';
+            return String(str)
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase();
+        }
+
         function fmtDate(dtStr) {
             if (!dtStr || dtStr === 'NaT' || dtStr === 'None' || dtStr === 'null') return '-';
             const clean = String(dtStr).trim().substring(0, 10);
@@ -833,29 +905,59 @@
             }
         }
 
+        // NOVO ALGORITMO DE BUSCA CORINGA COM SUPORTE A "OU" (vírgula, ;, |), "E" (espaço, %) E "NÃO CONTÉM" (-)
         function matchesWildcardSearch(itemStr, searchInput) {
             if (!searchInput) return true;
             
-            const cleanTerms = searchInput
-                .split(/%|\s+/)
-                .map(t => t.trim().toLowerCase())
+            const normItem = normalizeStr(itemStr);
+            const normInput = normalizeStr(searchInput);
+
+            // Separa por grupos de "OU"
+            const orGroups = normInput
+                .replace(/;/g, ',')
+                .replace(/\|/g, ',')
+                .split(',')
+                .map(g => g.trim())
                 .filter(Boolean);
 
-            for (let i = 0; i < cleanTerms.length; i++) {
-                const token = cleanTerms[i];
+            for (let g = 0; g < orGroups.length; g++) {
+                const group = orGroups[g];
+                
+                // Separa por sub-termos de "E"
+                const tokens = group
+                    .replace(/%/g, ' ')
+                    .split(/\s+/)
+                    .map(t => t.trim())
+                    .filter(Boolean);
 
-                if (token.startsWith('-') || token.startsWith('!')) {
-                    const excludeTerm = token.substring(1).trim();
-                    if (excludeTerm && itemStr.includes(excludeTerm)) {
-                        return false;
-                    }
-                } else {
-                    if (!itemStr.includes(token)) {
-                        return false;
+                if (tokens.length === 0) continue;
+
+                let groupMatch = true;
+
+                for (let i = 0; i < tokens.length; i++) {
+                    const token = tokens[i];
+
+                    if (token.startsWith('-') || token.startsWith('!')) {
+                        const excludeTerm = token.substring(1).trim();
+                        if (excludeTerm && normItem.includes(excludeTerm)) {
+                            groupMatch = false;
+                            break;
+                        }
+                    } else {
+                        if (!normItem.includes(token)) {
+                            groupMatch = false;
+                            break;
+                        }
                     }
                 }
+
+                // Se qualquer um dos grupos de "OU" bater, retorna verdadeiro
+                if (groupMatch) {
+                    return true;
+                }
             }
-            return true;
+
+            return false;
         }
 
         function getFilteredCarteira(ignoreColKey = null) {
@@ -869,6 +971,7 @@
             for (let i = 0; i < rawCarteira.length; i++) {
                 const item = rawCarteira[i];
 
+                // FILTROS DE CABEÇALHO DA TABELA
                 let colFilterMatch = true;
                 for (const colKey in colFilterState) {
                     if (ignoreColKey && colKey === ignoreColKey) continue;
@@ -884,6 +987,7 @@
                 }
                 if (!colFilterMatch) continue;
 
+                // FILTROS SUPERIORES MULTISSELEÇÃO
                 if (filterState.Empresa.size > 0 && !filterState.Empresa.has(String(item.Empresa || '').trim())) continue;
                 if (filterState.Cliente.size > 0 && !filterState.Cliente.has(String(item.Cliente || '').trim())) continue;
                 if (filterState.Código.size > 0 && !filterState.Código.has(String(item.Código || '').trim())) continue;
@@ -919,6 +1023,7 @@
                     if (!filterState.Capacidade.has(statusCap)) continue;
                 }
 
+                // FILTRAGEM RÍGIDA POR 'Dt. Pesquisa'
                 const rawDtPesquisa = item['Dt. Pesquisa'];
                 const dtPesquisa = (rawDtPesquisa && rawDtPesquisa !== 'NaT' && rawDtPesquisa !== 'None' && rawDtPesquisa !== 'null') ? String(rawDtPesquisa).substring(0, 10) : '';
 
@@ -929,7 +1034,7 @@
                 }
 
                 if (search) {
-                    const fullItemStr = `${item['Nº Orçamento']||''} ${item.Cliente||''} ${item.Código||''} ${item.Item||''} ${item['Nº Pedido']||''} ${item['Nº OS']||''} ${item.Empresa||''} ${item.Etapa||''} ${item['Status OS']||''}`.toLowerCase();
+                    const fullItemStr = `${item['Nº Orçamento']||''} ${item.Cliente||''} ${item.Código||''} ${item.Item||''} ${item['Nº Pedido']||''} ${item['Nº OS']||''} ${item.Empresa||''} ${item.Etapa||''} ${item['Status OS']||''}`;
                     if (!matchesWildcardSearch(fullItemStr, search)) continue;
                 }
 
@@ -992,7 +1097,6 @@
             let vlFaltaComprarUnico = 0;
             for (let k in osComprarMap) vlFaltaComprarUnico += osComprarMap[k];
 
-            // ATUALIZAÇÃO DOS KPIS DINO
             document.getElementById('kpiTotalItens').textContent = totalItens;
             document.getElementById('kpiSaldoEntregar').textContent = saldoEntregar.toLocaleString('pt-BR');
             document.getElementById('kpiValorTotal').textContent = fmtBRL(vlTotal);
