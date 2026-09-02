@@ -14,7 +14,7 @@
     <meta property="og:image" content="https://consultoriarf.net/producao_pstec/LOGO MINIMALISTA.png">
     <meta property="og:type" content="website">
 
-    <title>Carteira de Produção - PSTEC V2.3 Pro</title>
+    <title>Carteira de Produção - PSTEC V2.5 Pro</title>
 
     <!-- Autenticação Token -->
     <script>
@@ -72,7 +72,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-extrabold tracking-wide text-white">GRUPO PSTEC</h1>
-                    <p class="text-xs text-pstec-100">Carteira de Produção V2.3 Pro</p>
+                    <p class="text-xs text-pstec-100">Carteira de Produção V2.5 Pro</p>
                 </div>
             </div>
 
@@ -88,8 +88,8 @@
                     <span>Programação OS</span>
                 </a>
 
-                <!-- BOTÃO EXPORTAR EXCEL -->
-                <button onclick="exportToExcel()" class="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition shadow-md" title="Exportar tabela filtrada para Excel">
+                <!-- BOTÃO EXPORTAR EXCEL MODAL -->
+                <button onclick="openExportModal()" class="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition shadow-md" title="Configurar e exportar para Excel">
                     <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
                     <span class="hidden sm:inline">Exportar Excel</span>
                 </button>
@@ -157,21 +157,41 @@
                         <i data-lucide="chevron-up" id="iconToggleFiltros" class="w-4 h-4 text-slate-400"></i>
                     </button>
                 </div>
-                <button onclick="clearAllFilters()" class="text-[11px] text-red-600 font-bold hover:underline flex items-center gap-1">
-                    <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
-                    <span>Limpar Todos os Filtros</span>
-                </button>
+
+                <div class="flex items-center gap-3">
+                    <!-- BOTÃO GERENCIADOR DE VISIBILIDADE DAS COLUNAS DA TABELA -->
+                    <div class="relative custom-dd-container">
+                        <button onclick="toggleDropdownMenu('tableColsVisibilityMenu')" class="flex items-center gap-1 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold rounded-lg text-[11px] transition" title="Exibir ou Ocultar Colunas da Tabela">
+                            <i data-lucide="columns" class="w-3.5 h-3.5 text-pstec-700"></i>
+                            <span>Exibir Colunas ⚙️</span>
+                        </button>
+
+                        <div id="tableColsVisibilityMenu" class="hidden absolute right-0 top-full mt-1 w-60 bg-white border border-slate-200 rounded-2xl shadow-xl z-40 p-3 text-xs custom-dd-menu">
+                            <div class="flex justify-between items-center pb-2 border-b border-slate-100 mb-2 font-bold text-slate-700">
+                                <span>Colunas Visíveis na Tabela</span>
+                                <button onclick="resetTableColsVisibility()" class="text-[10px] text-pstec-700 hover:underline">Restaurar</button>
+                            </div>
+                            <div id="tableColsVisibilityCheckboxes" class="max-h-56 overflow-y-auto custom-scroll space-y-1">
+                                <!-- Gerado via JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="clearAllFilters()" class="text-[11px] text-red-600 font-bold hover:underline flex items-center gap-1">
+                        <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+                        <span>Limpar Todos os Filtros</span>
+                    </button>
+                </div>
             </div>
 
             <!-- ÁREA RECOLHÍVEL DOS FILTROS SUPERIORES -->
             <div id="collapsibleFilterContent" class="flex flex-col gap-3 transition-all duration-300">
                 
-                <!-- Pesquisa Coringa Global com Botão de Interrogação HINT -->
+                <!-- Pesquisa Coringa Global -->
                 <div class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 flex items-center gap-2 text-xs">
                     <i data-lucide="search" class="w-4 h-4 text-pstec-600 shrink-0"></i>
                     <input type="text" id="searchInput" oninput="debounceRender()" placeholder="Pesquisa Coringa (ex: GRID, MAURI ou %PCP%EXPEDIÇÃO% ou use '-' para Excluir)..." class="w-full bg-transparent text-slate-800 focus:outline-none font-bold placeholder-slate-400 py-1">
                     
-                    <!-- BOTÃO INTERROGAÇÃO DE AJUDA DO PESQUISAR -->
                     <button onclick="openSearchHelpModal()" class="p-1.5 bg-pstec-100 hover:bg-pstec-200 text-pstec-700 rounded-lg font-black transition flex items-center justify-center shrink-0 border border-pstec-200" title="Como funciona a pesquisa?">
                         <i data-lucide="help-circle" class="w-4 h-4 text-pstec-700"></i>
                     </button>
@@ -213,12 +233,12 @@
             </div>
         </div>
 
-        <!-- TABELA PRINCIPAL DE CARTEIRA COM FILTROS CRUZADOS NO ESTILO EXCEL -->
+        <!-- TABELA PRINCIPAL DE CARTEIRA (ALTURA DINÂMICA) -->
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-            <div id="tableScrollContainer" class="overflow-x-auto custom-scroll max-h-[60vh]">
+            <div id="tableScrollContainer" class="overflow-x-auto custom-scroll transition-all duration-300 max-h-[60vh]">
                 <table class="w-full text-left text-[11px] border-collapse whitespace-nowrap">
                     <thead id="mainTableHeader" class="sticky top-0 z-20 bg-pstec-700 text-white font-extrabold uppercase text-[10px] tracking-wider select-none">
-                        <!-- Renderizado via JS para incluir Popovers de Filtro Excel por Coluna -->
+                        <!-- Renderizado via JS -->
                     </thead>
                     <tbody id="carteiraTableBody" class="divide-y divide-slate-100 font-medium text-slate-700">
                         <!-- Renderizado via JavaScript -->
@@ -258,12 +278,71 @@
     <!-- FOOTER -->
     <footer class="bg-white border-t border-slate-200 py-3 mt-auto">
         <div class="max-w-[96%] mx-auto px-4 flex justify-between items-center text-xs text-slate-500">
-            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V2.3 Pro</span>
+            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V2.5 Pro</span>
             <span id="lastUpdateLabel">Atualizado: -</span>
         </div>
     </footer>
 
-    <!-- MODAL DE AJUDA / GUIA DO PESQUISAR (HINT) -->
+    <!-- MODAL DE CONFIGURAÇÃO DE EXPORTAÇÃO PARA EXCEL -->
+    <div id="exportModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[80]">
+        <div class="bg-white text-slate-800 rounded-3xl shadow-2xl max-w-xl w-full flex flex-col overflow-hidden border border-slate-200">
+            <div class="bg-pstec-700 px-6 py-4 flex justify-between items-center text-white">
+                <div class="flex items-center gap-2 font-extrabold text-sm">
+                    <i data-lucide="file-spreadsheet" class="w-5 h-5 text-pstecgreen-500"></i>
+                    <span>Configurar Exportação para Excel</span>
+                </div>
+                <button onclick="closeExportModal()" class="text-slate-300 hover:text-white p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+
+            <div class="p-6 space-y-4 text-xs overflow-y-auto max-h-[75vh] custom-scroll">
+                
+                <!-- SELEÇÃO DO FORMATO DE CAMPOS -->
+                <div class="space-y-1.5">
+                    <label class="font-extrabold text-slate-700 uppercase block text-[10px]">1. Quais colunas do resultado filtrado deseja incluir?</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <label class="flex items-center gap-2.5 p-3 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer font-bold text-slate-700">
+                            <input type="radio" name="exportColPreset" value="visible" checked onchange="handleExportPresetChange('visible')" class="text-pstec-700 focus:ring-pstec-500">
+                            <span>Apenas Colunas Visíveis da Tabela</span>
+                        </label>
+                        <label class="flex items-center gap-2.5 p-3 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer font-bold text-slate-700">
+                            <input type="radio" name="exportColPreset" value="all" onchange="handleExportPresetChange('all')" class="text-pstec-700 focus:ring-pstec-500">
+                            <span>Incluir Todos os Campos (Tabela + Modal)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- SELEÇÃO PERSONALIZADA DAS COLUNAS -->
+                <div class="space-y-2 pt-2 border-t border-slate-100">
+                    <div class="flex justify-between items-center">
+                        <label class="font-extrabold text-slate-700 uppercase block text-[10px]">2. Ajuste Fino dos Campos</label>
+                        <div class="flex gap-2 text-[10px] font-bold">
+                            <button onclick="setExportColsState(true)" class="text-pstec-700 hover:underline">Marcar Todas</button>
+                            <span class="text-slate-300">|</span>
+                            <button onclick="setExportColsState(false)" class="text-red-600 hover:underline">Desmarcar Todas</button>
+                        </div>
+                    </div>
+
+                    <div id="exportColsCheckboxes" class="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-200 max-h-56 overflow-y-auto custom-scroll">
+                        <!-- Preenchido via JS -->
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="bg-slate-50 px-6 py-3 border-t border-slate-200 flex justify-between items-center shrink-0">
+                <span class="text-[11px] text-slate-500 font-semibold">Exportando <span id="lblExportCountTag" class="text-pstec-700 font-bold">0</span> registros filtrados</span>
+                <div class="flex gap-2">
+                    <button onclick="closeExportModal()" class="px-4 py-2 bg-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-300 transition">Cancelar</button>
+                    <button onclick="executeExcelExport()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition flex items-center gap-1.5">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        <span>Gerar Excel</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE AJUDA / GUIA DO PESQUISAR -->
     <div id="searchHelpModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[70]">
         <div class="bg-white text-slate-800 rounded-3xl shadow-2xl max-w-lg w-full p-6 space-y-4 border border-slate-200 relative">
             <div class="flex justify-between items-center border-b pb-3">
@@ -423,7 +502,7 @@
         </div>
     </div>
 
-    <!-- LOGICA JS DA V2.3 PRO -->
+    <!-- LOGICA JS DA V2.4 PRO -->
     <script>
         const API_CARTEIRA = 'https://pstec.consultoriarf.net/CARTEIRA';
         let rawCarteira = [];
@@ -436,6 +515,9 @@
         let batchStep = 50;
         let debounceTimer = null;
         let isFiltrosCollapsed = false;
+
+        // Estado das Colunas Ocultas na Tabela
+        let hiddenTableCols = new Set();
 
         const filterState = {
             Empresa: new Set(),
@@ -460,6 +542,7 @@
 
         const colFilterState = {};
 
+        // TODAS AS COLUNAS DA TABELA PRINCIPAL
         const tableColumnsConfig = [
             { key: 'Nº Orçamento', label: 'Orçamento', align: 'left', sortable: true },
             { key: 'Cliente', label: 'Cliente', align: 'left', sortable: true },
@@ -482,6 +565,43 @@
             { key: 'Disponibilidade Material', label: 'Disp. Material', align: 'left', sortable: false },
             { key: 'Prata', label: 'Prata', align: 'left', sortable: false },
             { key: 'Empresa', label: 'Empresa', align: 'left', sortable: false }
+        ];
+
+        // CONFIGURAÇÃO TODAS AS COLUNAS EXPORTÁVEIS PARA O MODAL DO EXCEL
+        const exportableColsConfig = [
+            { id: 'col_AcaoIndex', label: 'ID Ação / Sequência', defaultVisible: true, defaultAll: true },
+            { id: 'Nº Orçamento', label: 'Nº Orçamento', defaultVisible: true, defaultAll: true },
+            { id: 'Cliente', label: 'Cliente', defaultVisible: true, defaultAll: true },
+            { id: 'Código', label: 'Código do Item', defaultVisible: true, defaultAll: true },
+            { id: 'Item', label: 'Descrição do Item', defaultVisible: true, defaultAll: true },
+            { id: 'Nº Pedido', label: 'Nº Pedido', defaultVisible: true, defaultAll: true },
+            { id: 'Nº OS', label: 'Nº OS', defaultVisible: true, defaultAll: true },
+            { id: 'Status OS', label: 'Status OS', defaultVisible: true, defaultAll: true },
+            { id: 'Dt. aprovação', label: 'Dt. Aprovação', defaultVisible: true, defaultAll: true },
+            { id: 'Prev. entrega(original)', label: 'Prev. Entrega (Original)', defaultVisible: true, defaultAll: true },
+            { id: 'Dt. Negociada', label: 'Dt. Negociada', defaultVisible: false, defaultAll: true },
+            { id: 'Dt. Pesquisa', label: 'Dt. Pesquisa', defaultVisible: false, defaultAll: true },
+            { id: 'Qtde. Total', label: 'Qtde. Total', defaultVisible: true, defaultAll: true },
+            { id: 'Qtde. Entregue', label: 'Qtde. Entregue', defaultVisible: true, defaultAll: true },
+            { id: 'Saldo a entregar', label: 'Saldo a Entregar', defaultVisible: true, defaultAll: true },
+            { id: 'Vl. Unitário', label: 'Vl. Unitário', defaultVisible: true, defaultAll: true },
+            { id: 'Vl. Total', label: 'Vl. Total', defaultVisible: true, defaultAll: true },
+            { id: 'Vl. a faturar', label: 'Vl. a Faturar', defaultVisible: true, defaultAll: true },
+            { id: 'Vl. Liberado', label: 'Vl. Liberado', defaultVisible: true, defaultAll: true },
+            { id: 'Valor fat. disp.', label: 'Valor Fat. Disp.', defaultVisible: true, defaultAll: true },
+            { id: 'Vl. Lucro', label: 'Vl. Lucro', defaultVisible: true, defaultAll: true },
+            { id: 'Margem Lucro', label: 'Margem Lucro (%)', defaultVisible: true, defaultAll: true },
+            { id: 'Valor falta comprar', label: 'Vl. Falta Comprar', defaultVisible: true, defaultAll: true },
+            { id: 'Etapa', label: 'Etapa do Processo', defaultVisible: false, defaultAll: true },
+            { id: 'Disponibilidade Material', label: 'Disp. Material', defaultVisible: true, defaultAll: true },
+            { id: 'Lista de Materiais', label: 'Lista de Materiais', defaultVisible: false, defaultAll: true },
+            { id: 'Processamento LM', label: 'Processamento LM', defaultVisible: false, defaultAll: true },
+            { id: 'Ordem de compra', label: 'Ordem de Compra', defaultVisible: false, defaultAll: true },
+            { id: 'Prata', label: 'Prata', defaultVisible: true, defaultAll: true },
+            { id: 'Capacidade disponivel', label: 'Capacidade Disponível', defaultVisible: false, defaultAll: true },
+            { id: 'Tipo', label: 'Tipo', defaultVisible: false, defaultAll: true },
+            { id: 'Prioridade', label: 'Prioridade', defaultVisible: false, defaultAll: true },
+            { id: 'Empresa', label: 'Empresa', defaultVisible: true, defaultAll: true }
         ];
 
         const configDropdowns = [
@@ -509,6 +629,12 @@
             const nomeUser = localStorage.getItem('pstec_usuario_nome');
             if (nomeUser) {
                 document.getElementById('userDisplayName').textContent = nomeUser;
+            }
+
+            // Restaura colunas ocultas da tabela do localStorage
+            const savedHiddenCols = localStorage.getItem('pstec_carteira_hidden_table_cols');
+            if (savedHiddenCols) {
+                try { hiddenTableCols = new Set(JSON.parse(savedHiddenCols)); } catch(e){}
             }
 
             if (localStorage.getItem('pstec_carteira_filtros_collapsed') === 'true') {
@@ -545,16 +671,25 @@
         function toggleFiltros(forceState = null) {
             const content = document.getElementById('collapsibleFilterContent');
             const icon = document.getElementById('iconToggleFiltros');
+            const tableContainer = document.getElementById('tableScrollContainer');
             
             isFiltrosCollapsed = forceState !== null ? forceState : !isFiltrosCollapsed;
 
             if (isFiltrosCollapsed) {
                 content.classList.add('hidden');
                 if (icon) icon.setAttribute('data-lucide', 'chevron-down');
+                if (tableContainer) {
+                    tableContainer.classList.remove('max-h-[60vh]');
+                    tableContainer.classList.add('max-h-[78vh]');
+                }
                 localStorage.setItem('pstec_carteira_filtros_collapsed', 'true');
             } else {
                 content.classList.remove('hidden');
                 if (icon) icon.setAttribute('data-lucide', 'chevron-up');
+                if (tableContainer) {
+                    tableContainer.classList.remove('max-h-[78vh]');
+                    tableContainer.classList.add('max-h-[60vh]');
+                }
                 localStorage.setItem('pstec_carteira_filtros_collapsed', 'false');
             }
 
@@ -574,6 +709,7 @@
                 
                 rawCarteira = await response.json();
 
+                renderTableColsVisibilityDropdown();
                 renderTableHeader();
                 renderDropdownsHTML();
                 renderCarteiraView();
@@ -589,6 +725,41 @@
             }
         }
 
+        // GERENCIADOR DE COLUNAS VISÍVEIS NA TABELA (EXIBIR / OCULTAR)
+        function renderTableColsVisibilityDropdown() {
+            const container = document.getElementById('tableColsVisibilityCheckboxes');
+            if (!container) return;
+
+            container.innerHTML = tableColumnsConfig.map(col => {
+                const isChecked = !hiddenTableCols.has(col.key);
+                return `
+                    <label class="flex items-center gap-2 px-2 py-1 hover:bg-slate-100 cursor-pointer rounded-lg text-slate-700 font-semibold text-[11px]">
+                        <input type="checkbox" value="${col.key}" ${isChecked ? 'checked' : ''} onchange="toggleTableColVisibility('${col.key}')" class="rounded text-pstec-700 focus:ring-pstec-500">
+                        <span class="truncate" title="${col.label}">${col.label}</span>
+                    </label>
+                `;
+            }).join('');
+        }
+
+        function toggleTableColVisibility(key) {
+            if (hiddenTableCols.has(key)) {
+                hiddenTableCols.delete(key);
+            } else {
+                hiddenTableCols.add(key);
+            }
+            localStorage.setItem('pstec_carteira_hidden_table_cols', JSON.stringify(Array.from(hiddenTableCols)));
+            renderTableHeader();
+            renderCarteiraView();
+        }
+
+        function resetTableColsVisibility() {
+            hiddenTableCols.clear();
+            localStorage.removeItem('pstec_carteira_hidden_table_cols');
+            renderTableColsVisibilityDropdown();
+            renderTableHeader();
+            renderCarteiraView();
+        }
+
         function renderTableHeader() {
             const thead = document.getElementById('mainTableHeader');
             if (!thead) return;
@@ -596,6 +767,8 @@
             let trHTML = '<tr><th class="p-3">Ação</th>';
 
             tableColumnsConfig.forEach(col => {
+                if (hiddenTableCols.has(col.key)) return; // Pula se oculto
+
                 const isFiltered = Boolean(colFilterState[col.key] && colFilterState[col.key].size > 0);
                 const alignClass = col.align === 'center' ? 'text-center' : (col.align === 'right' ? 'text-right' : 'text-left');
 
@@ -905,14 +1078,12 @@
             }
         }
 
-        // NOVO ALGORITMO DE BUSCA CORINGA COM SUPORTE A "OU" (vírgula, ;, |), "E" (espaço, %) E "NÃO CONTÉM" (-)
         function matchesWildcardSearch(itemStr, searchInput) {
             if (!searchInput) return true;
             
             const normItem = normalizeStr(itemStr);
             const normInput = normalizeStr(searchInput);
 
-            // Separa por grupos de "OU"
             const orGroups = normInput
                 .replace(/;/g, ',')
                 .replace(/\|/g, ',')
@@ -923,7 +1094,6 @@
             for (let g = 0; g < orGroups.length; g++) {
                 const group = orGroups[g];
                 
-                // Separa por sub-termos de "E"
                 const tokens = group
                     .replace(/%/g, ' ')
                     .split(/\s+/)
@@ -951,7 +1121,6 @@
                     }
                 }
 
-                // Se qualquer um dos grupos de "OU" bater, retorna verdadeiro
                 if (groupMatch) {
                     return true;
                 }
@@ -971,7 +1140,6 @@
             for (let i = 0; i < rawCarteira.length; i++) {
                 const item = rawCarteira[i];
 
-                // FILTROS DE CABEÇALHO DA TABELA
                 let colFilterMatch = true;
                 for (const colKey in colFilterState) {
                     if (ignoreColKey && colKey === ignoreColKey) continue;
@@ -987,7 +1155,6 @@
                 }
                 if (!colFilterMatch) continue;
 
-                // FILTROS SUPERIORES MULTISSELEÇÃO
                 if (filterState.Empresa.size > 0 && !filterState.Empresa.has(String(item.Empresa || '').trim())) continue;
                 if (filterState.Cliente.size > 0 && !filterState.Cliente.has(String(item.Cliente || '').trim())) continue;
                 if (filterState.Código.size > 0 && !filterState.Código.has(String(item.Código || '').trim())) continue;
@@ -1023,7 +1190,6 @@
                     if (!filterState.Capacidade.has(statusCap)) continue;
                 }
 
-                // FILTRAGEM RÍGIDA POR 'Dt. Pesquisa'
                 const rawDtPesquisa = item['Dt. Pesquisa'];
                 const dtPesquisa = (rawDtPesquisa && rawDtPesquisa !== 'NaT' && rawDtPesquisa !== 'None' && rawDtPesquisa !== 'null') ? String(rawDtPesquisa).substring(0, 10) : '';
 
@@ -1142,46 +1308,52 @@
 
                 const isParcial = entregue > 0 && saldo > 0;
 
-                return `
-                    <tr class="${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'} hover:bg-pstec-50/60 transition-colors">
-                        <td class="p-3">
-                            <button onclick="openModal(${idx})" class="p-1.5 bg-pstec-700 hover:bg-pstec-800 text-white rounded-lg font-bold text-[10px] transition shadow-xs" title="Ver Detalhes">
-                                <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-                            </button>
-                        </td>
-                        <td class="p-3 font-bold font-mono text-pstec-700">${item['Nº Orçamento'] || '-'}</td>
-                        <td class="p-3 font-bold text-slate-800 uppercase max-w-[140px] truncate" title="${item.Cliente||''}">${item.Cliente || '-'}</td>
-                        <td class="p-3 max-w-[220px] truncate" title="${item.Item||''}">
-                            <span class="font-bold text-slate-700 font-mono block text-[10px]">${item.Código || '-'}</span>
-                            <span class="text-slate-500 font-medium">${item.Item || '-'}</span>
-                        </td>
-                        <td class="p-3 font-mono text-slate-600">${item['Nº Pedido'] || '-'}</td>
-                        <td class="p-3">
-                            <span class="font-bold font-mono text-slate-800 block">${item['Nº OS'] ? 'OS ' + item['Nº OS'] : '-'}</span>
-                            <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded ${item['Status OS'] === 'APROVADO' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}">${item['Status OS'] || 'SEM OS'}</span>
-                        </td>
-                        <td class="p-3 text-center font-semibold text-slate-600">${dtAprov}</td>
-                        <td class="p-3 text-center font-bold text-slate-700">${prevEnt}</td>
-                        <td class="p-3 text-right font-mono">${total.toLocaleString('pt-BR')}</td>
-                        <td class="p-3 text-right font-mono ${isParcial ? 'text-amber-600 font-bold' : ''}">${entregue.toLocaleString('pt-BR')}</td>
-                        <td class="p-3 text-right font-mono font-bold text-pstec-700">${saldo.toLocaleString('pt-BR')}</td>
-                        
-                        <td class="p-3 text-right font-mono">${fmtBRL(vlUnit)}</td>
-                        <td class="p-3 text-right font-mono font-bold text-slate-800">${fmtBRL(vlTotal)}</td>
-                        <td class="p-3 text-right font-mono font-bold text-blue-600">${fmtBRL(vlAFat)}</td>
-                        <td class="p-3 text-right font-mono font-bold text-emerald-600">${fmtBRL(vlLib)}</td>
-                        <td class="p-3 text-right font-mono font-bold text-purple-700">${fmtBRL(vlFatDisp)}</td>
-                        <td class="p-3 text-right font-mono font-bold text-emerald-700 bg-emerald-50/50">${fmtBRL(vlLucro)}</td>
-                        <td class="p-3 text-right font-mono font-bold text-emerald-700 bg-emerald-50/50">${margemLucroStr}</td>
-                        <td class="p-3 text-right font-mono font-bold text-red-600">${fmtBRL(vlFaltaComp)}</td>
-
-                        <td class="p-3">
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${item['Disponibilidade Material'] === 'Total disponível' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${item['Disponibilidade Material'] || '-'}</span>
-                        </td>
-                        <td class="p-3 font-bold">${item.Prata || '-'}</td>
-                        <td class="p-3 text-slate-500 uppercase max-w-[150px] truncate" title="${item.Empresa||''}">${item.Empresa || '-'}</td>
-                    </tr>
+                // CÉLULAS DINÂMICAS DE ACORDO COM A VISIBILIDADE DAS COLUNAS
+                let cellsHTML = `
+                    <td class="p-3">
+                        <button onclick="openModal(${idx})" class="p-1.5 bg-pstec-700 hover:bg-pstec-800 text-white rounded-lg font-bold text-[10px] transition shadow-xs" title="Ver Detalhes">
+                            <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </td>
                 `;
+
+                if (!hiddenTableCols.has('Nº Orçamento')) cellsHTML += `<td class="p-3 font-bold font-mono text-pstec-700">${item['Nº Orçamento'] || '-'}</td>`;
+                if (!hiddenTableCols.has('Cliente')) cellsHTML += `<td class="p-3 font-bold text-slate-800 uppercase max-w-[140px] truncate" title="${item.Cliente||''}">${item.Cliente || '-'}</td>`;
+                if (!hiddenTableCols.has('Código')) cellsHTML += `
+                    <td class="p-3 max-w-[220px] truncate" title="${item.Item||''}">
+                        <span class="font-bold text-slate-700 font-mono block text-[10px]">${item.Código || '-'}</span>
+                        <span class="text-slate-500 font-medium">${item.Item || '-'}</span>
+                    </td>
+                `;
+                if (!hiddenTableCols.has('Nº Pedido')) cellsHTML += `<td class="p-3 font-mono text-slate-600">${item['Nº Pedido'] || '-'}</td>`;
+                if (!hiddenTableCols.has('Nº OS')) cellsHTML += `
+                    <td class="p-3">
+                        <span class="font-bold font-mono text-slate-800 block">${item['Nº OS'] ? 'OS ' + item['Nº OS'] : '-'}</span>
+                        <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded ${item['Status OS'] === 'APROVADO' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}">${item['Status OS'] || 'SEM OS'}</span>
+                    </td>
+                `;
+                if (!hiddenTableCols.has('Dt. aprovação')) cellsHTML += `<td class="p-3 text-center font-semibold text-slate-600">${dtAprov}</td>`;
+                if (!hiddenTableCols.has('Prev. entrega(original)')) cellsHTML += `<td class="p-3 text-center font-bold text-slate-700">${prevEnt}</td>`;
+                if (!hiddenTableCols.has('Qtde. Total')) cellsHTML += `<td class="p-3 text-right font-mono">${total.toLocaleString('pt-BR')}</td>`;
+                if (!hiddenTableCols.has('Qtde. Entregue')) cellsHTML += `<td class="p-3 text-right font-mono ${isParcial ? 'text-amber-600 font-bold' : ''}">${entregue.toLocaleString('pt-BR')}</td>`;
+                if (!hiddenTableCols.has('Saldo a entregar')) cellsHTML += `<td class="p-3 text-right font-mono font-bold text-pstec-700">${saldo.toLocaleString('pt-BR')}</td>`;
+                if (!hiddenTableCols.has('Vl. Unitário')) cellsHTML += `<td class="p-3 text-right font-mono">${fmtBRL(vlUnit)}</td>`;
+                if (!hiddenTableCols.has('Vl. Total')) cellsHTML += `<td class="p-3 text-right font-mono font-bold text-slate-800">${fmtBRL(vlTotal)}</td>`;
+                if (!hiddenTableCols.has('Vl. a faturar')) cellsHTML += `<td class="p-3 text-right font-mono font-bold text-blue-600">${fmtBRL(vlAFat)}</td>`;
+                if (!hiddenTableCols.has('Vl. Liberado')) cellsHTML += `<td class="p-3 text-right font-mono font-bold text-emerald-600">${fmtBRL(vlLib)}</td>`;
+                if (!hiddenTableCols.has('Valor fat. disp.')) cellsHTML += `<td class="p-3 text-right font-mono font-bold text-purple-700">${fmtBRL(vlFatDisp)}</td>`;
+                if (!hiddenTableCols.has('Vl. Lucro')) cellsHTML += `<td class="p-3 text-right font-mono font-bold text-emerald-700 bg-emerald-50/50">${fmtBRL(vlLucro)}</td>`;
+                if (!hiddenTableCols.has('Margem Lucro')) cellsHTML += `<td class="p-3 text-right font-mono font-bold text-emerald-700 bg-emerald-50/50">${margemLucroStr}</td>`;
+                if (!hiddenTableCols.has('Valor falta comprar')) cellsHTML += `<td class="p-3 text-right font-mono font-bold text-red-600">${fmtBRL(vlFaltaComp)}</td>`;
+                if (!hiddenTableCols.has('Disponibilidade Material')) cellsHTML += `
+                    <td class="p-3">
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${item['Disponibilidade Material'] === 'Total disponível' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${item['Disponibilidade Material'] || '-'}</span>
+                    </td>
+                `;
+                if (!hiddenTableCols.has('Prata')) cellsHTML += `<td class="p-3 font-bold">${item.Prata || '-'}</td>`;
+                if (!hiddenTableCols.has('Empresa')) cellsHTML += `<td class="p-3 text-slate-500 uppercase max-w-[150px] truncate" title="${item.Empresa||''}">${item.Empresa || '-'}</td>`;
+
+                return `<tr class="${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'} hover:bg-pstec-50/60 transition-colors">${cellsHTML}</tr>`;
             }).join('');
 
             updatePaginationControls(itemsToRender.length, currentFilteredData.length);
@@ -1218,44 +1390,108 @@
             renderTableBatch();
         }
 
-        function exportToExcel() {
+        // LÓGICA DO MODAL DE EXPORTAÇÃO EXCEL PARA DADOS FILTRADOS
+        function openExportModal() {
+            const m = document.getElementById('exportModal');
+            if (!m) return;
+
+            document.getElementById('lblExportCountTag').textContent = currentFilteredData.length;
+
+            const savedColsJson = localStorage.getItem('pstec_carteira_export_cols');
+            let savedColsSet = null;
+            if (savedColsJson) {
+                try { savedColsSet = new Set(JSON.parse(savedColsJson)); } catch(e){}
+            }
+
+            const container = document.getElementById('exportColsCheckboxes');
+            if (container) {
+                container.innerHTML = exportableColsConfig.map(col => {
+                    // Padrão atual baseado no preset selecionado
+                    const isChecked = savedColsSet ? savedColsSet.has(col.id) : col.defaultVisible;
+                    return `
+                        <label class="flex items-center gap-2 p-1.5 hover:bg-white rounded-lg cursor-pointer font-semibold text-slate-700">
+                            <input type="checkbox" value="${col.id}" ${isChecked ? 'checked' : ''} class="export-col-checkbox rounded text-emerald-600 focus:ring-emerald-500">
+                            <span class="truncate" title="${col.label}">${col.label}</span>
+                        </label>
+                    `;
+                }).join('');
+            }
+
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function closeExportModal() {
+            const m = document.getElementById('exportModal');
+            if (m) {
+                m.classList.add('hidden');
+                m.classList.remove('flex');
+            }
+        }
+
+        function handleExportPresetChange(preset) {
+            document.querySelectorAll('.export-col-checkbox').forEach(cb => {
+                const colConf = exportableColsConfig.find(c => c.id === cb.value);
+                if (colConf) {
+                    cb.checked = preset === 'all' ? colConf.defaultAll : colConf.defaultVisible;
+                }
+            });
+        }
+
+        function setExportColsState(enableAll) {
+            document.querySelectorAll('.export-col-checkbox').forEach(cb => {
+                cb.checked = enableAll;
+            });
+        }
+
+        function executeExcelExport() {
             if (!currentFilteredData || currentFilteredData.length === 0) {
-                alert('Não há dados filtrados para exportar.');
+                alert('Não há dados filtrados na tela para exportar.');
                 return;
             }
 
-            const excelRows = currentFilteredData.map(item => ({
-                'Orçamento': item['Nº Orçamento'] || '',
-                'Cliente': item.Cliente || '',
-                'Código': item.Código || '',
-                'Descrição Item': item.Item || '',
-                'Nº Pedido': item['Nº Pedido'] || '',
-                'Nº OS': item['Nº OS'] || '',
-                'Status OS': item['Status OS'] || '',
-                'Dt. Aprovação': fmtDate(item['Dt. aprovação']),
-                'Prev. Entrega': fmtDate(item['Prev. entrega(original)']),
-                'Qtde Total': parseNum(item['Qtde. Total']),
-                'Qtde Entregue': parseNum(item['Qtde. Entregue']),
-                'Saldo Entregar': parseNum(item['Saldo a entregar']),
-                'Vl. Unitário': parseNum(item['Vl. Unitário']),
-                'Vl. Total': parseNum(item['Vl. Total']),
-                'Vl. a Faturar': parseNum(item['Vl. a faturar']),
-                'Vl. Liberado': parseNum(item['Vl. Liberado']),
-                'Valor Fat. Disp.': parseNum(item['Valor fat. disp.']),
-                'Vl. Lucro': parseNum(item['Vl. Lucro']),
-                'Margem Lucro (%)': fmtPct(item['Margem Lucro']),
-                'Vl. Falta Comprar': parseNum(item['Valor falta comprar']),
-                'Disp. Material': item['Disponibilidade Material'] || '',
-                'Prata': item.Prata || '',
-                'Empresa': item.Empresa || ''
-            }));
+            const selectedColElements = document.querySelectorAll('.export-col-checkbox:checked');
+            if (selectedColElements.length === 0) {
+                alert('Selecione pelo menos uma coluna para incluir no arquivo Excel.');
+                return;
+            }
+
+            const selectedCols = Array.from(selectedColElements).map(cb => cb.value);
+            localStorage.setItem('pstec_carteira_export_cols', JSON.stringify(selectedCols));
+
+            const excelRows = currentFilteredData.map((item, idx) => {
+                const rowObj = {};
+                selectedCols.forEach(colId => {
+                    if (colId === 'col_AcaoIndex') {
+                        rowObj['ID Ação'] = idx + 1;
+                    } else {
+                        const colConf = exportableColsConfig.find(c => c.id === colId);
+                        const labelName = colConf ? colConf.label : colId;
+                        let val = item[colId];
+
+                        if (colId.includes('Dt.') || colId.includes('Prev.')) {
+                            rowObj[labelName] = fmtDate(val);
+                        } else if (colId.includes('Qtde') || colId.includes('Saldo') || colId.includes('Vl.') || colId.includes('Valor') || colId.includes('Capacidade')) {
+                            rowObj[labelName] = parseNum(val);
+                        } else if (colId === 'Margem Lucro') {
+                            rowObj[labelName] = fmtPct(val);
+                        } else {
+                            rowObj[labelName] = val || '';
+                        }
+                    }
+                });
+                return rowObj;
+            });
 
             const worksheet = XLSX.utils.json_to_sheet(excelRows);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Carteira_Producao");
 
-            const fileName = `Carteira_Producao_PSTEC_${new Date().toISOString().substring(0,10)}.xlsx`;
+            const fileName = `Carteira_Producao_PSTEC_FILTRADA_${new Date().toISOString().substring(0,10)}.xlsx`;
             XLSX.writeFile(workbook, fileName);
+
+            closeExportModal();
         }
 
         function openModal(filteredIdx) {
