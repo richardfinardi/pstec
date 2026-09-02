@@ -14,7 +14,7 @@
     <meta property="og:image" content="https://consultoriarf.net/producao_pstec/LOGO MINIMALISTA.png">
     <meta property="og:type" content="website">
 
-    <title>Carteira de Produção - PSTEC V1.6</title>
+    <title>Carteira de Produção - PSTEC V1.7 Ultra Fast</title>
 
     <!-- Autenticação Token -->
     <script>
@@ -71,7 +71,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-extrabold tracking-wide text-white">GRUPO PSTEC</h1>
-                    <p class="text-xs text-pstec-100">Carteira de Produção V1.6</p>
+                    <p class="text-xs text-pstec-100">Carteira de Produção V1.7</p>
                 </div>
             </div>
 
@@ -157,7 +157,6 @@
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 text-xs">
-                    <!-- Previsão de Entrega (De / Até) -->
                     <div class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 flex items-center gap-1.5">
                         <span class="text-[10px] text-slate-400 font-bold">De:</span>
                         <input type="date" id="dateFrom" onchange="renderCarteiraView()" class="bg-transparent w-full text-slate-800 focus:outline-none font-medium">
@@ -343,7 +342,7 @@
     <!-- FOOTER -->
     <footer class="bg-white border-t border-slate-200 py-3 mt-auto">
         <div class="max-w-[96%] mx-auto px-4 flex justify-between items-center text-xs text-slate-500">
-            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V1.6</span>
+            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V1.7</span>
             <span id="lastUpdateLabel">Atualizado: -</span>
         </div>
     </footer>
@@ -369,7 +368,7 @@
         </div>
     </div>
 
-    <!-- LOGICA JS OTIMIZADA -->
+    <!-- LOGICA JS DE ALTA PERFORMANCE -->
     <script>
         const API_CARTEIRA = 'https://pstec.consultoriarf.net/CARTEIRA';
         let rawCarteira = [];
@@ -390,7 +389,6 @@
                 document.getElementById('userDisplayName').textContent = nomeUser;
             }
 
-            // Restaura o estado de recolhido do filtro se existir
             if (localStorage.getItem('pstec_carteira_filtros_collapsed') === 'true') {
                 toggleFiltros(true);
             }
@@ -399,16 +397,11 @@
             fetchCarteiraData();
         });
 
-        // RECOLHER / EXPANDIR ÁREA DE FILTROS
         function toggleFiltros(forceState = null) {
             const content = document.getElementById('collapsibleFilterContent');
             const icon = document.getElementById('iconToggleFiltros');
             
-            if (forceState !== null) {
-                isFiltrosCollapsed = forceState;
-            } else {
-                isFiltrosCollapsed = !isFiltrosCollapsed;
-            }
+            isFiltrosCollapsed = forceState !== null ? forceState : !isFiltrosCollapsed;
 
             if (isFiltrosCollapsed) {
                 content.classList.add('hidden');
@@ -434,36 +427,8 @@
                 const response = await fetch(`${API_CARTEIRA}?_t=${Date.now()}`, { cache: 'no-store' });
                 if (!response.ok) throw new Error(`Erro na API: ${response.status}`);
                 
-                const data = await response.json();
-                
-                rawCarteira = new Array(data.length);
-                for (let id = 0; id < data.length; id++) {
-                    const item = data[id];
-                    const osVal = item['Nº OS'] ? String(item['Nº OS']).trim() : '';
-                    
-                    rawCarteira[id] = {
-                        ...item,
-                        _id: id,
-                        _posicaoFiltro: (!osVal || osVal === 'null') ? 'PCP' : 'PRODUCAO',
-                        _saldo: parseNum(item['Saldo a entregar']),
-                        _entregue: parseNum(item['Qtde. Entregue']),
-                        _total: parseNum(item['Qtde. Total']),
-                        _vlTotal: parseNum(item['Vl. Total']),
-                        _vlAFaturar: parseNum(item['Vl. a faturar']),
-                        _vlLiberado: parseNum(item['Vl. Liberado']),
-                        _vlUnit: parseNum(item['Vl. Unitário']),
-                        _vlFaltaComp: parseNum(item['Valor falta comprar']),
-                        _capDisp: parseNum(item['Capacidade disponivel']),
-                        _searchStr: `${item['Nº Orçamento']||''} ${item.Cliente||''} ${item.Código||''} ${item.Item||''} ${item['Nº Pedido']||''} ${item['Nº OS']||''} ${item.Empresa||''}`.toLowerCase(),
-                        _dtAprov: item['Dt. aprovação'] ? String(item['Dt. aprovação']) : '',
-                        _prevEntrega: item['Prev. entrega(original)'] || item['Dt. Negociada'] ? String(item['Prev. entrega(original)'] || item['Dt. Negociada']) : ''
-                    };
-                }
-
-                const selStatusOS = document.getElementById('filterStatusOS');
-                if (selStatusOS && (!selStatusOS.value || selStatusOS.value === '')) {
-                    selStatusOS.value = 'APROVADO';
-                }
+                // Armazena vetor direto sem criar cópias pesadas
+                rawCarteira = await response.json();
 
                 renderCarteiraView();
 
@@ -471,7 +436,7 @@
                     setTimeout(() => {
                         populateNativeSelects();
                         selectsPopulated = true;
-                    }, 50);
+                    }, 100);
                 }
 
                 document.getElementById('lastUpdateLabel').textContent = `Atualizado: ${new Date().toLocaleTimeString('pt-BR')}`;
@@ -486,56 +451,55 @@
         }
 
         function populateNativeSelects() {
-            const getUnique = (key) => {
+            const fill = (id, key, label) => {
+                const sel = document.getElementById(id);
+                if (!sel) return;
+                const currVal = sel.value;
                 const set = new Set();
+                
                 for (let i = 0; i < rawCarteira.length; i++) {
                     const val = rawCarteira[i][key];
                     if (val !== null && val !== undefined && String(val).trim() !== '') {
                         set.add(val);
                     }
                 }
-                return Array.from(set).sort();
-            };
-
-            const fill = (id, options, label) => {
-                const sel = document.getElementById(id);
-                if (!sel) return;
-                const currVal = sel.value;
+                
+                const sorted = Array.from(set).sort();
                 sel.innerHTML = `<option value="">${label}</option>`;
-                options.forEach(opt => {
+                
+                for (let i = 0; i < sorted.length; i++) {
                     const el = document.createElement('option');
-                    el.value = opt;
-                    el.textContent = opt;
+                    el.value = sorted[i];
+                    el.textContent = sorted[i];
                     sel.appendChild(el);
-                });
+                }
                 if (currVal) sel.value = currVal;
             };
 
-            fill('filterEmpresa', getUnique('Empresa'), 'Empresa (Todas)');
-            fill('filterCliente', getUnique('Cliente'), 'Cliente (Todos)');
-            fill('filterCodigo', getUnique('Código'), 'Código (Todos)');
-            fill('filterOS', getUnique('Nº OS'), 'Nº OS (Todas)');
-            fill('filterOrcamento', getUnique('Nº Orçamento'), 'Nº Orçamento (Todos)');
-            fill('filterPedido', getUnique('Nº Pedido'), 'Nº Pedido (Todos)');
-            fill('filterStatusOS', getUnique('Status OS'), 'Status OS (Todos)');
-            fill('filterListaMat', getUnique('Lista de Materiais'), 'Lista de Materiais (Todas)');
-            fill('filterProcessamentoLM', getUnique('Processamento LM'), 'Processamento LM (Todos)');
-            fill('filterDispMat', getUnique('Disponibilidade Material'), 'Disponibilidade Material (Todas)');
-            fill('filterOrdemCompra', getUnique('Ordem de compra'), 'Ordem de compra (Todas)');
-            fill('filterPrata', getUnique('Prata'), 'Prata (Todos)');
-            fill('filterTipo', getUnique('Tipo'), 'Tipo (Todos)');
-            fill('filterEtapa', getUnique('Etapa'), 'Etapa (Todas)');
-            fill('filterPCP', ['PCP', 'PRODUCAO'], 'PCP ou PRODUÇÃO (Todos)');
-            fill('filterPrioridade', getUnique('Prioridade'), 'Prioridade (Todas)');
+            fill('filterEmpresa', 'Empresa', 'Empresa (Todas)');
+            fill('filterCliente', 'Cliente', 'Cliente (Todos)');
+            fill('filterCodigo', 'Código', 'Código (Todos)');
+            fill('filterOS', 'Nº OS', 'Nº OS (Todas)');
+            fill('filterOrcamento', 'Nº Orçamento', 'Nº Orçamento (Todos)');
+            fill('filterPedido', 'Nº Pedido', 'Nº Pedido (Todos)');
+            fill('filterStatusOS', 'Status OS', 'Status OS (Todos)');
+            fill('filterListaMat', 'Lista de Materiais', 'Lista de Materiais (Todas)');
+            fill('filterProcessamentoLM', 'Processamento LM', 'Processamento LM (Todos)');
+            fill('filterDispMat', 'Disponibilidade Material', 'Disponibilidade Material (Todas)');
+            fill('filterOrdemCompra', 'Ordem de compra', 'Ordem de compra (Todas)');
+            fill('filterPrata', 'Prata', 'Prata (Todos)');
+            fill('filterTipo', 'Tipo', 'Tipo (Todos)');
+            fill('filterEtapa', 'Etapa', 'Etapa (Todas)');
+            fill('filterPrioridade', 'Prioridade', 'Prioridade (Todas)');
 
             const selStatusOS = document.getElementById('filterStatusOS');
-            if (selStatusOS && !selStatusOS.value) {
+            if (selStatusOS && (!selStatusOS.value || selStatusOS.value === '')) {
                 selStatusOS.value = 'APROVADO';
             }
         }
 
         function parseNum(val) {
-            if (val === null || val === undefined) return 0;
+            if (!val) return 0;
             if (typeof val === 'number') return val;
             let str = String(val).replace('R$', '').replace(/\s/g, '');
             if (str.includes(',') && str.includes('.')) str = str.replace(/\./g, '').replace(',', '.');
@@ -559,7 +523,7 @@
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
                 renderCarteiraView();
-            }, 100);
+            }, 80);
         }
 
         function sortByColumn(colKey) {
@@ -574,12 +538,11 @@
 
         function updateSortIndicators() {
             const cols = ['Nº Orçamento', 'Cliente', 'Nº Pedido', 'Nº OS', 'Dt. aprovação', 'Prev. entrega(original)', 'Qtde. Total', 'Saldo a entregar', 'Vl. Total', 'Vl. a faturar'];
-            cols.forEach(col => {
+            for (let i = 0; i < cols.length; i++) {
+                const col = cols[i];
                 const el = document.getElementById(`sort_${col}`);
-                if (el) {
-                    el.textContent = sortColumn === col ? (sortAsc ? '▲' : '▼') : '';
-                }
-            });
+                if (el) el.textContent = sortColumn === col ? (sortAsc ? '▲' : '▼') : '';
+            }
         }
 
         function getFilteredCarteira() {
@@ -594,7 +557,7 @@
             const orcVal = document.getElementById('filterOrcamento')?.value || '';
             const pedVal = document.getElementById('filterPedido')?.value || '';
             const analiseVal = document.getElementById('filterAnaliseCritica')?.value || '';
-            const stOS = document.getElementById('filterStatusOS')?.value || 'APROVADO';
+            const stOS = document.getElementById('filterStatusOS')?.value ?? 'APROVADO';
             const saldoVal = document.getElementById('filterSaldoEntrega')?.value || '';
             const listaMatVal = document.getElementById('filterListaMat')?.value || '';
             const procLMVal = document.getElementById('filterProcessamentoLM')?.value || '';
@@ -608,7 +571,7 @@
             const libFatVal = document.getElementById('filterLiberadoFaturar')?.value || '';
             const prio = document.getElementById('filterPrioridade')?.value || '';
 
-            let filtered = [];
+            const filtered = [];
 
             for (let i = 0; i < rawCarteira.length; i++) {
                 const item = rawCarteira[i];
@@ -629,7 +592,13 @@
                 if (etapaVal && String(item.Etapa || '') !== etapaVal) continue;
                 if (prio && String(item.Prioridade || '') !== prio) continue;
 
-                if (pcpVal && item._posicaoFiltro !== pcpVal) continue;
+                // DAX PCP / PRODUÇÃO
+                if (pcpVal) {
+                    const rawOS = item['Nº OS'] ? String(item['Nº OS']).trim() : '';
+                    const isPCP = (!rawOS || rawOS === 'null');
+                    if (pcpVal === 'PCP' && !isPCP) continue;
+                    if (pcpVal === 'PRODUCAO' && isPCP) continue;
+                }
 
                 if (analiseVal) {
                     const hasSim = String(item['Análise critica industrial']||'').toLowerCase()==='sim' || 
@@ -639,28 +608,34 @@
                     if (analiseVal === 'nao' && hasSim) continue;
                 }
 
+                const sEntrega = parseNum(item['Saldo a entregar']);
                 if (saldoVal) {
-                    if (saldoVal === 'com_saldo' && item._saldo <= 0) continue;
-                    if (saldoVal === 'sem_saldo' && item._saldo > 0) continue;
+                    if (saldoVal === 'com_saldo' && sEntrega <= 0) continue;
+                    if (saldoVal === 'sem_saldo' && sEntrega > 0) continue;
                 }
 
                 if (capVal) {
-                    if (capVal === 'sim' && item._capDisp <= 0) continue;
-                    if (capVal === 'nao' && item._capDisp > 0) continue;
+                    const cDisp = parseNum(item['Capacidade disponivel']);
+                    if (capVal === 'sim' && cDisp <= 0) continue;
+                    if (capVal === 'nao' && cDisp > 0) continue;
                 }
 
                 if (libFatVal) {
-                    if (libFatVal === 'sim' && item._vlLiberado <= 0) continue;
-                    if (libFatVal === 'nao' && item._vlLiberado > 0) continue;
+                    const vLib = parseNum(item['Vl. Liberado']);
+                    if (libFatVal === 'sim' && vLib <= 0) continue;
+                    if (libFatVal === 'nao' && vLib > 0) continue;
                 }
 
-                if (item._prevEntrega) {
-                    const dtItem = item._prevEntrega.substring(0, 10);
-                    if (dtFrom && dtItem < dtFrom) continue;
-                    if (dtTo && dtItem > dtTo) continue;
+                const prevEntrega = String(item['Prev. entrega(original)'] || item['Dt. Negociada'] || '').substring(0, 10);
+                if (prevEntrega) {
+                    if (dtFrom && prevEntrega < dtFrom) continue;
+                    if (dtTo && prevEntrega > dtTo) continue;
                 }
 
-                if (search && !item._searchStr.includes(search)) continue;
+                if (search) {
+                    const str = `${item['Nº Orçamento']||''} ${item.Cliente||''} ${item.Código||''} ${item.Item||''} ${item['Nº Pedido']||''} ${item['Nº OS']||''} ${item.Empresa||''}`.toLowerCase();
+                    if (!str.includes(search)) continue;
+                }
 
                 filtered.push(item);
             }
@@ -682,8 +657,7 @@
 
                 if (valA < valB) return sortAsc ? -1 : 1;
                 if (valA > valB) return sortAsc ? 1 : -1;
-
-                return a._prevEntrega.localeCompare(b._prevEntrega);
+                return 0;
             });
 
             return filtered;
@@ -705,14 +679,15 @@
 
             for (let i = 0; i < totalItens; i++) {
                 const item = currentFilteredData[i];
-                saldoEntregar += item._saldo;
-                vlTotal += item._vlTotal;
-                vlAFaturar += item._vlAFaturar;
-                vlLiberado += item._vlLiberado;
+                saldoEntregar += parseNum(item['Saldo a entregar']);
+                vlTotal += parseNum(item['Vl. Total']);
+                vlAFaturar += parseNum(item['Vl. a faturar']);
+                vlLiberado += parseNum(item['Vl. Liberado']);
 
-                if (item._vlFaltaComp > 0) {
-                    const osKey = item['Nº OS'] ? String(item['Nº OS']).trim() : `SEM_OS_${item._id}`;
-                    if (!osComprarMap[osKey]) osComprarMap[osKey] = item._vlFaltaComp;
+                const vlFalta = parseNum(item['Valor falta comprar']);
+                if (vlFalta > 0) {
+                    const osKey = item['Nº OS'] ? String(item['Nº OS']).trim() : `SEM_OS_${i}`;
+                    if (!osComprarMap[osKey]) osComprarMap[osKey] = vlFalta;
                 }
             }
 
@@ -745,14 +720,21 @@
             const itemsToRender = currentFilteredData.slice(0, currentRenderLimit);
 
             tbody.innerHTML = itemsToRender.map((item, idx) => {
-                const dtAprov = fmtDate(item._dtAprov);
-                const prevEnt = fmtDate(item._prevEntrega);
-                const isParcial = item._entregue > 0 && item._saldo > 0;
+                const dtAprov = fmtDate(item['Dt. aprovação']);
+                const prevEnt = fmtDate(item['Prev. entrega(original)'] || item['Dt. Negociada']);
+                const entregue = parseNum(item['Qtde. Entregue']);
+                const saldo = parseNum(item['Saldo a entregar']);
+                const total = parseNum(item['Qtde. Total']);
+                const vlUnit = parseNum(item['Vl. Unitário']);
+                const vlTotal = parseNum(item['Vl. Total']);
+                const vlAFat = parseNum(item['Vl. a faturar']);
+
+                const isParcial = entregue > 0 && saldo > 0;
 
                 return `
                     <tr class="${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'} hover:bg-pstec-50/60 transition-colors">
                         <td class="p-3">
-                            <button onclick="openModal(${item._id})" class="p-1.5 bg-pstec-700 hover:bg-pstec-800 text-white rounded-lg font-bold text-[10px] transition" title="Ver Detalhes">
+                            <button onclick="openModal(${idx})" class="p-1.5 bg-pstec-700 hover:bg-pstec-800 text-white rounded-lg font-bold text-[10px] transition" title="Ver Detalhes">
                                 <i data-lucide="eye" class="w-3.5 h-3.5"></i>
                             </button>
                         </td>
@@ -769,12 +751,12 @@
                         </td>
                         <td class="p-3 text-center font-semibold text-slate-600">${dtAprov}</td>
                         <td class="p-3 text-center font-bold text-slate-700">${prevEnt}</td>
-                        <td class="p-3 text-right font-mono">${item._total.toLocaleString('pt-BR')}</td>
-                        <td class="p-3 text-right font-mono ${isParcial ? 'text-amber-600 font-bold' : ''}">${item._entregue.toLocaleString('pt-BR')}</td>
-                        <td class="p-3 text-right font-mono font-bold text-pstec-700">${item._saldo.toLocaleString('pt-BR')}</td>
-                        <td class="p-3 text-right font-mono">${fmtBRL(item._vlUnit)}</td>
-                        <td class="p-3 text-right font-mono font-bold text-slate-800">${fmtBRL(item._vlTotal)}</td>
-                        <td class="p-3 text-right font-mono font-bold text-blue-600">${fmtBRL(item._vlAFaturar)}</td>
+                        <td class="p-3 text-right font-mono">${total.toLocaleString('pt-BR')}</td>
+                        <td class="p-3 text-right font-mono ${isParcial ? 'text-amber-600 font-bold' : ''}">${entregue.toLocaleString('pt-BR')}</td>
+                        <td class="p-3 text-right font-mono font-bold text-pstec-700">${saldo.toLocaleString('pt-BR')}</td>
+                        <td class="p-3 text-right font-mono">${fmtBRL(vlUnit)}</td>
+                        <td class="p-3 text-right font-mono font-bold text-slate-800">${fmtBRL(vlTotal)}</td>
+                        <td class="p-3 text-right font-mono font-bold text-blue-600">${fmtBRL(vlAFat)}</td>
                         <td class="p-3">
                             <span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${item['Disponibilidade Material'] === 'Total disponível' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${item['Disponibilidade Material'] || '-'}</span>
                         </td>
@@ -818,8 +800,8 @@
             renderTableBatch();
         }
 
-        function openModal(rawId) {
-            const item = rawCarteira.find(i => i._id === rawId);
+        function openModal(filteredIdx) {
+            const item = currentFilteredData[filteredIdx];
             if (!item) return;
 
             document.getElementById('mOrcamentoBadge').textContent = `Orçamento Nº ${item['Nº Orçamento'] || 'N/A'}`;
@@ -827,7 +809,7 @@
 
             const grid = document.getElementById('mContentGrid');
             
-            const entries = Object.entries(item).filter(([k]) => !k.startsWith('_'));
+            const entries = Object.entries(item);
             let html = `<div class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">`;
 
             entries.forEach(([key, val]) => {
