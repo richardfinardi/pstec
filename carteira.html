@@ -14,7 +14,7 @@
     <meta property="og:image" content="https://consultoriarf.net/producao_pstec/LOGO MINIMALISTA.png">
     <meta property="og:type" content="website">
 
-    <title>Carteira de Produção - PSTEC V2.0 Pro</title>
+    <title>Carteira de Produção - PSTEC V2.0.1 Pro</title>
 
     <!-- Autenticação Token -->
     <script>
@@ -72,7 +72,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-extrabold tracking-wide text-white">GRUPO PSTEC</h1>
-                    <p class="text-xs text-pstec-100">Carteira de Produção V2.0 Pro</p>
+                    <p class="text-xs text-pstec-100">Carteira de Produção V2.0.1 Pro</p>
                 </div>
             </div>
 
@@ -107,7 +107,7 @@
         </div>
     </header>
 
-    <!-- METRICS / CARDS DE KPI RECALCULADOS CONFORME OS FILTROS -->
+    <!-- METRICS / CARDS DE KPI -->
     <div id="metricsBar" class="bg-white border-b border-slate-200 text-slate-800 shadow-sm py-3">
         <div class="max-w-[96%] mx-auto px-4 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2.5">
             <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
@@ -162,7 +162,7 @@
             <!-- ÁREA RECOLHÍVEL DOS FILTROS SUPERIORES -->
             <div id="collapsibleFilterContent" class="flex flex-col gap-3 transition-all duration-300">
                 
-                <!-- Pesquisa Coringa Global (Contém / Não Contém) -->
+                <!-- Pesquisa Coringa Global -->
                 <div class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 flex items-center gap-2 text-xs">
                     <i data-lucide="search" class="w-4 h-4 text-pstec-600"></i>
                     <input type="text" id="searchInput" oninput="debounceRender()" placeholder="Pesquisa Coringa (%PCP%EXPEDIÇÃO% ou use '-' para Excluir, ex: GRID -CANCELADO)" class="w-full bg-transparent text-slate-800 focus:outline-none font-bold placeholder-slate-400">
@@ -204,7 +204,7 @@
             </div>
         </div>
 
-        <!-- TABELA PRINCIPAL DE CARTEIRA COM FILTROS NO ESTILO EXCEL NO CABEÇALHO -->
+        <!-- TABELA PRINCIPAL DE CARTEIRA -->
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
             <div id="tableScrollContainer" class="overflow-x-auto custom-scroll max-h-[60vh]">
                 <table class="w-full text-left text-[11px] border-collapse whitespace-nowrap">
@@ -249,7 +249,7 @@
     <!-- FOOTER -->
     <footer class="bg-white border-t border-slate-200 py-3 mt-auto">
         <div class="max-w-[96%] mx-auto px-4 flex justify-between items-center text-xs text-slate-500">
-            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V2.0 Pro</span>
+            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V2.0.1 Pro</span>
             <span id="lastUpdateLabel">Atualizado: -</span>
         </div>
     </footer>
@@ -358,7 +358,7 @@
         </div>
     </div>
 
-    <!-- LOGICA JS COMPLETA DA V2.0 PRO -->
+    <!-- LOGICA JS DE MULTISSELEÇÃO E BUSCA WILD CARD -->
     <script>
         const API_CARTEIRA = 'https://pstec.consultoriarf.net/CARTEIRA';
         let rawCarteira = [];
@@ -507,7 +507,6 @@
             }
         }
 
-        // RENDERIZAÇÃO DO CABEÇALHO DA TABELA COM FILTROS INDIVIDUALIZADOS ESTILO EXCEL
         function renderTableHeader() {
             const thead = document.getElementById('mainTableHeader');
             if (!thead) return;
@@ -531,7 +530,6 @@
                             </button>
                         </div>
 
-                        <!-- POPOVER FILTRO EXCEL DA COLUNA -->
                         <div id="col_popover_${col.key}" class="hidden absolute left-0 top-full mt-1 w-64 bg-white text-slate-800 border border-slate-200 rounded-2xl shadow-2xl z-40 p-3 text-xs normal-case font-normal col-filter-popover">
                             <div class="flex justify-between items-center pb-2 border-b border-slate-100 mb-2 font-bold">
                                 <span>Filtro: ${col.label}</span>
@@ -791,6 +789,16 @@
                 sortAsc = true;
             }
             renderCarteiraView();
+        }
+
+        // FUNÇÃO DE ATUALIZAÇÃO DOS INDICADORES DE ORDENAÇÃO
+        function updateSortIndicators() {
+            const cols = ['Nº Orçamento', 'Cliente', 'Nº Pedido', 'Nº OS', 'Dt. aprovação', 'Prev. entrega(original)', 'Qtde. Total', 'Saldo a entregar', 'Vl. Total', 'Vl. a faturar', 'Vl. Liberado', 'Valor fat. disp.', 'Valor falta comprar'];
+            for (let i = 0; i < cols.length; i++) {
+                const col = cols[i];
+                const el = document.getElementById(`sort_${col}`);
+                if (el) el.textContent = sortColumn === col ? (sortAsc ? '▲' : '▼') : '';
+            }
         }
 
         function matchesWildcardSearch(itemStr, searchInput) {
@@ -1068,7 +1076,6 @@
             renderTableBatch();
         }
 
-        // EXPORTAR PARA EXCEL COMPATÍVEL VIA SHEETJS
         function exportToExcel() {
             if (!currentFilteredData || currentFilteredData.length === 0) {
                 alert('Não há dados filtrados para exportar.');
