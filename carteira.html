@@ -14,7 +14,7 @@
     <meta property="og:image" content="https://consultoriarf.net/producao_pstec/LOGO MINIMALISTA.png">
     <meta property="og:type" content="website">
 
-    <title>Carteira de Produção - PSTEC V1.9.3 Pro</title>
+    <title>Carteira de Produção - PSTEC V2.0 Pro</title>
 
     <!-- Autenticação Token -->
     <script>
@@ -23,7 +23,7 @@
         }
     </script>
 
-    <!-- Tailwind CSS & Lucide Icons -->
+    <!-- Tailwind CSS, Lucide Icons & SheetJS (Excel) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -49,6 +49,8 @@
         }
     </script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
     <style>
         body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background-color: #f8fafc; color: #0f172a; }
         .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -70,7 +72,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-extrabold tracking-wide text-white">GRUPO PSTEC</h1>
-                    <p class="text-xs text-pstec-100">Carteira de Produção V1.9.3 Pro</p>
+                    <p class="text-xs text-pstec-100">Carteira de Produção V2.0 Pro</p>
                 </div>
             </div>
 
@@ -86,6 +88,12 @@
                     <span>Programação OS</span>
                 </a>
 
+                <!-- BOTÃO EXPORTAR EXCEL -->
+                <button onclick="exportToExcel()" class="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition shadow-md" title="Exportar tabela filtrada para Excel">
+                    <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">Exportar Excel</span>
+                </button>
+
                 <button id="btnRefresh" onclick="fetchCarteiraData(false)" class="flex items-center gap-2 px-3.5 py-2 bg-pstecgreen-500 hover:bg-pstecgreen-600 text-slate-950 font-bold text-xs transition-all shadow-md rounded-xl" title="Atualizar Carteira">
                     <i data-lucide="refresh-cw" class="w-4 h-4" id="refreshIcon"></i>
                     <span class="hidden sm:inline">Atualizar</span>
@@ -99,7 +107,7 @@
         </div>
     </header>
 
-    <!-- METRICS / CARDS DE KPI -->
+    <!-- METRICS / CARDS DE KPI RECALCULADOS CONFORME OS FILTROS -->
     <div id="metricsBar" class="bg-white border-b border-slate-200 text-slate-800 shadow-sm py-3">
         <div class="max-w-[96%] mx-auto px-4 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2.5">
             <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
@@ -151,13 +159,13 @@
                 </button>
             </div>
 
-            <!-- ÁREA RECOLHÍVEL DOS FILTROS -->
+            <!-- ÁREA RECOLHÍVEL DOS FILTROS SUPERIORES -->
             <div id="collapsibleFilterContent" class="flex flex-col gap-3 transition-all duration-300">
                 
-                <!-- Pesquisa Global Direta com suporte a Wildcard (%termo1%termo2%) -->
+                <!-- Pesquisa Coringa Global (Contém / Não Contém) -->
                 <div class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 flex items-center gap-2 text-xs">
                     <i data-lucide="search" class="w-4 h-4 text-pstec-600"></i>
-                    <input type="text" id="searchInput" oninput="debounceRender()" placeholder="Pesquisa Coringa (ex: %PCP%EXPEDIÇÃO% ou digite OS, Cliente, Orçamento, Item...)" class="w-full bg-transparent text-slate-800 focus:outline-none font-bold placeholder-slate-400">
+                    <input type="text" id="searchInput" oninput="debounceRender()" placeholder="Pesquisa Coringa (%PCP%EXPEDIÇÃO% ou use '-' para Excluir, ex: GRID -CANCELADO)" class="w-full bg-transparent text-slate-800 focus:outline-none font-bold placeholder-slate-400">
                 </div>
 
                 <!-- DATES & CHECKBOX FILTERS GRID -->
@@ -173,7 +181,7 @@
                         <input type="date" id="dateTo" onchange="renderCarteiraView()" class="bg-transparent w-full text-slate-800 focus:outline-none font-medium">
                     </div>
 
-                    <!-- DROPDOWNS CUSTOMIZADOS DE MULTISSELEÇÃO COM CHECKBOX -->
+                    <!-- DROPDOWNS CUSTOMIZADOS DE MULTISSELEÇÃO -->
                     <div id="dd_Empresa"></div>
                     <div id="dd_Cliente"></div>
                     <div id="dd_Codigo"></div>
@@ -196,36 +204,12 @@
             </div>
         </div>
 
-        <!-- TABELA PRINCIPAL DE CARTEIRA -->
+        <!-- TABELA PRINCIPAL DE CARTEIRA COM FILTROS NO ESTILO EXCEL NO CABEÇALHO -->
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
             <div id="tableScrollContainer" class="overflow-x-auto custom-scroll max-h-[60vh]">
                 <table class="w-full text-left text-[11px] border-collapse whitespace-nowrap">
-                    <thead class="sticky top-0 z-20 bg-pstec-700 text-white font-extrabold uppercase text-[10px] tracking-wider select-none">
-                        <tr>
-                            <th class="p-3">Ação</th>
-                            <th class="p-3 cursor-pointer hover:bg-pstec-800" onclick="sortByColumn('Nº Orçamento')">Orçamento <span id="sort_Nº Orçamento"></span></th>
-                            <th class="p-3 cursor-pointer hover:bg-pstec-800" onclick="sortByColumn('Cliente')">Cliente <span id="sort_Cliente"></span></th>
-                            <th class="p-3">Código / Item</th>
-                            <th class="p-3 cursor-pointer hover:bg-pstec-800" onclick="sortByColumn('Nº Pedido')">Nº Pedido <span id="sort_Nº Pedido"></span></th>
-                            <th class="p-3 cursor-pointer hover:bg-pstec-800" onclick="sortByColumn('Nº OS')">Nº OS / Status <span id="sort_Nº OS"></span></th>
-                            <th class="p-3 text-center cursor-pointer hover:bg-pstec-800" onclick="sortByColumn('Dt. aprovação')">Dt. Aprovação <span id="sort_Dt. aprovação"></span></th>
-                            <th class="p-3 text-center cursor-pointer hover:bg-pstec-800" onclick="sortByColumn('Prev. entrega(original)')">Prev. Entrega <span id="sort_Prev. entrega(original)"></span></th>
-                            <th class="p-3 text-right cursor-pointer hover:bg-pstec-800" onclick="sortByColumn('Qtde. Total')">Qtde Total <span id="sort_Qtde. Total"></span></th>
-                            <th class="p-3 text-right font-semibold">Entregue</th>
-                            <th class="p-3 text-right cursor-pointer hover:bg-pstec-800" onclick="sortByColumn('Saldo a entregar')">Saldo Entregar <span id="sort_Saldo a entregar"></span></th>
-                            
-                            <!-- COLUNAS FINANCEIRAS OBRIGATÓRIAS -->
-                            <th class="p-3 text-right font-semibold">Vl. Unitário</th>
-                            <th class="p-3 text-right cursor-pointer hover:bg-pstec-800" onclick="sortByColumn('Vl. Total')">Vl. Total <span id="sort_Vl. Total"></span></th>
-                            <th class="p-3 text-right cursor-pointer hover:bg-pstec-800" onclick="sortByColumn('Vl. a faturar')">Vl. a Faturar <span id="sort_Vl. a faturar"></span></th>
-                            <th class="p-3 text-right cursor-pointer hover:bg-pstec-800" onclick="sortByColumn('Vl. Liberado')">Vl. Liberado <span id="sort_Vl. Liberado"></span></th>
-                            <th class="p-3 text-right cursor-pointer hover:bg-pstec-800" onclick="sortByColumn('Valor fat. disp.')">Valor fat. disp. <span id="sort_Valor fat. disp."></span></th>
-                            <th class="p-3 text-right cursor-pointer hover:bg-pstec-800" onclick="sortByColumn('Valor falta comprar')">Vl. Falta Comprar <span id="sort_Valor falta comprar"></span></th>
-
-                            <th class="p-3">Disp. Material</th>
-                            <th class="p-3">Prata</th>
-                            <th class="p-3">Empresa</th>
-                        </tr>
+                    <thead id="mainTableHeader" class="sticky top-0 z-20 bg-pstec-700 text-white font-extrabold uppercase text-[10px] tracking-wider select-none">
+                        <!-- Renderizado via JS para incluir Popovers de Filtro Excel por Coluna -->
                     </thead>
                     <tbody id="carteiraTableBody" class="divide-y divide-slate-100 font-medium text-slate-700">
                         <!-- Renderizado via JavaScript -->
@@ -233,7 +217,7 @@
                 </table>
             </div>
 
-            <!-- BARRA DE PAGINAÇÃO EM LOTES -->
+            <!-- BARRA DE PAGINAÇÃO EM LOTES / EXIBIR TODOS -->
             <div class="bg-slate-50 border-t border-slate-200 px-4 py-3 flex flex-wrap justify-between items-center gap-3 text-xs font-bold">
                 <div class="text-slate-600">
                     Exibindo <span id="lblExibidosCount" class="text-pstec-700 font-extrabold">0</span> de <span id="lblTotalCount" class="text-slate-800 font-extrabold">0</span> registros
@@ -250,6 +234,7 @@
                         <option value="100">100 por vez</option>
                         <option value="250">250 por vez</option>
                         <option value="500">500 por vez</option>
+                        <option value="999999">Exibir Todos (Sem Limite)</option>
                     </select>
                 </div>
             </div>
@@ -264,7 +249,7 @@
     <!-- FOOTER -->
     <footer class="bg-white border-t border-slate-200 py-3 mt-auto">
         <div class="max-w-[96%] mx-auto px-4 flex justify-between items-center text-xs text-slate-500">
-            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V1.9.3 Pro</span>
+            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V2.0 Pro</span>
             <span id="lastUpdateLabel">Atualizado: -</span>
         </div>
     </footer>
@@ -373,7 +358,7 @@
         </div>
     </div>
 
-    <!-- LOGICA JS DE MULTISSELEÇÃO E BUSCA WILD CARD -->
+    <!-- LOGICA JS COMPLETA DA V2.0 PRO -->
     <script>
         const API_CARTEIRA = 'https://pstec.consultoriarf.net/CARTEIRA';
         let rawCarteira = [];
@@ -387,7 +372,7 @@
         let debounceTimer = null;
         let isFiltrosCollapsed = false;
 
-        // Estrutura do Estado dos Filtros Multisseleção
+        // Estado dos Filtros de Multisseleção Superiores
         const filterState = {
             Empresa: new Set(),
             Cliente: new Set(),
@@ -408,6 +393,31 @@
             Tipo: new Set(),
             Prioridade: new Set()
         };
+
+        // Estado dos Filtros Individuais do Cabeçalho da Tabela
+        const colFilterState = {};
+
+        const tableColumnsConfig = [
+            { key: 'Nº Orçamento', label: 'Orçamento', align: 'left', sortable: true },
+            { key: 'Cliente', label: 'Cliente', align: 'left', sortable: true },
+            { key: 'Código', label: 'Código / Item', align: 'left', sortable: false },
+            { key: 'Nº Pedido', label: 'Nº Pedido', align: 'left', sortable: true },
+            { key: 'Nº OS', label: 'Nº OS / Status', align: 'left', sortable: true },
+            { key: 'Dt. aprovação', label: 'Dt. Aprovação', align: 'center', sortable: true },
+            { key: 'Prev. entrega(original)', label: 'Prev. Entrega', align: 'center', sortable: true },
+            { key: 'Qtde. Total', label: 'Qtde Total', align: 'right', sortable: true },
+            { key: 'Qtde. Entregue', label: 'Entregue', align: 'right', sortable: false },
+            { key: 'Saldo a entregar', label: 'Saldo Entregar', align: 'right', sortable: true },
+            { key: 'Vl. Unitário', label: 'Vl. Unitário', align: 'right', sortable: false },
+            { key: 'Vl. Total', label: 'Vl. Total', align: 'right', sortable: true },
+            { key: 'Vl. a faturar', label: 'Vl. a Faturar', align: 'right', sortable: true },
+            { key: 'Vl. Liberado', label: 'Vl. Liberado', align: 'right', sortable: true },
+            { key: 'Valor fat. disp.', label: 'Valor fat. disp.', align: 'right', sortable: true },
+            { key: 'Valor falta comprar', label: 'Vl. Falta Comprar', align: 'right', sortable: true },
+            { key: 'Disponibilidade Material', label: 'Disp. Material', align: 'left', sortable: false },
+            { key: 'Prata', label: 'Prata', align: 'left', sortable: false },
+            { key: 'Empresa', label: 'Empresa', align: 'left', sortable: false }
+        ];
 
         const configDropdowns = [
             { id: 'dd_Empresa', key: 'Empresa', label: 'Empresa' },
@@ -441,8 +451,8 @@
             }
 
             document.addEventListener('click', (e) => {
-                if (!e.target.closest('.custom-dd-container')) {
-                    document.querySelectorAll('.custom-dd-menu').forEach(m => m.classList.add('hidden'));
+                if (!e.target.closest('.custom-dd-container') && !e.target.closest('.col-filter-popover')) {
+                    document.querySelectorAll('.custom-dd-menu, .col-filter-popover').forEach(m => m.classList.add('hidden'));
                 }
             });
 
@@ -482,6 +492,7 @@
                 
                 rawCarteira = await response.json();
 
+                renderTableHeader();
                 renderDropdownsHTML();
                 renderCarteiraView();
 
@@ -494,6 +505,133 @@
                 if (btnRefresh) btnRefresh.disabled = false;
                 lucide.createIcons();
             }
+        }
+
+        // RENDERIZAÇÃO DO CABEÇALHO DA TABELA COM FILTROS INDIVIDUALIZADOS ESTILO EXCEL
+        function renderTableHeader() {
+            const thead = document.getElementById('mainTableHeader');
+            if (!thead) return;
+
+            let trHTML = '<tr><th class="p-3">Ação</th>';
+
+            tableColumnsConfig.forEach(col => {
+                const isFiltered = Boolean(colFilterState[col.key] && colFilterState[col.key].size > 0);
+                const alignClass = col.align === 'center' ? 'text-center' : (col.align === 'right' ? 'text-right' : 'text-left');
+
+                trHTML += `
+                    <th class="p-2.5 ${alignClass} relative group">
+                        <div class="inline-flex items-center gap-1.5 ${isFiltered ? 'bg-pstecgreen-600 text-slate-950 px-2 py-1 rounded-lg shadow-xs' : ''}">
+                            ${col.sortable ? `
+                                <span class="cursor-pointer hover:underline" onclick="sortByColumn('${col.key}')">${col.label}</span>
+                                <span id="sort_${col.key}" class="text-[9px]"></span>
+                            ` : `<span>${col.label}</span>`}
+
+                            <button onclick="toggleColFilterPopover(event, '${col.key}')" class="p-1 hover:bg-black/20 rounded transition" title="Filtrar por ${col.label}">
+                                <i data-lucide="filter" class="w-3 h-3 ${isFiltered ? 'text-slate-950 font-black' : 'text-slate-300'}"></i>
+                            </button>
+                        </div>
+
+                        <!-- POPOVER FILTRO EXCEL DA COLUNA -->
+                        <div id="col_popover_${col.key}" class="hidden absolute left-0 top-full mt-1 w-64 bg-white text-slate-800 border border-slate-200 rounded-2xl shadow-2xl z-40 p-3 text-xs normal-case font-normal col-filter-popover">
+                            <div class="flex justify-between items-center pb-2 border-b border-slate-100 mb-2 font-bold">
+                                <span>Filtro: ${col.label}</span>
+                                <button onclick="clearColFilter('${col.key}')" class="text-[10px] text-red-600 hover:underline">Limpar</button>
+                            </div>
+
+                            <input type="text" placeholder="Filtrar (usar % ou -)..." oninput="filterColOptionsUI(this, '${col.key}')" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 mb-2 text-[11px] focus:outline-none font-medium">
+
+                            <div class="flex justify-between items-center text-[10px] font-bold pb-1.5">
+                                <button onclick="setAllColFilter('${col.key}', true)" class="text-pstec-700 hover:underline">Marcar Todos</button>
+                                <button onclick="setAllColFilter('${col.key}', false)" class="text-red-600 hover:underline">Desmarcar</button>
+                            </div>
+
+                            <div id="col_opts_${col.key}" class="max-h-48 overflow-y-auto custom-scroll space-y-0.5 text-left">
+                                ${renderColOptionsListHTML(col.key)}
+                            </div>
+                        </div>
+                    </th>
+                `;
+            });
+
+            trHTML += '</tr>';
+            thead.innerHTML = trHTML;
+            lucide.createIcons();
+        }
+
+        function renderColOptionsListHTML(key) {
+            const set = new Set();
+            for (let i = 0; i < rawCarteira.length; i++) {
+                const val = rawCarteira[i][key];
+                if (val !== null && val !== undefined && String(val).trim() !== '') {
+                    set.add(String(val).trim());
+                }
+            }
+            const sorted = Array.from(set).sort();
+            const selectedSet = colFilterState[key] || new Set();
+
+            return sorted.map(val => {
+                const isChecked = selectedSet.has(val) ? 'checked' : '';
+                return `
+                    <label class="flex items-center gap-2 px-2 py-1 hover:bg-slate-100 cursor-pointer rounded-md text-slate-700 font-medium text-[11px]">
+                        <input type="checkbox" value="${val}" ${isChecked} onchange="toggleColOption('${key}', '${val}')" class="rounded text-pstec-700 focus:ring-pstec-500">
+                        <span class="truncate max-w-[190px]" title="${val}">${val}</span>
+                    </label>
+                `;
+            }).join('');
+        }
+
+        function toggleColFilterPopover(e, key) {
+            e.stopPropagation();
+            const popoverId = `col_popover_${key}`;
+            document.querySelectorAll('.col-filter-popover').forEach(p => {
+                if (p.id !== popoverId) p.classList.add('hidden');
+            });
+            const popover = document.getElementById(popoverId);
+            if (popover) popover.classList.toggle('hidden');
+        }
+
+        function filterColOptionsUI(inputEl, key) {
+            const term = inputEl.value.trim().toLowerCase();
+            const container = document.getElementById(`col_opts_${key}`);
+            if (!container) return;
+            const labels = container.querySelectorAll('label');
+
+            labels.forEach(lbl => {
+                const txt = lbl.textContent.toLowerCase();
+                lbl.style.display = matchesWildcardSearch(txt, term) ? 'flex' : 'none';
+            });
+        }
+
+        function toggleColOption(key, val) {
+            if (!colFilterState[key]) colFilterState[key] = new Set();
+            if (colFilterState[key].has(val)) colFilterState[key].delete(val);
+            else colFilterState[key].add(val);
+
+            renderTableHeader();
+            renderCarteiraView();
+        }
+
+        function setAllColFilter(key, enableAll) {
+            if (!colFilterState[key]) colFilterState[key] = new Set();
+            colFilterState[key].clear();
+
+            if (enableAll) {
+                for (let i = 0; i < rawCarteira.length; i++) {
+                    const val = rawCarteira[i][key];
+                    if (val !== null && val !== undefined && String(val).trim() !== '') {
+                        colFilterState[key].add(String(val).trim());
+                    }
+                }
+            }
+
+            renderTableHeader();
+            renderCarteiraView();
+        }
+
+        function clearColFilter(key) {
+            if (colFilterState[key]) colFilterState[key].clear();
+            renderTableHeader();
+            renderCarteiraView();
         }
 
         function renderDropdownsHTML() {
@@ -549,7 +687,7 @@
                             </div>
 
                             ${options.length > 8 ? `
-                                <input type="text" placeholder="Filtrar..." oninput="filterDDList(this, '${conf.id}_opts')" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 mb-1.5 focus:outline-none font-medium text-[11px]">
+                                <input type="text" placeholder="Filtrar (usar % ou -)..." oninput="filterDDList(this, '${conf.id}_opts')" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 mb-1.5 focus:outline-none font-medium text-[11px]">
                             ` : ''}
 
                             <div id="${conf.id}_opts" class="max-h-52 overflow-y-auto custom-scroll space-y-0.5">
@@ -572,13 +710,13 @@
         }
 
         function filterDDList(inputEl, optsId) {
-            const term = inputEl.value.toLowerCase();
+            const term = inputEl.value.trim().toLowerCase();
             const optsContainer = document.getElementById(optsId);
             if (!optsContainer) return;
             const labels = optsContainer.querySelectorAll('label');
             labels.forEach(lbl => {
                 const txt = lbl.textContent.toLowerCase();
-                lbl.style.display = txt.includes(term) ? 'flex' : 'none';
+                lbl.style.display = matchesWildcardSearch(txt, term) ? 'flex' : 'none';
             });
         }
 
@@ -655,15 +793,6 @@
             renderCarteiraView();
         }
 
-        function updateSortIndicators() {
-            const cols = ['Nº Orçamento', 'Cliente', 'Nº Pedido', 'Nº OS', 'Dt. aprovação', 'Prev. entrega(original)', 'Qtde. Total', 'Saldo a entregar', 'Vl. Total', 'Vl. a faturar', 'Vl. Liberado', 'Valor fat. disp.', 'Valor falta comprar'];
-            for (let i = 0; i < cols.length; i++) {
-                const col = cols[i];
-                const el = document.getElementById(`sort_${col}`);
-                if (el) el.textContent = sortColumn === col ? (sortAsc ? '▲' : '▼') : '';
-            }
-        }
-
         function matchesWildcardSearch(itemStr, searchInput) {
             if (!searchInput) return true;
             
@@ -673,8 +802,17 @@
                 .filter(Boolean);
 
             for (let i = 0; i < cleanTerms.length; i++) {
-                if (!itemStr.includes(cleanTerms[i])) {
-                    return false;
+                const token = cleanTerms[i];
+
+                if (token.startsWith('-') || token.startsWith('!')) {
+                    const excludeTerm = token.substring(1).trim();
+                    if (excludeTerm && itemStr.includes(excludeTerm)) {
+                        return false;
+                    }
+                } else {
+                    if (!itemStr.includes(token)) {
+                        return false;
+                    }
                 }
             }
             return true;
@@ -691,6 +829,21 @@
             for (let i = 0; i < rawCarteira.length; i++) {
                 const item = rawCarteira[i];
 
+                // FILTROS DE CABEÇALHO DA TABELA (ESTILO EXCEL)
+                let colFilterMatch = true;
+                for (const colKey in colFilterState) {
+                    const selSet = colFilterState[colKey];
+                    if (selSet && selSet.size > 0) {
+                        const cellVal = String(item[colKey] || '').trim();
+                        if (!selSet.has(cellVal)) {
+                            colFilterMatch = false;
+                            break;
+                        }
+                    }
+                }
+                if (!colFilterMatch) continue;
+
+                // FILTROS SUPERIORES MULTISSELEÇÃO
                 if (filterState.Empresa.size > 0 && !filterState.Empresa.has(String(item.Empresa || '').trim())) continue;
                 if (filterState.Cliente.size > 0 && !filterState.Cliente.has(String(item.Cliente || '').trim())) continue;
                 if (filterState.Código.size > 0 && !filterState.Código.has(String(item.Código || '').trim())) continue;
@@ -731,7 +884,7 @@
                 const dtPesquisa = (rawDtPesquisa && rawDtPesquisa !== 'NaT' && rawDtPesquisa !== 'None' && rawDtPesquisa !== 'null') ? String(rawDtPesquisa).substring(0, 10) : '';
 
                 if (hasDateFilter) {
-                    if (!dtPesquisa) continue; // Exclui itens sem Dt. Pesquisa cadastrada
+                    if (!dtPesquisa) continue;
                     if (dtFrom && dtPesquisa < dtFrom) continue;
                     if (dtTo && dtPesquisa > dtTo) continue;
                 }
@@ -888,7 +1041,7 @@
         function updatePaginationControls(exibidos, total) {
             document.getElementById('lblExibidosCount').textContent = exibidos;
             document.getElementById('lblTotalCount').textContent = total;
-            document.getElementById('lblStepSize').textContent = batchStep;
+            document.getElementById('lblStepSize').textContent = batchStep >= 999999 ? 'Todos' : batchStep;
 
             const btn = document.getElementById('btnLoadMore');
             if (btn) {
@@ -913,6 +1066,45 @@
             batchStep = parseInt(document.getElementById('selectBatchSize').value || 50);
             currentRenderLimit = batchStep;
             renderTableBatch();
+        }
+
+        // EXPORTAR PARA EXCEL COMPATÍVEL VIA SHEETJS
+        function exportToExcel() {
+            if (!currentFilteredData || currentFilteredData.length === 0) {
+                alert('Não há dados filtrados para exportar.');
+                return;
+            }
+
+            const excelRows = currentFilteredData.map(item => ({
+                'Orçamento': item['Nº Orçamento'] || '',
+                'Cliente': item.Cliente || '',
+                'Código': item.Código || '',
+                'Descrição Item': item.Item || '',
+                'Nº Pedido': item['Nº Pedido'] || '',
+                'Nº OS': item['Nº OS'] || '',
+                'Status OS': item['Status OS'] || '',
+                'Dt. Aprovação': fmtDate(item['Dt. aprovação']),
+                'Prev. Entrega': fmtDate(item['Prev. entrega(original)']),
+                'Qtde Total': parseNum(item['Qtde. Total']),
+                'Qtde Entregue': parseNum(item['Qtde. Entregue']),
+                'Saldo Entregar': parseNum(item['Saldo a entregar']),
+                'Vl. Unitário': parseNum(item['Vl. Unitário']),
+                'Vl. Total': parseNum(item['Vl. Total']),
+                'Vl. a Faturar': parseNum(item['Vl. a faturar']),
+                'Vl. Liberado': parseNum(item['Vl. Liberado']),
+                'Valor Fat. Disp.': parseNum(item['Valor fat. disp.']),
+                'Vl. Falta Comprar': parseNum(item['Valor falta comprar']),
+                'Disp. Material': item['Disponibilidade Material'] || '',
+                'Prata': item.Prata || '',
+                'Empresa': item.Empresa || ''
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(excelRows);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Carteira_Producao");
+
+            const fileName = `Carteira_Producao_PSTEC_${new Date().toISOString().substring(0,10)}.xlsx`;
+            XLSX.writeFile(workbook, fileName);
         }
 
         function openModal(filteredIdx) {
@@ -993,11 +1185,16 @@
                 filterState[k].clear();
             });
 
+            Object.keys(colFilterState).forEach(k => {
+                colFilterState[k].clear();
+            });
+
             filterState['Status OS'].add('APROVADO');
             
             sortColumn = 'Dt. aprovação';
             sortAsc = false;
             
+            renderTableHeader();
             renderDropdownsHTML();
             renderCarteiraView();
         }
