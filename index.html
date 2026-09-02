@@ -8,26 +8,22 @@
     <link rel="icon" type="image/png" href="LOGO MINIMALISTA.png">
     <link rel="apple-touch-icon" href="LOGO MINIMALISTA.png">
 
-    <!-- Meta Tags para Prévia no WhatsApp / Redes Sociais (Open Graph) -->
-    <meta property="og:title" content="Controle Semanal de Produção | Consultoria RF">
-    <meta property="og:description" content="Dashboard de acompanhamento e controle de produção.">
+    <!-- Meta Tags -->
+    <meta property="og:title" content="Carteira de Produção | Consultoria RF">
+    <meta property="og:description" content="Dashboard de acompanhamento da carteira de produção PSTEC.">
     <meta property="og:image" content="https://consultoriarf.net/producao_pstec/LOGO MINIMALISTA.png">
-    <meta property="og:image:type" content="image/png">
-    <meta property="og:image:width" content="500">
-    <meta property="og:image:height" content="500">
-    <meta property="og:url" content="https://consultoriarf.net/producao_pstec/">
     <meta property="og:type" content="website">
-    
-    <title>Programação de Produção - PSTEC V1.4</title>
 
-    <!-- VERIFICAÇÃO DE AUTENTICAÇÃO ANTES DE RENDERIZAR A PÁGINA -->
+    <title>Carteira de Produção - PSTEC V1.8</title>
+
+    <!-- Autenticação Token -->
     <script>
         if (!localStorage.getItem('pstec_token')) {
             window.location.href = 'login-pstec.html';
         }
     </script>
 
-    <!-- Tailwind CSS -->
+    <!-- Tailwind CSS & Lucide Icons -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -52,11 +48,10 @@
             }
         }
     </script>
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background-color: #f8fafc; color: #0f172a; }
-        .custom-scroll::-webkit-scrollbar { width: 5px; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     </style>
@@ -65,11 +60,10 @@
 
     <!-- HEADER -->
     <header class="bg-pstec-700 text-white sticky top-0 z-50 shadow-md">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
+        <div class="max-w-[96%] mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
             
-            <!-- Título & Logo PSTEC -->
             <div class="flex items-center gap-4">
-                <div class="flex items-center justify-center p-1.5 bg-white rounded-xl shadow-sm cursor-pointer" onclick="setAbaAtiva('dashboard')">
+                <div class="flex items-center justify-center p-1.5 bg-white rounded-xl shadow-sm cursor-pointer" onclick="window.location.href='index.html'">
                     <img src="./logo.png" alt="PSTEC" class="h-9 max-h-10 w-auto object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                     <div class="hidden p-1.5 bg-pstec-700 rounded-lg text-white font-bold items-center justify-center">
                         <i data-lucide="factory" class="w-6 h-6 text-pstecgreen-500"></i>
@@ -77,49 +71,28 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-extrabold tracking-wide text-white">GRUPO PSTEC</h1>
-                    <p class="text-xs text-pstec-100">Controle de Produção V1.4</p>
+                    <p class="text-xs text-pstec-100">Carteira de Produção V1.8</p>
                 </div>
             </div>
 
-            <!-- Botões de Ação do Topo -->
+            <!-- Botões Header -->
             <div class="flex items-center gap-2">
-                <!-- Identificação do Usuário Logado -->
                 <div class="hidden md:flex items-center gap-1.5 px-3 py-2 bg-pstec-800 border border-pstec-600 rounded-xl text-xs font-bold text-slate-200">
                     <i data-lucide="user-check" class="w-4 h-4 text-pstecgreen-500"></i>
                     <span id="userDisplayName">Usuário</span>
                 </div>
 
-                <!-- ABAS DE NAVEGAÇÃO INTERNA NO HEADER -->
-                <button id="btnAbaDashboard" onclick="setAbaAtiva('dashboard')" class="flex items-center gap-1.5 px-3 py-2 bg-pstec-900 text-white font-extrabold rounded-xl text-xs transition shadow-md border border-pstecgreen-500">
+                <a href="index.html" class="flex items-center gap-1.5 px-3 py-2 bg-pstec-800 hover:bg-pstec-900 text-white font-extrabold rounded-xl text-xs transition shadow-md">
                     <i data-lucide="calendar" class="w-4 h-4"></i>
-                    <span>Produção</span>
-                </button>
+                    <span>Programação OS</span>
+                </a>
 
-                <!-- ABA FATURAMENTO -->
-                <button id="btnAbaFaturamento" onclick="setAbaAtiva('faturamento')" class="hidden flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl text-xs transition shadow-md">
-                    <i data-lucide="package-check" class="w-4 h-4"></i>
-                    <span>Faturamento</span>
-                </button>
-
-                <!-- ABA CONFERÊNCIA APONTAMENTOS -->
-                <button id="btnAbaConferencia" onclick="setAbaAtiva('conferencia')" class="hidden flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold rounded-xl text-xs transition shadow-md">
-                    <i data-lucide="clipboard-check" class="w-4 h-4"></i>
-                    <span>Conferência Apontamentos</span>
-                </button>
-
-                <!-- BOTÃO OS'S NO LIMBO -->
-                <button id="btnVerLimbo" onclick="setAbaAtiva('limbo')" class="flex items-center gap-1.5 px-3 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl text-xs transition shadow-md">
-                    <i data-lucide="ghost" class="w-4 h-4"></i>
-                    <span id="txtBtnLimbo">OS's no Limbo (0)</span>
-                </button>
-
-                <!-- Botão Atualizar Manual -->
-                <button id="btnRefresh" onclick="fetchData(false)" class="flex items-center gap-2 px-3.5 py-2 bg-pstecgreen-500 hover:bg-pstecgreen-600 text-slate-950 font-bold text-xs transition-all shadow" title="Atualizar Dados">
+                <button id="btnRefresh" onclick="fetchCarteiraData(false)" class="flex items-center gap-2 px-3.5 py-2 bg-pstecgreen-500 hover:bg-pstecgreen-600 text-slate-950 font-bold text-xs transition-all shadow-md rounded-xl" title="Atualizar Carteira">
                     <i data-lucide="refresh-cw" class="w-4 h-4" id="refreshIcon"></i>
+                    <span class="hidden sm:inline">Atualizar</span>
                 </button>
 
-                <!-- Botão Sair / Logout -->
-                <button onclick="efetuarLogout()" class="flex items-center gap-1.5 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-xs transition shadow" title="Sair do Sistema">
+                <button onclick="efetuarLogout()" class="flex items-center gap-1.5 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-xs transition shadow-md" title="Sair do Sistema">
                     <i data-lucide="log-out" class="w-4 h-4"></i>
                     <span class="hidden sm:inline">Sair</span>
                 </button>
@@ -127,2112 +100,876 @@
         </div>
     </header>
 
-    <!-- METRICS BAR -->
-    <div id="metricsBar" class="bg-white border-b border-slate-200 text-slate-800 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 py-3 grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
-                <span class="text-[10px] text-slate-500 font-bold uppercase block">Total de OS (Filtrado)</span>
-                <span id="metricTotalOS" class="text-xl font-extrabold text-pstec-700">0</span>
+    <!-- METRICS / CARDS DE KPI -->
+    <div id="metricsBar" class="bg-white border-b border-slate-200 text-slate-800 shadow-sm py-3">
+        <div class="max-w-[96%] mx-auto px-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                <span class="text-[9px] text-slate-500 font-bold uppercase block">Itens Registrados</span>
+                <span id="kpiTotalItens" class="text-lg font-black text-pstec-700">0</span>
             </div>
-            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
-                <span class="text-[10px] text-slate-500 font-bold uppercase block">OS Atrasadas</span>
-                <span id="metricAtrasadas" class="text-xl font-extrabold text-red-600">0</span>
+            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                <span class="text-[9px] text-slate-500 font-bold uppercase block">Saldo a Entregar</span>
+                <span id="kpiSaldoEntregar" class="text-lg font-black text-slate-800">0</span>
             </div>
-            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
-                <span class="text-[10px] text-slate-500 font-bold uppercase block">Valor Geral Total</span>
-                <span id="metricValorTotal" class="text-xl font-extrabold text-pstecgreen-600">R$ 0,00</span>
+            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                <span class="text-[9px] text-slate-500 font-bold uppercase block">Valor Total</span>
+                <span id="kpiValorTotal" class="text-lg font-black text-pstecgreen-600">R$ 0,00</span>
             </div>
-            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
-                <span class="text-[10px] text-slate-500 font-bold uppercase block">Sem Orçamento</span>
-                <span id="metricSemOrcamento" class="text-xl font-extrabold text-amber-600">0</span>
+            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                <span class="text-[9px] text-slate-500 font-bold uppercase block">Valor a Faturar</span>
+                <span id="kpiValorAFaturar" class="text-lg font-black text-blue-600">R$ 0,00</span>
+            </div>
+            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                <span class="text-[9px] text-slate-500 font-bold uppercase block">Valor Liberado</span>
+                <span id="kpiValorLiberado" class="text-lg font-black text-emerald-600">R$ 0,00</span>
+            </div>
+            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                <span class="text-[9px] text-slate-500 font-bold uppercase block">Vl. Falta Comprar (S/ Duplicidade)</span>
+                <span id="kpiValorFaltaComprar" class="text-lg font-black text-red-600">R$ 0,00</span>
             </div>
         </div>
     </div>
 
-    <!-- CONTROLES E FILTROS -->
-    <main class="max-w-7xl w-full mx-auto p-4 flex flex-col gap-4 flex-1">
+    <!-- PAINEL DE CONTROLES E FILTROS COMPLETO -->
+    <main class="max-w-[96%] w-full mx-auto p-4 flex flex-col gap-4 flex-1">
         
-        <div id="filtersBar" class="bg-white p-3.5 rounded-2xl border border-slate-200 flex flex-wrap items-center justify-between gap-3 shadow-sm">
-            
-            <!-- Busca Geral Universal -->
-            <div class="flex items-center gap-2 flex-1 min-w-[200px] bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
-                <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
-                <input type="text" id="searchInput" oninput="renderView()" placeholder="Pesquisar (OS, Título, Cliente, Empresa, Classificação, Cod. Interno...)" 
-                       class="w-full text-xs bg-transparent text-slate-800 focus:outline-none placeholder-slate-400 font-medium">
-            </div>
-
-            <!-- Filtro Geral por Empresa -->
-            <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
-                <i data-lucide="building" class="w-4 h-4 text-slate-400"></i>
-                <select id="segmentoFilter" onchange="renderView()" class="text-xs bg-transparent text-slate-700 focus:outline-none cursor-pointer max-w-[150px] font-bold">
-                    <option value="">Empresa (Todas)</option>
-                </select>
-            </div>
-
-            <!-- FILTRO DE OS ATRASADAS -->
-            <div id="atrasadaContainer" class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
-                <i data-lucide="alert-triangle" class="w-4 h-4 text-slate-400"></i>
-                <select id="atrasadaFilter" onchange="renderView()" class="text-xs bg-transparent text-slate-700 focus:outline-none cursor-pointer max-w-[140px] font-bold">
-                    <option value="">Atrasadas (Todas)</option>
-                    <option value="sim">🔴 Somente Atrasadas (Sim)</option>
-                    <option value="nao">🟢 Somente No Prazo (Não)</option>
-                </select>
-            </div>
-
-            <!-- FILTRO DE APONTAMENTO ABERTO -->
-            <div id="apontamentoContainer" class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
-                <i data-lucide="cog" class="w-4 h-4 text-slate-400"></i>
-                <select id="apontamentoAbertoFilter" onchange="renderView()" class="text-xs bg-transparent text-slate-700 focus:outline-none cursor-pointer max-w-[170px] font-bold">
-                    <option value="">Apontamento Aberto (Todos)</option>
-                    <option value="sim">🟢 Com Apontamento Aberto</option>
-                    <option value="nao">🔴 Sem Apontamento Aberto</option>
-                </select>
-            </div>
-
-            <!-- Filtro por Classificação -->
-            <div id="classificacaoContainer" class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
-                <i data-lucide="tag" class="w-4 h-4 text-slate-400"></i>
-                <select id="classificacaoFilter" onchange="renderView()" class="text-xs bg-transparent text-slate-700 focus:outline-none cursor-pointer max-w-[140px] font-medium">
-                    <option value="">Classificação (Todas)</option>
-                </select>
-            </div>
-
-            <!-- Filtro por Status Produção -->
-            <div id="producaoContainer" class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
-                <i data-lucide="activity" class="w-4 h-4 text-slate-400"></i>
-                <select id="producaoFilter" onchange="renderView()" class="text-xs bg-transparent text-slate-700 focus:outline-none cursor-pointer max-w-[140px] font-medium">
-                    <option value="">Produção (Todos)</option>
-                    <option value="finalizado">Finalizado (100%)</option>
-                    <option value="nao_finalizado">Não Finalizado (&lt;100%)</option>
-                </select>
-            </div>
-
-            <!-- Filtro por Cliente -->
-            <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
-                <i data-lucide="user" class="w-4 h-4 text-slate-400"></i>
-                <select id="clientFilter" onchange="renderView()" class="text-xs bg-transparent text-slate-700 focus:outline-none cursor-pointer max-w-[130px] font-medium">
-                    <option value="">Todos os Clientes</option>
-                </select>
-            </div>
-
-            <!-- Filtro por Prata -->
-            <div id="prataContainer" class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
-                <i data-lucide="sparkles" class="w-4 h-4 text-slate-400"></i>
-                <select id="prataFilter" onchange="renderView()" class="text-xs bg-transparent text-slate-700 focus:outline-none cursor-pointer max-w-[130px] font-medium">
-                    <option value="">Prata (Todos)</option>
-                </select>
-            </div>
-
-            <!-- Filtro por Status Compras -->
-            <div id="comprasContainer" class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
-                <i data-lucide="shopping-cart" class="w-4 h-4 text-slate-400"></i>
-                <select id="comprasFilter" onchange="renderView()" class="text-xs bg-transparent text-slate-700 focus:outline-none cursor-pointer max-w-[130px] font-medium">
-                    <option value="">Compras (Todos)</option>
-                </select>
-            </div>
-
-            <!-- Filtro por Status Terceiros -->
-            <div id="terceirosContainer" class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
-                <i data-lucide="truck" class="w-4 h-4 text-slate-400"></i>
-                <select id="terceirosFilter" onchange="renderView()" class="text-xs bg-transparent text-slate-700 focus:outline-none cursor-pointer max-w-[130px] font-medium">
-                    <option value="">Terceiros (Todos)</option>
-                </select>
-            </div>
-
-            <!-- BOTÕES DE FILTRO SEPARADOS -->
-            <div id="extraButtonsContainer" class="flex items-center gap-2">
-                <button id="btnToggleOrcamento" onclick="toggleOrcamentoFilter()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
-                    <i data-lucide="dollar-sign" class="w-3.5 h-3.5 text-pstecgreen-600"></i>
-                    <span id="txtToggleOrcamento">Exibir somente com Orçamentos</span>
-                </button>
-
-                <!-- BOTÃO LIMPAR FILTROS -->
-                <button onclick="clearAllFilters()" title="Limpar todos os filtros acionados" class="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
-                    <i data-lucide="filter-x" class="w-3.5 h-3.5 text-red-600"></i>
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 flex flex-col gap-3 shadow-sm">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                <div class="flex items-center gap-2">
+                    <button onclick="toggleFiltros()" class="flex items-center gap-1.5 p-1 hover:bg-slate-100 rounded-lg transition text-pstec-700 font-bold text-xs" title="Recolher/Expandir Filtros">
+                        <i data-lucide="filter" class="w-4 h-4"></i>
+                        <span>Filtros do Dashboard de Carteira</span>
+                        <i data-lucide="chevron-up" id="iconToggleFiltros" class="w-4 h-4 text-slate-400"></i>
+                    </button>
+                </div>
+                <button onclick="clearAllFilters()" class="text-[11px] text-red-600 font-bold hover:underline flex items-center gap-1">
+                    <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
                     <span>Limpar Filtros</span>
                 </button>
             </div>
-        </div>
 
-        <!-- BARRA NAVEGADORA DE DATA & SELETOR DE VISÃO -->
-        <div id="navigationBar" class="bg-white p-3 rounded-2xl border border-slate-200 flex flex-wrap items-center justify-between gap-3 shadow-sm">
-            
-            <!-- Navegação de Data -->
-            <div class="flex items-center bg-pstec-700 text-white rounded-xl px-2 py-1 shadow-sm">
-                <button onclick="navigateDate(-1)" class="p-1 hover:bg-pstec-800 rounded-lg text-pstec-100 hover:text-white transition">
-                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
-                </button>
-                
-                <div class="flex items-center gap-2 px-3">
-                    <i data-lucide="calendar" class="w-4 h-4 text-pstec-100"></i>
-                    <span id="currentDateLabel" class="font-bold text-xs capitalize tracking-wide min-w-[160px] text-center">
-                        Carregando...
-                    </span>
+            <!-- ÁREA RECOLHÍVEL DOS FILTROS -->
+            <div id="collapsibleFilterContent" class="flex flex-col gap-3 transition-all duration-300">
+                <!-- Pesquisa Global Direta -->
+                <div class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 flex items-center gap-2 text-xs">
+                    <i data-lucide="search" class="w-4 h-4 text-pstec-600"></i>
+                    <input type="text" id="searchInput" oninput="debounceRender()" placeholder="Pesquisa Geral Rápida (Digite qualquer Nº de OS, Orçamento, Cliente, Item ou Pedido...)" class="w-full bg-transparent text-slate-800 focus:outline-none font-bold placeholder-slate-400">
                 </div>
 
-                <button onclick="navigateDate(1)" class="p-1 hover:bg-pstec-800 rounded-lg text-pstec-100 hover:text-white transition">
-                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                </button>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 text-xs">
+                    <!-- Previsão de Entrega (De / Até) -->
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 flex items-center gap-1.5">
+                        <span class="text-[10px] text-slate-400 font-bold">De:</span>
+                        <input type="date" id="dateFrom" onchange="renderCarteiraView()" class="bg-transparent w-full text-slate-800 focus:outline-none font-medium">
+                    </div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 flex items-center gap-1.5">
+                        <span class="text-[10px] text-slate-400 font-bold">Até:</span>
+                        <input type="date" id="dateTo" onchange="renderCarteiraView()" class="bg-transparent w-full text-slate-800 focus:outline-none font-medium">
+                    </div>
 
-                <button onclick="resetToToday()" class="ml-2 px-2.5 py-0.5 bg-white hover:bg-slate-100 rounded-lg text-xs font-bold text-pstec-800 transition shadow-sm">
-                    Hoje
-                </button>
-            </div>
+                    <select id="filterEmpresa" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
+                        <option value="">Empresa (Todas)</option>
+                    </select>
 
-            <!-- Seletor de Visão (Mês, Semana, Dia) -->
-            <div id="viewModeContainer" class="bg-slate-100 p-1 rounded-xl border border-slate-200 flex items-center gap-1">
-                <button id="viewBtnMonth" onclick="setViewMode('month')" class="px-3 py-1 rounded-lg text-xs font-bold transition">Mês</button>
-                <button id="viewBtnWeek" onclick="setViewMode('week')" class="px-3 py-1 rounded-lg text-xs font-bold transition">Semana</button>
-                <button id="viewBtnDay" onclick="setViewMode('day')" class="px-3 py-1 rounded-lg text-xs font-bold transition">Dia</button>
+                    <select id="filterCliente" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
+                        <option value="">Cliente (Todos)</option>
+                    </select>
+
+                    <select id="filterCodigo" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
+                        <option value="">Código (Todos)</option>
+                    </select>
+
+                    <select id="filterOS" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
+                        <option value="">Nº OS (Todas)</option>
+                    </select>
+
+                    <select id="filterOrcamento" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
+                        <option value="">Nº Orçamento (Todos)</option>
+                    </select>
+
+                    <select id="filterPedido" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
+                        <option value="">Nº Pedido (Todos)</option>
+                    </select>
+
+                    <select id="filterAnaliseCritica" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
+                        <option value="">Necessita Análise... (Todos)</option>
+                        <option value="sim">Sim (Possui 'Sim')</option>
+                        <option value="nao">Não (Todos 'Não')</option>
+                    </select>
+
+                    <select id="filterStatusOS" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-bold focus:outline-none text-pstec-700 truncate">
+                        <option value="">Status OS (Todos)</option>
+                        <option value="APROVADO" selected>APROVADO</option>
+                    </select>
+
+                    <select id="filterSaldoEntrega" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
+                        <option value="">Saldo de entrega (Todos)</option>
+                        <option value="com_saldo">Com Saldo a Entregar (>0)</option>
+                        <option value="sem_saldo">Entregue (Saldo = 0)</option>
+                    </select>
+
+                    <select id="filterListaMat" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
+                        <option value="">Lista de Materiais (Todas)</option>
+                    </select>
+
+                    <select id="filterProcessamentoLM" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
+                        <option value="">Processamento LM (Todos)</option>
+                    </select>
+
+                    <select id="filterDispMat" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
+                        <option value="">Disponibilidade Material (Todas)</option>
+                    </select>
+
+                    <select id="filterOrdemCompra" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
+                        <option value="">Ordem de compra (Todas)</option>
+                    </select>
+
+                    <select id="filterPrata" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
+                        <option value="">Prata (Todos)</option>
+                    </select>
+
+                    <select id="filterCapacidade" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
+                        <option value="">tem_capacidade (Todos)</option>
+                        <option value="sim">Com Capacidade (>0)</option>
+                        <option value="nao">Sem Capacidade (=0)</option>
+                    </select>
+
+                    <select id="filterTipo" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
+                        <option value="">Tipo (Todos)</option>
+                    </select>
+
+                    <select id="filterEtapa" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
+                        <option value="">Etapa (Todas)</option>
+                    </select>
+
+                    <select id="filterPCP" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-bold focus:outline-none text-pstec-700 truncate">
+                        <option value="">PCP ou PRODUÇÃO (Todos)</option>
+                        <option value="PCP">PCP (Sem OS criada)</option>
+                        <option value="PRODUCAO">PRODUÇÃO (Com OS criada)</option>
+                    </select>
+
+                    <select id="filterLiberadoFaturar" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
+                        <option value="">Liberado para Faturar (Todos)</option>
+                        <option value="sim">Com Vl. Liberado (>0)</option>
+                        <option value="nao">Sem Vl. Liberado (=0)</option>
+                    </select>
+
+                    <select id="filterPrioridade" onchange="renderCarteiraView()" class="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-medium focus:outline-none truncate">
+                        <option value="">Prioridade (Todas)</option>
+                    </select>
+                </div>
             </div>
         </div>
 
-        <!-- ÁREA PRINCIPAL DO CALENDÁRIO / PAINEL DA ABA SELECIONADA -->
-        <div id="calendarGrid" class="w-full">
-            <!-- Renderizado via JS conforme a aba selecionada -->
+        <!-- TABELA PRINCIPAL DE CARTEIRA COM TODAS AS COLUNAS OBRIGATÓRIAS -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+            <div id="tableScrollContainer" class="overflow-x-auto custom-scroll max-h-[60vh]">
+                <table class="w-full text-left text-[11px] border-collapse whitespace-nowrap">
+                    <thead class="sticky top-0 z-20 bg-pstec-700 text-white font-extrabold uppercase text-[10px] tracking-wider select-none">
+                        <tr>
+                            <th class="p-3">Ação</th>
+                            <th class="p-3 cursor-pointer hover:bg-pstec-800" onclick="sortByColumn('Nº Orçamento')">Orçamento <span id="sort_Nº Orçamento"></span></th>
+                            <th class="p-3 cursor-pointer hover:bg-pstec-800" onclick="sortByColumn('Cliente')">Cliente <span id="sort_Cliente"></span></th>
+                            <th class="p-3">Código / Item</th>
+                            <th class="p-3 cursor-pointer hover:bg-pstec-800" onclick="sortByColumn('Nº Pedido')">Nº Pedido <span id="sort_Nº Pedido"></span></th>
+                            <th class="p-3 cursor-pointer hover:bg-pstec-800" onclick="sortByColumn('Nº OS')">Nº OS / Status <span id="sort_Nº OS"></span></th>
+                            <th class="p-3 text-center cursor-pointer hover:bg-pstec-800" onclick="sortByColumn('Dt. aprovação')">Dt. Aprovação <span id="sort_Dt. aprovação"></span></th>
+                            <th class="p-3 text-center cursor-pointer hover:bg-pstec-800" onclick="sortByColumn('Prev. entrega(original)')">Prev. Entrega <span id="sort_Prev. entrega(original)"></span></th>
+                            <th class="p-3 text-right cursor-pointer hover:bg-pstec-800" onclick="sortByColumn('Qtde. Total')">Qtde Total <span id="sort_Qtde. Total"></span></th>
+                            <th class="p-3 text-right font-semibold">Entregue</th>
+                            <th class="p-3 text-right cursor-pointer hover:bg-pstec-800" onclick="sortByColumn('Saldo a entregar')">Saldo Entregar <span id="sort_Saldo a entregar"></span></th>
+                            
+                            <!-- COLUNAS FINANCEIRAS SOLICITADAS -->
+                            <th class="p-3 text-right font-semibold">Vl. Unitário</th>
+                            <th class="p-3 text-right cursor-pointer hover:bg-pstec-800" onclick="sortByColumn('Vl. Total')">Vl. Total <span id="sort_Vl. Total"></span></th>
+                            <th class="p-3 text-right cursor-pointer hover:bg-pstec-800" onclick="sortByColumn('Vl. a faturar')">Vl. a Faturar <span id="sort_Vl. a faturar"></span></th>
+                            <th class="p-3 text-right cursor-pointer hover:bg-pstec-800" onclick="sortByColumn('Vl. Liberado')">Vl. Liberado <span id="sort_Vl. Liberado"></span></th>
+                            <th class="p-3 text-right cursor-pointer hover:bg-pstec-800" onclick="sortByColumn('Valor fat. disp.')">Valor fat. disp. <span id="sort_Valor fat. disp."></span></th>
+                            <th class="p-3 text-right cursor-pointer hover:bg-pstec-800" onclick="sortByColumn('Valor falta comprar')">Vl. Falta Comprar <span id="sort_Valor falta comprar"></span></th>
+
+                            <th class="p-3">Disp. Material</th>
+                            <th class="p-3">Prata</th>
+                            <th class="p-3">Empresa</th>
+                        </tr>
+                    </thead>
+                    <tbody id="carteiraTableBody" class="divide-y divide-slate-100 font-medium text-slate-700">
+                        <!-- Renderizado via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- BARRA DE PAGINAÇÃO EM LOTES -->
+            <div class="bg-slate-50 border-t border-slate-200 px-4 py-3 flex flex-wrap justify-between items-center gap-3 text-xs font-bold">
+                <div class="text-slate-600">
+                    Exibindo <span id="lblExibidosCount" class="text-pstec-700 font-extrabold">0</span> de <span id="lblTotalCount" class="text-slate-800 font-extrabold">0</span> registros
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button id="btnLoadMore" onclick="carregarMaisLinhas()" class="px-3.5 py-1.5 bg-pstec-800 hover:bg-pstec-900 text-amber-400 border border-pstec-600 rounded-xl font-extrabold transition shadow-sm flex items-center gap-1.5">
+                        <i data-lucide="plus-circle" class="w-4 h-4 text-amber-400"></i>
+                        <span>Carregar + <span id="lblStepSize">50</span></span>
+                    </button>
+
+                    <select id="selectBatchSize" onchange="alterarTamanhoLote()" class="bg-white border border-slate-300 rounded-xl px-2.5 py-1 text-slate-700 font-bold focus:outline-none">
+                        <option value="50" selected>50 por vez</option>
+                        <option value="100">100 por vez</option>
+                        <option value="250">250 por vez</option>
+                        <option value="500">500 por vez</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div id="emptyState" class="hidden p-12 text-center text-slate-400 flex-col items-center gap-2">
+                <i data-lucide="folder-search" class="w-10 h-10 stroke-1 text-slate-300"></i>
+                <p class="text-xs font-semibold">Nenhum registro de carteira encontrado com os filtros selecionados.</p>
+            </div>
         </div>
     </main>
 
     <!-- FOOTER -->
-    <footer class="bg-white border-t border-slate-200 py-4 mt-8">
-        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-            <div class="flex items-center gap-2 font-medium">
-                <i data-lucide="code-2" class="w-4 h-4 text-pstec-600"></i>
-                <span>© 2026 PSTEC — Sistema de Gestão de Produção V1.4</span>
-            </div>
+    <footer class="bg-white border-t border-slate-200 py-3 mt-auto">
+        <div class="max-w-[96%] mx-auto px-4 flex justify-between items-center text-xs text-slate-500">
+            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V1.8</span>
+            <span id="lastUpdateLabel">Atualizado: -</span>
         </div>
     </footer>
 
-    <!-- MODAL FORMULÁRIO DE EDICÃO DA DATA RENEGOCIADA & JUSTIFICATIVA -->
-    <div id="altRenegociationFormModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[70]">
-        <div class="bg-white text-slate-800 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200">
-            <div class="bg-purple-800 px-5 py-3.5 flex justify-between items-center text-white">
-                <div class="flex items-center gap-2 font-bold text-sm">
-                    <i data-lucide="calendar-clock" class="w-4 h-4 text-purple-300"></i>
-                    <span id="altRenHeaderTitle">Alterar Data Renegociada</span>
+    <!-- MODAL DE DETALHES COMPLETO E VISUALMENTE REFORMULADO -->
+    <div id="detailsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-white text-slate-800 rounded-3xl shadow-2xl max-w-4xl w-full flex flex-col max-h-[90vh] overflow-hidden border border-slate-200">
+            
+            <!-- CABEÇALHO DO MODAL -->
+            <div class="bg-pstec-700 px-6 py-4 flex justify-between items-center text-white shrink-0">
+                <div class="space-y-1">
+                    <div class="flex items-center gap-2">
+                        <span id="mOrcamentoBadge" class="text-[11px] font-black bg-pstec-900 text-pstecgreen-500 px-2.5 py-0.5 rounded-lg border border-pstec-600 font-mono"></span>
+                        <span id="mStatusOSBadge"></span>
+                    </div>
+                    <h3 id="mItemTitle" class="font-extrabold text-sm text-white truncate max-w-xl"></h3>
                 </div>
-                <button onclick="closeAltRenegociationFormModal()" class="text-purple-200 hover:text-white p-1"><i data-lucide="x" class="w-4 h-4"></i></button>
+                <button onclick="closeModal()" class="text-pstec-100 hover:text-white p-1 rounded-lg transition hover:bg-pstec-800"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
             
-            <div class="p-5 space-y-4 text-xs">
-                <div>
-                    <label class="block font-bold text-slate-700 mb-1">Nova Data de Renegociação:</label>
-                    <input type="date" id="inputNewRenegociationDate" 
-                           class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:border-purple-600 font-semibold">
-                    <span class="text-[10px] text-slate-400 italic">Deixe limpo para remover a data renegociada.</span>
-                </div>
-
-                <div>
-                    <label class="block font-bold text-slate-700 mb-1">Justificativa da Alteração <span class="text-red-500">*</span>:</label>
-                    <textarea id="textareaJustification" rows="3" placeholder="Digite o motivo da alteração (obrigatório)..." 
-                              class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-slate-800 focus:outline-none focus:border-purple-600 font-medium custom-scroll"></textarea>
-                </div>
-
-                <p id="altRenegociationFormError" class="text-red-600 text-[11px] font-bold hidden"></p>
-            </div>
-
-            <div class="bg-slate-50 px-5 py-3 border-t border-slate-200 flex justify-end gap-2">
-                <button onclick="closeAltRenegociationFormModal()" class="px-3.5 py-1.5 bg-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-300 transition">Cancelar</button>
-                <button id="btnSaveRenegociation" onclick="submitAltRenegociation()" class="px-4 py-1.5 bg-purple-700 text-white rounded-xl font-bold hover:bg-purple-800 shadow-sm transition flex items-center gap-1.5">
-                    <i data-lucide="save" class="w-3.5 h-3.5"></i>
-                    <span>Salvar Alteração</span>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL DE DETALHES DA OS -->
-    <div id="osModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-        <div class="bg-white text-slate-800 rounded-2xl shadow-2xl max-w-lg w-full flex flex-col max-h-[90vh] overflow-hidden border border-slate-200">
-            <!-- CABEÇALHO DO MODAL (FIXO) -->
-            <div class="bg-pstec-700 px-6 py-3.5 flex justify-between items-center text-white shrink-0">
-                <div>
-                    <span id="mOS" class="text-xs font-bold bg-pstec-900 text-white px-2 py-0.5 rounded uppercase"></span>
-                    <h3 id="mTitulo" class="font-bold text-sm mt-1 text-white"></h3>
-                </div>
-                <button onclick="closeModal()" class="text-pstec-100 hover:text-white p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-            
-            <!-- CORPO DO MODAL -->
-            <div class="p-5 space-y-3 text-xs overflow-y-auto custom-scroll flex-1">
-                <div class="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
-                    <div><span class="text-slate-500 block font-semibold">Nº Pedido</span><span id="mPedido" class="font-bold text-slate-800"></span></div>
-                    <div><span class="text-slate-500 block font-semibold">Cliente</span><span id="mCliente" class="font-bold text-slate-800"></span></div>
-                    <div><span class="text-slate-500 block font-semibold">CNPJ Cliente</span><span id="mCnpj" class="font-bold text-pstec-700 font-mono"></span></div>
-                    <div><span class="text-slate-500 block font-semibold">Empresa</span><span id="mSegmento" class="font-bold text-pstec-700"></span></div>
-                    <div><span class="text-slate-500 block font-semibold">Código Interno</span><span id="mCodInterno" class="font-bold text-slate-800 font-mono"></span></div>
-                    <div><span class="text-slate-500 block font-semibold">Origem</span><span id="mOrigem" class="font-bold text-slate-800"></span></div>
-                    <div><span class="text-slate-500 block font-semibold">Classificação</span><span id="mClassificacao" class="font-bold text-indigo-700 uppercase"></span></div>
-                    <div><span class="text-slate-500 block font-semibold">Possui Prata</span><span id="mPrata" class="font-bold text-slate-800"></span></div>
-                    <div><span class="text-slate-500 block font-semibold">OS Filhos (Quais)</span><span id="mOsFilhosQuais" class="font-bold text-pstec-700 font-mono"></span></div>
-                    <div><span class="text-slate-500 block font-semibold">Possui Orçamento</span><span id="mPossuiOrcamento" class="font-bold text-slate-800"></span></div>
-                    <div><span class="text-slate-500 block font-semibold">Preço Geral / Valor</span><span id="mPreco" class="font-bold text-pstecgreen-600"></span></div>
-                    <div><span class="text-slate-500 block font-semibold">Nº do Orçamento</span><span id="mNumOrcamento" class="font-bold text-pstec-700"></span></div>
-                </div>
-
-                <!-- STATUS OPERAÇÃO -->
-                <div class="space-y-1.5">
-                    <h4 class="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Status da Operação</h4>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div class="bg-slate-50 p-2 rounded-lg border border-slate-200"><span class="text-slate-500 block">Compras</span><span id="mCompras" class="font-semibold text-slate-800"></span></div>
-                        <div class="bg-slate-50 p-2 rounded-lg border border-slate-200"><span class="text-slate-500 block">Terceiros</span><span id="mTerceiros" class="font-semibold text-slate-800"></span></div>
-                        <div class="bg-slate-50 p-2 rounded-lg border border-slate-200"><span class="text-slate-500 block">Produção</span><span id="mProducao" class="font-semibold text-pstec-600"></span></div>
-                        <div class="bg-slate-50 p-2 rounded-lg border border-slate-200"><span class="text-slate-500 block">Atrasada</span><span id="mAtrasada" class="font-bold"></span></div>
+            <!-- CORPO DO MODAL ORGANIZADO POR BLOCOS -->
+            <div class="p-6 space-y-4 text-xs overflow-y-auto custom-scroll flex-1 bg-slate-50/50">
+                
+                <!-- PAINEL DE RESUMO FINANCEIRO DO ITEM -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs">
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block">Valor Total</span>
+                        <span id="mVlTotal" class="text-sm font-black text-slate-900 font-mono">R$ 0,00</span>
+                    </div>
+                    <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs">
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block">Valor a Faturar</span>
+                        <span id="mVlAFaturar" class="text-sm font-black text-blue-600 font-mono">R$ 0,00</span>
+                    </div>
+                    <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs">
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block">Valor Liberado</span>
+                        <span id="mVlLiberado" class="text-sm font-black text-emerald-600 font-mono">R$ 0,00</span>
+                    </div>
+                    <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs">
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block">Vl. Falta Comprar</span>
+                        <span id="mVlFaltaComprar" class="text-sm font-black text-red-600 font-mono">R$ 0,00</span>
                     </div>
                 </div>
 
-                <!-- PROCESSOS PENDENTES (PP PENDENTES) -->
-                <div class="space-y-1.5 pt-1">
-                    <h4 class="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Processos Pendentes (PP Pendentes)</h4>
-                    <div class="bg-amber-50/60 border border-amber-200/80 p-2.5 rounded-xl font-medium text-slate-700 leading-relaxed text-[11px]" id="mPpPendentes">
-                        -
+                <!-- BLOCO 1: DADOS DO CLIENTE E PEDIDO -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-2.5 shadow-xs">
+                    <div class="flex items-center gap-2 text-pstec-700 font-extrabold border-b pb-1.5 text-xs">
+                        <i data-lucide="building-2" class="w-4 h-4"></i>
+                        <span>Cliente e Identificação do Pedido</span>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+                        <div><span class="text-slate-400 block font-bold text-[10px]">Cliente:</span><strong id="mCliente" class="text-slate-800 uppercase font-bold"></strong></div>
+                        <div><span class="text-slate-400 block font-bold text-[10px]">Empresa:</span><strong id="mEmpresa" class="text-pstec-700 uppercase font-bold"></strong></div>
+                        <div><span class="text-slate-400 block font-bold text-[10px]">Nº Pedido:</span><strong id="mPedido" class="text-slate-800 font-mono"></strong></div>
+                        <div><span class="text-slate-400 block font-bold text-[10px]">Código do Item:</span><strong id="mCodigo" class="text-slate-800 font-mono"></strong></div>
                     </div>
                 </div>
 
-                <!-- SEMÁFORO E DETALHES DE APONTAMENTO ABERTO NO MODAL -->
-                <div class="space-y-1.5 pt-1">
-                    <h4 class="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Apontamento em Andamento</h4>
-                    <div id="mApontamentoContainer" class="p-3 rounded-xl border flex flex-col gap-1.5">
-                        <div class="flex items-center justify-between">
-                            <span class="font-bold text-xs" id="mApontamentoStatusTitle">Status</span>
-                            <span id="mApontamentoBadge"></span>
-                        </div>
-                        <p class="text-[11px] font-mono leading-relaxed" id="mApontamentoDetalheText">-</p>
+                <!-- BLOCO 2: DATAS E PRAZOS -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-2.5 shadow-xs">
+                    <div class="flex items-center gap-2 text-pstec-700 font-extrabold border-b pb-1.5 text-xs">
+                        <i data-lucide="calendar-days" class="w-4 h-4"></i>
+                        <span>Datas e Prazos de Entrega</span>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+                        <div><span class="text-slate-400 block font-bold text-[10px]">Dt. Aprovação:</span><strong id="mDtAprov" class="text-slate-800 font-mono"></strong></div>
+                        <div><span class="text-slate-400 block font-bold text-[10px]">Prev. Entrega (Original):</span><strong id="mPrevOriginal" class="text-slate-800 font-mono"></strong></div>
+                        <div><span class="text-slate-400 block font-bold text-[10px]">Dt. Negociada:</span><strong id="mDtNegociada" class="text-purple-700 font-mono font-bold"></strong></div>
+                        <div><span class="text-slate-400 block font-bold text-[10px]">Análise Crítica:</span><strong id="mAnalise" class="text-indigo-700"></strong></div>
                     </div>
                 </div>
 
-                <!-- DATAS MAPEADAS COM FORMATO LIMPO -->
-                <div class="space-y-1.5 pt-2 border-t border-slate-200">
-                    <h4 class="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Datas do Processo</h4>
-                    <div class="grid grid-cols-2 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-[11px]">
-                        <div><span class="text-slate-500 block">Abertura OS:</span> <span id="mAbertura" class="font-semibold text-slate-700"></span></div>
-                        <div><span class="text-slate-500 block">Data Renegociada:</span> <span id="mDtRenegociada" class="font-bold text-purple-700"></span></div>
-                        <div><span class="text-slate-500 block">Prev. Entrega Orçamento:</span> <span id="mPrevEntregaOrcamento" class="font-semibold text-pstec-700"></span></div>
-                        <div><span class="text-slate-500 block">Prev. Entrega OS:</span> <span id="mPrevEntregaOS" class="font-semibold text-pstec-700"></span></div>
-                        <div><span class="text-slate-500 block">Último Apontamento:</span> <span id="mApontamento" class="font-semibold text-slate-700"></span></div>
-                        <div><span class="text-slate-500 block">Entrega Normalizada:</span> <span id="mEntregaNorm" class="font-bold text-amber-600"></span></div>
+                <!-- BLOCO 3: QUANTIDADES E OPERAÇÃO -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-2.5 shadow-xs">
+                    <div class="flex items-center gap-2 text-pstec-700 font-extrabold border-b pb-1.5 text-xs">
+                        <i data-lucide="boxes" class="w-4 h-4"></i>
+                        <span>Quantidades e Operação PCP</span>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 font-mono">
+                        <div><span class="text-slate-400 block font-bold text-[10px] font-sans">Qtde. Total:</span><strong id="mQtdeTotal" class="text-slate-800"></strong></div>
+                        <div><span class="text-slate-400 block font-bold text-[10px] font-sans">Qtde. Entregue:</span><strong id="mQtdeEntregue" class="text-amber-600"></strong></div>
+                        <div><span class="text-slate-400 block font-bold text-[10px] font-sans">Saldo a Entregar:</span><strong id="mSaldoEntregar" class="text-pstec-700 font-extrabold"></strong></div>
+                        <div><span class="text-slate-400 block font-bold text-[10px] font-sans">Vl. Unitário:</span><strong id="mVlUnitario" class="text-slate-800"></strong></div>
                     </div>
                 </div>
 
-                <!-- CAMPO JUSTIFICATIVA EXIBIDO ABAIXO DAS DATAS NO MODAL -->
-                <div class="space-y-1.5 pt-2 border-t border-slate-200">
-                    <h4 class="font-bold text-purple-800 uppercase tracking-wider text-[10px]">Justificativa da Renegociação</h4>
-                    <div class="bg-purple-50/70 border border-purple-200 p-2.5 rounded-xl font-mono text-[11px] text-purple-900 leading-relaxed" id="mJustificativa">
-                        -
+                <!-- BLOCO 4: MATERIAIS E COMPRAS -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-2.5 shadow-xs">
+                    <div class="flex items-center gap-2 text-pstec-700 font-extrabold border-b pb-1.5 text-xs">
+                        <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+                        <span>Suprimentos e Materiais</span>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+                        <div><span class="text-slate-400 block font-bold text-[10px]">Disp. Material:</span><strong id="mDispMat" class="text-slate-800"></strong></div>
+                        <div><span class="text-slate-400 block font-bold text-[10px]">Lista de Materiais:</span><strong id="mListaMat" class="text-slate-800"></strong></div>
+                        <div><span class="text-slate-400 block font-bold text-[10px]">Prata:</span><strong id="mPrata" class="text-slate-800"></strong></div>
+                        <div><span class="text-slate-400 block font-bold text-[10px]">Valor Fat. Disp.:</span><strong id="mVlFatDisp" class="text-emerald-700 font-mono font-bold"></strong></div>
                     </div>
                 </div>
+
             </div>
 
             <!-- RODAPÉ DO MODAL -->
-            <div class="bg-slate-50 px-5 py-3 border-t border-slate-200 flex flex-wrap justify-between items-center gap-2 shrink-0">
-                <div class="flex items-center gap-2 flex-wrap">
-                    <button onclick="openAltRenegociationFormModal()" class="px-3.5 py-1.5 bg-purple-700 hover:bg-purple-800 text-white rounded-xl font-bold text-xs transition shadow-sm flex items-center gap-1.5">
-                        <i data-lucide="calendar-cog" class="w-4 h-4"></i>
-                        <span>Alterar Dt. Renegociada</span>
-                    </button>
-
-                    <!-- BOTÃO NOVO: GERAR CÓDIGO DO CLIENTE -->
-                    <button onclick="gerarCodigoClienteAcesso()" class="px-3.5 py-1.5 bg-pstec-700 hover:bg-pstec-800 text-white rounded-xl font-bold text-xs transition shadow-sm flex items-center gap-1.5">
-                        <i data-lucide="key" class="w-4 h-4 text-pstecgreen-500"></i>
-                        <span>Gerar Acesso Cliente</span>
-                    </button>
-
-                    <!-- BOTÃO DINÂMICO PARA NAVEGAÇÃO DE LIMBO -->
-                    <button id="btnEnviarLimbo" onclick="executarAcaoLimbo()" class="px-3.5 py-1.5 rounded-xl font-bold text-xs transition shadow-sm flex items-center gap-1.5">
-                        <i data-lucide="ghost" class="w-4 h-4"></i>
-                        <span id="txtLabelBtnLimbo">Enviar para o Limbo</span>
-                    </button>
-                </div>
-
-                <button onclick="closeModal()" class="px-4 py-1.5 bg-pstec-700 text-white rounded-xl font-semibold hover:bg-pstec-800 shadow-sm transition">Fechar</button>
+            <div class="bg-slate-50 px-6 py-3 border-t border-slate-200 flex justify-end shrink-0">
+                <button onclick="closeModal()" class="px-5 py-2 bg-pstec-700 text-white rounded-xl font-bold hover:bg-pstec-800 shadow-sm transition">Fechar</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL GERAR ACESSO DO CLIENTE -->
-    <div id="clientAccessModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[80]">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4 text-xs border border-slate-200 relative">
-            <div class="flex justify-between items-center border-b pb-2">
-                <div class="flex items-center gap-2 text-pstec-900 font-extrabold text-sm">
-                    <i data-lucide="shield-check" class="w-5 h-5 text-pstecgreen-600"></i>
-                    <span>Acesso do Cliente Gerado</span>
-                </div>
-                <button onclick="closeClientAccessModal()" class="text-slate-400 hover:text-slate-700"><i data-lucide="x" class="w-4 h-4"></i></button>
-            </div>
-
-            <div class="space-y-3">
-                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
-                    <span class="text-[10px] text-slate-400 font-bold uppercase block">Cliente</span>
-                    <span id="caClientName" class="font-extrabold text-slate-800 text-xs"></span>
-                </div>
-
-                <div class="grid grid-cols-2 gap-2">
-                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
-                        <span class="text-[10px] text-slate-400 font-bold uppercase block">CNPJ do Cliente</span>
-                        <span id="caClientCNPJ" class="font-extrabold font-mono text-slate-800 text-xs"></span>
-                    </div>
-
-                    <div class="bg-pstec-50 p-3 rounded-xl border border-pstec-100">
-                        <span class="text-[10px] text-pstec-700 font-bold uppercase block">Senha de Acesso Exclusiva</span>
-                        <span id="caClientCode" class="font-black font-mono text-pstecgreen-600 text-sm tracking-wider"></span>
-                    </div>
-                </div>
-
-                <div>
-                    <span class="text-[10px] text-slate-400 font-bold uppercase block mb-1">Mensagem Pronta para WhatsApp</span>
-                    <textarea id="caMessageText" rows="4" readonly class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-mono text-[10.5px] text-slate-700 focus:outline-none custom-scroll"></textarea>
-                </div>
-            </div>
-
-            <div class="flex justify-end gap-2 pt-2">
-                <button onclick="closeClientAccessModal()" class="px-3.5 py-1.5 bg-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-300 transition">Fechar</button>
-                <button onclick="copiarMensagemCliente()" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-sm transition flex items-center gap-1.5">
-                    <i data-lucide="copy" class="w-3.5 h-3.5"></i>
-                    <span>Copiar Mensagem</span>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- JAVASCRIPT LÓGICA E RENDERIZAÇÃO -->
+    <!-- LOGICA JS DE ALTA PERFORMANCE -->
     <script>
-        const API_URL = 'https://pstec.consultoriarf.net/producao';
-        const API_HR_A_MAIS = 'https://pstec.consultoriarf.net/hr-a-mais';
-        const API_FATURAMENTO = 'https://pstec.consultoriarf.net/faturamento_prod';
-
-        let rawData = [];
-        let rawConferenciaData = [];
-        let rawFaturamentoData = [];
-        let currentDate = new Date();
-        let selectedItemModal = null; 
-
-        let currentView = localStorage.getItem('pstec_preferred_view') || 'week';
+        const API_CARTEIRA = 'https://pstec.consultoriarf.net/CARTEIRA';
+        let rawCarteira = [];
+        let currentFilteredData = [];
         
-        let abaAtiva = 'dashboard';
+        let sortColumn = 'Dt. aprovação';
+        let sortAsc = false;
 
-        let onlyWithBudget = false;
-        let isValuesUnlocked = true;
-
-        // Mapeamento de dígitos para senhas aleatórias
-        const charMap = {
-            '0': '0',
-            '1': 'I',
-            '2': 'b',
-            '3': 'c',
-            '4': 'd',
-            '5': 'h',
-            '6': 'F',
-            '7': 'g',
-            '8': 'H',
-            '9': 'I'
-        };
-
-        function calculateCustomClientPassword(cnpj) {
-            const clean = String(cnpj || '').replace(/\D/g, '');
-            if (clean.length < 8) return '';
-            
-            // 6 dígitos antes da barra (posição 2 a 8 no CNPJ limpo de 14 dígitos)
-            const sixDigits = clean.substring(2, 8);
-            const inverted = sixDigits.split('').reverse().join('');
-            
-            return inverted.split('').map(d => charMap[d] || d).join('');
-        }
+        let currentRenderLimit = 50;
+        let batchStep = 50;
+        let debounceTimer = null;
+        let selectsPopulated = false;
+        let isFiltrosCollapsed = false;
 
         document.addEventListener('DOMContentLoaded', () => {
             const nomeUser = localStorage.getItem('pstec_usuario_nome');
             if (nomeUser) {
-                const displayEl = document.getElementById('userDisplayName');
-                if (displayEl) displayEl.textContent = nomeUser;
+                document.getElementById('userDisplayName').textContent = nomeUser;
             }
 
-            configurarVisibilidadeAbas();
+            if (localStorage.getItem('pstec_carteira_filtros_collapsed') === 'true') {
+                toggleFiltros(true);
+            }
 
             lucide.createIcons();
-            setViewMode(currentView, false);
-            fetchData();
-
-            setInterval(() => {
-                const isModalOpen = !document.getElementById('osModal').classList.contains('hidden') ||
-                                    !document.getElementById('altRenegociationFormModal').classList.contains('hidden') ||
-                                    !document.getElementById('clientAccessModal').classList.contains('hidden');
-                
-                if (!isModalOpen) {
-                    fetchData(true);
-                    if (abaAtiva === 'conferencia') {
-                        fetchConferenciaData(true);
-                    } else if (abaAtiva === 'faturamento') {
-                        fetchFaturamentoData(true);
-                    }
-                }
-            }, 30000);
+            fetchCarteiraData();
         });
 
-        function configurarVisibilidadeAbas() {
-            const valFaturamento = localStorage.getItem('pstec_perm_faturamento');
-            const valFinalizacao = localStorage.getItem('pstec_perm_finalizacao');
+        function toggleFiltros(forceState = null) {
+            const content = document.getElementById('collapsibleFilterContent');
+            const icon = document.getElementById('iconToggleFiltros');
+            
+            isFiltrosCollapsed = forceState !== null ? forceState : !isFiltrosCollapsed;
 
-            const permFaturamento = valFaturamento !== null && String(valFaturamento).trim() === '1';
-            const permFinalizacao = valFinalizacao !== null && String(valFinalizacao).trim() === '1';
-
-            const btnAbaFaturamento = document.getElementById('btnAbaFaturamento');
-            const btnAbaConferencia = document.getElementById('btnAbaConferencia');
-
-            if (btnAbaFaturamento) {
-                if (permFaturamento) {
-                    btnAbaFaturamento.classList.remove('hidden');
-                } else {
-                    btnAbaFaturamento.classList.add('hidden');
-                }
-            }
-
-            if (btnAbaConferencia) {
-                if (permFinalizacao) {
-                    btnAbaConferencia.classList.remove('hidden');
-                } else {
-                    btnAbaConferencia.classList.add('hidden');
-                }
-            }
-        }
-
-        function setAbaAtiva(novaAba) {
-            abaAtiva = novaAba;
-
-            const metricsBar = document.getElementById('metricsBar');
-            const filtersBar = document.getElementById('filtersBar');
-            const navigationBar = document.getElementById('navigationBar');
-
-            const btnDashboard = document.getElementById('btnAbaDashboard');
-            const btnFaturamento = document.getElementById('btnAbaFaturamento');
-            const btnConferencia = document.getElementById('btnAbaConferencia');
-            const btnLimbo = document.getElementById('btnVerLimbo');
-
-            const atrasadaContainer = document.getElementById('atrasadaContainer');
-            const apontamentoContainer = document.getElementById('apontamentoContainer');
-            const producaoContainer = document.getElementById('producaoContainer');
-            const prataContainer = document.getElementById('prataContainer');
-            const classificacaoContainer = document.getElementById('classificacaoContainer');
-            const comprasContainer = document.getElementById('comprasContainer');
-            const terceirosContainer = document.getElementById('terceirosContainer');
-            const extraButtonsContainer = document.getElementById('extraButtonsContainer');
-            const viewModeContainer = document.getElementById('viewModeContainer');
-
-            if (btnDashboard) btnDashboard.className = "flex items-center gap-1.5 px-3 py-2 bg-pstec-800 hover:bg-pstec-900 text-white font-extrabold rounded-xl text-xs transition shadow-md";
-            if (btnFaturamento) btnFaturamento.className = "flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl text-xs transition shadow-md";
-            if (btnConferencia) btnConferencia.className = "flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold rounded-xl text-xs transition shadow-md";
-            if (btnLimbo) btnLimbo.className = "flex items-center gap-1.5 px-3 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl text-xs transition shadow-md";
-
-            configurarVisibilidadeAbas();
-
-            if (abaAtiva === 'dashboard') {
-                if (btnDashboard) btnDashboard.className = "flex items-center gap-1.5 px-3 py-2 bg-pstec-900 border border-pstecgreen-500 text-white font-black rounded-xl text-xs transition shadow-md";
-                if (metricsBar) metricsBar.classList.remove('hidden');
-                if (filtersBar) filtersBar.classList.remove('hidden');
-                if (navigationBar) navigationBar.classList.remove('hidden');
-
-                if (atrasadaContainer) atrasadaContainer.classList.remove('hidden');
-                if (apontamentoContainer) apontamentoContainer.classList.remove('hidden');
-                if (producaoContainer) producaoContainer.classList.remove('hidden');
-                if (prataContainer) prataContainer.classList.remove('hidden');
-                if (classificacaoContainer) classificacaoContainer.classList.remove('hidden');
-                if (comprasContainer) comprasContainer.classList.remove('hidden');
-                if (terceirosContainer) terceirosContainer.classList.remove('hidden');
-                if (extraButtonsContainer) extraButtonsContainer.classList.remove('hidden');
-                if (viewModeContainer) viewModeContainer.classList.remove('hidden');
-
-            } else if (abaAtiva === 'faturamento') {
-                if (btnFaturamento) btnFaturamento.className = "flex items-center gap-1.5 px-3 py-2 bg-blue-900 border border-blue-400 text-white font-black rounded-xl text-xs transition shadow-md";
-                if (metricsBar) metricsBar.classList.add('hidden');
-                if (filtersBar) filtersBar.classList.remove('hidden');
-                if (navigationBar) navigationBar.classList.remove('hidden');
-
-                if (atrasadaContainer) atrasadaContainer.classList.add('hidden');
-                if (apontamentoContainer) apontamentoContainer.classList.add('hidden');
-                if (producaoContainer) producaoContainer.classList.add('hidden');
-                if (prataContainer) prataContainer.classList.add('hidden');
-                if (classificacaoContainer) classificacaoContainer.classList.add('hidden');
-                if (comprasContainer) comprasContainer.classList.add('hidden');
-                if (terceirosContainer) terceirosContainer.classList.add('hidden');
-                if (extraButtonsContainer) extraButtonsContainer.classList.add('hidden');
-                if (viewModeContainer) viewModeContainer.classList.add('hidden');
-
-                currentView = 'month';
-                fetchFaturamentoData();
-
-            } else if (abaAtiva === 'conferencia') {
-                if (btnConferencia) btnConferencia.className = "flex items-center gap-1.5 px-3 py-2 bg-indigo-900 border border-indigo-400 text-white font-black rounded-xl text-xs transition shadow-md";
-                if (metricsBar) metricsBar.classList.add('hidden');
-                if (filtersBar) filtersBar.classList.add('hidden');
-                if (navigationBar) navigationBar.classList.remove('hidden'); 
-                if (viewModeContainer) viewModeContainer.classList.remove('hidden');
-                fetchConferenciaData();
+            if (isFiltrosCollapsed) {
+                content.classList.add('hidden');
+                if (icon) icon.setAttribute('data-lucide', 'chevron-down');
+                localStorage.setItem('pstec_carteira_filtros_collapsed', 'true');
             } else {
-                if (metricsBar) metricsBar.classList.add('hidden');
-                if (filtersBar) filtersBar.classList.add('hidden');
-                if (navigationBar) navigationBar.classList.add('hidden');
-
-                if (abaAtiva === 'limbo' && btnLimbo) {
-                    btnLimbo.className = "flex items-center gap-1.5 px-3 py-2 bg-pstec-900 border border-amber-400 text-amber-400 font-black rounded-xl text-xs transition shadow-md";
-                }
+                content.classList.remove('hidden');
+                if (icon) icon.setAttribute('data-lucide', 'chevron-up');
+                localStorage.setItem('pstec_carteira_filtros_collapsed', 'false');
             }
 
-            renderView();
+            lucide.createIcons();
         }
 
-        function efetuarLogout() {
-            localStorage.removeItem('pstec_token');
-            localStorage.removeItem('pstec_usuario_nome');
-            localStorage.removeItem('pstec_perm_faturamento');
-            localStorage.removeItem('pstec_perm_finalizacao');
-            window.location.href = 'login-pstec.html';
-        }
-
-        function initializeCurrentDate() {
-            if (!rawData || rawData.length === 0) return;
-
-            const currMonthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
-            const hasDataInCurrMonth = rawData.some(item => item.entrega_normalizada && String(item.entrega_normalizada).substring(0, 7) === currMonthKey);
-
-            if (!hasDataInCurrMonth) {
-                const monthCounts = {};
-                rawData.forEach(item => {
-                    if (item.entrega_normalizada && String(item.entrega_normalizada).length >= 7) {
-                        const mKey = String(item.entrega_normalizada).substring(0, 7);
-                        monthCounts[mKey] = (monthCounts[mKey] || 0) + 1;
-                    }
-                });
-
-                const sortedMonths = Object.entries(monthCounts).sort((a, b) => b[1] - a[1]);
-                if (sortedMonths.length > 0) {
-                    const [bestYear, bestMonth] = sortedMonths[0][0].split('-');
-                    currentDate = new Date(parseInt(bestYear), parseInt(bestMonth) - 1, 1);
-                }
-            }
-        }
-
-        function formatDate(dtStr) {
-            if (!dtStr || dtStr === 'NaT' || dtStr === 'None' || dtStr === 'null') return '-';
-            const cleanStr = String(dtStr).trim();
-            if (cleanStr.length < 10) return '-';
-            const yyyyMmDd = cleanStr.substring(0, 10);
-            const parts = yyyyMmDd.split('-');
-            if (parts.length === 3) {
-                return `${parts[2]}/${parts[1]}/${parts[0]}`;
-            }
-            return cleanStr;
-        }
-
-        function formatHours(val) {
-            const num = parseFloat(val);
-            if (isNaN(num)) return '0.00 hrs';
-            return `${num.toFixed(2)} hrs`;
-        }
-
-        function getISOWeekNumber(d) {
-            const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-            const dayNum = date.getUTCDay() || 7;
-            date.setUTCDate(date.getUTCDate() + 4 - dayNum);
-            const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-            return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
-        }
-
-        function getWeekDateRangeStr(d) {
-            const targetDate = new Date(d);
-            let dayOfWeek = targetDate.getDay() - 1;
-            if (dayOfWeek === -1) dayOfWeek = 6;
-            const wStart = new Date(targetDate);
-            wStart.setDate(wStart.getDate() - dayOfWeek);
-            const wEnd = new Date(wStart);
-            wEnd.setDate(wEnd.getDate() + 6);
-
-            const fmtDay = (date) => String(date.getDate()).padStart(2, '0');
-            const fmtMonth = (date) => String(date.getMonth() + 1).padStart(2, '0');
-
-            return `${fmtDay(wStart)}/${fmtMonth(wStart)} - ${fmtDay(wEnd)}/${fmtMonth(wEnd)}`;
-        }
-
-        async function fetchData(isSilent = false) {
+        async function fetchCarteiraData(isSilent = false) {
             const refreshIcon = document.getElementById('refreshIcon');
             const btnRefresh = document.getElementById('btnRefresh');
             
-            if (!isSilent && refreshIcon) {
-                refreshIcon.classList.add('animate-spin');
-            }
-            if (!isSilent && btnRefresh) {
-                btnRefresh.disabled = true;
-            }
-
-            const savedFilters = {
-                search: document.getElementById('searchInput')?.value || '',
-                atrasada: document.getElementById('atrasadaFilter')?.value || '',
-                apontamento: document.getElementById('apontamentoAbertoFilter')?.value || '',
-                segmento: document.getElementById('segmentoFilter')?.value || '',
-                producao: document.getElementById('producaoFilter')?.value || '',
-                cliente: document.getElementById('clientFilter')?.value || '',
-                prata: document.getElementById('prataFilter')?.value || '',
-                classificacao: document.getElementById('classificacaoFilter')?.value || '',
-                compras: document.getElementById('comprasFilter')?.value || '',
-                terceiros: document.getElementById('terceirosFilter')?.value || ''
-            };
+            if (!isSilent && refreshIcon) refreshIcon.classList.add('animate-spin');
+            if (!isSilent && btnRefresh) btnRefresh.disabled = true;
 
             try {
-                const cacheBusterUrl = `${API_URL}?_t=${Date.now()}`;
-                const response = await fetch(cacheBusterUrl, { cache: 'no-store' });
+                const response = await fetch(`${API_CARTEIRA}?_t=${Date.now()}`, { cache: 'no-store' });
+                if (!response.ok) throw new Error(`Erro na API: ${response.status}`);
+                
+                rawCarteira = await response.json();
 
-                if (!response.ok) {
-                    throw new Error(`Erro na requisição: ${response.status} ${response.statusText}`);
+                renderCarteiraView();
+
+                if (!selectsPopulated) {
+                    setTimeout(() => {
+                        populateNativeSelects();
+                        selectsPopulated = true;
+                    }, 100);
                 }
 
-                rawData = await response.json();
-
-                initializeCurrentDate();
-
-                populateSelectOptions(savedFilters);
-
-                const searchInput = document.getElementById('searchInput');
-                if (searchInput) searchInput.value = savedFilters.search;
-
-                renderView();
-
+                document.getElementById('lastUpdateLabel').textContent = `Atualizado: ${new Date().toLocaleTimeString('pt-BR')}`;
             } catch (error) {
-                console.error('Erro ao buscar dados da API:', error);
-                if (!isSilent) {
-                    alert('Não foi possível atualizar os dados de produção. Verifique a conexão com o servidor.');
-                }
+                console.error('Erro ao buscar dados da Carteira:', error);
+                if (!isSilent) alert('Não foi possível atualizar a Carteira de Produção.');
             } finally {
-                if (refreshIcon) {
-                    refreshIcon.classList.remove('animate-spin');
-                }
-                if (btnRefresh) {
-                    btnRefresh.disabled = false;
-                }
+                if (refreshIcon) refreshIcon.classList.remove('animate-spin');
+                if (btnRefresh) btnRefresh.disabled = false;
                 lucide.createIcons();
             }
         }
 
-        async function fetchConferenciaData(isSilent = false) {
-            try {
-                const cacheBusterUrl = `${API_HR_A_MAIS}?_t=${Date.now()}`;
-                const response = await fetch(cacheBusterUrl, { cache: 'no-store' });
-                if (!response.ok) throw new Error('Erro na requisição da API de horas a mais');
-                rawConferenciaData = await response.json();
-                if (abaAtiva === 'conferencia') renderPaginaConferenciaView();
-            } catch (err) {
-                console.error('Erro ao buscar dados de conferência:', err);
-            }
-        }
-
-        async function fetchFaturamentoData(isSilent = false) {
-            try {
-                const cacheBusterUrl = `${API_FATURAMENTO}?_t=${Date.now()}`;
-                const response = await fetch(cacheBusterUrl, { cache: 'no-store' });
-                if (!response.ok) throw new Error('Erro na requisição da API de faturamento');
-                rawFaturamentoData = await response.json();
-                if (abaAtiva === 'faturamento') renderPaginaFaturamentoView();
-            } catch (err) {
-                console.error('Erro ao buscar dados de faturamento:', err);
-            }
-        }
-
-        function populateSelectOptions(savedFilters = {}) {
-            const getUniqueOptions = (key) => {
-                const values = rawData
-                    .map(item => item[key])
-                    .filter(val => val !== null && val !== undefined && String(val).trim() !== '');
-                return [...new Set(values)].sort();
-            };
-
-            const fillSelect = (elementId, options, defaultLabel, savedValue) => {
-                const select = document.getElementById(elementId);
-                if (!select) return;
-
-                select.innerHTML = `<option value="">${defaultLabel}</option>`;
-                options.forEach(opt => {
-                    const optionEl = document.createElement('option');
-                    optionEl.value = opt;
-                    optionEl.textContent = opt;
-                    select.appendChild(optionEl);
-                });
-
-                if (savedValue && options.includes(savedValue)) {
-                    select.value = savedValue;
-                } else if (savedValue) {
-                    select.value = savedValue;
+        function populateNativeSelects() {
+            const fill = (id, key, label) => {
+                const sel = document.getElementById(id);
+                if (!sel) return;
+                const currVal = sel.value;
+                const set = new Set();
+                
+                for (let i = 0; i < rawCarteira.length; i++) {
+                    const val = rawCarteira[i][key];
+                    if (val !== null && val !== undefined && String(val).trim() !== '') {
+                        set.add(val);
+                    }
                 }
+                
+                const sorted = Array.from(set).sort();
+                sel.innerHTML = `<option value="">${label}</option>`;
+                
+                for (let i = 0; i < sorted.length; i++) {
+                    const el = document.createElement('option');
+                    el.value = sorted[i];
+                    el.textContent = sorted[i];
+                    sel.appendChild(el);
+                }
+                if (currVal) sel.value = currVal;
             };
 
-            fillSelect('segmentoFilter', getUniqueOptions('empresa'), 'Empresa (Todas)', savedFilters.segmento);
-            fillSelect('clientFilter', getUniqueOptions('cliente'), 'Todos os Clientes', savedFilters.cliente);
-            fillSelect('prataFilter', getUniqueOptions('possui_prata'), 'Prata (Todos)', savedFilters.prata);
-            fillSelect('classificacaoFilter', getUniqueOptions('classificacao'), 'Classificação (Todas)', savedFilters.classificacao);
-            fillSelect('comprasFilter', getUniqueOptions('status_compras'), 'Compras (Todos)', savedFilters.compras);
-            fillSelect('terceirosFilter', getUniqueOptions('status_terceiros'), 'Terceiros (Todos)', savedFilters.terceiros);
+            fill('filterEmpresa', 'Empresa', 'Empresa (Todas)');
+            fill('filterCliente', 'Cliente', 'Cliente (Todos)');
+            fill('filterCodigo', 'Código', 'Código (Todos)');
+            fill('filterOS', 'Nº OS', 'Nº OS (Todas)');
+            fill('filterOrcamento', 'Nº Orçamento', 'Nº Orçamento (Todos)');
+            fill('filterPedido', 'Nº Pedido', 'Nº Pedido (Todos)');
+            fill('filterStatusOS', 'Status OS', 'Status OS (Todos)');
+            fill('filterListaMat', 'Lista de Materiais', 'Lista de Materiais (Todas)');
+            fill('filterProcessamentoLM', 'Processamento LM', 'Processamento LM (Todos)');
+            fill('filterDispMat', 'Disponibilidade Material', 'Disponibilidade Material (Todas)');
+            fill('filterOrdemCompra', 'Ordem de compra', 'Ordem de compra (Todas)');
+            fill('filterPrata', 'Prata', 'Prata (Todos)');
+            fill('filterTipo', 'Tipo', 'Tipo (Todos)');
+            fill('filterEtapa', 'Etapa', 'Etapa (Todas)');
+            fill('filterPrioridade', 'Prioridade', 'Prioridade (Todas)');
 
-            const producaoSelect = document.getElementById('producaoFilter');
-            if (producaoSelect && savedFilters.producao) {
-                producaoSelect.value = savedFilters.producao;
-            }
-
-            const apontamentoSelect = document.getElementById('apontamentoAbertoFilter');
-            if (apontamentoSelect && savedFilters.apontamento) {
-                apontamentoSelect.value = savedFilters.apontamento;
-            }
-
-            const atrasadaSelect = document.getElementById('atrasadaFilter');
-            if (atrasadaSelect && savedFilters.atrasada) {
-                atrasadaSelect.value = savedFilters.atrasada;
-            }
-        }
-
-        function setViewMode(mode, triggerRender = true) {
-            currentView = mode;
-            localStorage.setItem('pstec_preferred_view', mode);
-
-            const btnM = document.getElementById('viewBtnMonth');
-            const btnW = document.getElementById('viewBtnWeek');
-            const btnD = document.getElementById('viewBtnDay');
-
-            const activeClass = "bg-pstec-700 text-white shadow-sm";
-            const inactiveClass = "text-slate-600 hover:text-pstec-700 hover:bg-slate-200";
-
-            if (btnM) btnM.className = `px-3 py-1 rounded-lg text-xs font-bold transition ${mode === 'month' ? activeClass : inactiveClass}`;
-            if (btnW) btnW.className = `px-3 py-1 rounded-lg text-xs font-bold transition ${mode === 'week' ? activeClass : inactiveClass}`;
-            if (btnD) btnD.className = `px-3 py-1 rounded-lg text-xs font-bold transition ${mode === 'day' ? activeClass : inactiveClass}`;
-
-            if (triggerRender) renderView();
-        }
-
-        function navigateDate(delta) {
-            if (currentView === 'month' || abaAtiva === 'faturamento') {
-                currentDate.setMonth(currentDate.getMonth() + delta);
-            } else if (currentView === 'week') {
-                currentDate.setDate(currentDate.getDate() + (delta * 7));
-            } else if (currentView === 'day') {
-                currentDate.setDate(currentDate.getDate() + delta);
-            }
-            renderView();
-        }
-
-        function resetToToday() {
-            currentDate = new Date();
-            initializeCurrentDate();
-            renderView();
-        }
-
-        function updateDateLabel() {
-            const label = document.getElementById('currentDateLabel');
-            if (!label) return;
-
-            const search = (document.getElementById('searchInput')?.value || '').trim();
-            if (search && abaAtiva === 'dashboard') {
-                label.textContent = "Busca Geral Ativa";
-                return;
-            }
-            
-            if (currentView === 'month' || abaAtiva === 'faturamento') {
-                const monthStr = currentDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-                label.textContent = monthStr.charAt(0).toUpperCase() + monthStr.slice(1);
-            } else if (currentView === 'week') {
-                const targetDate = new Date(currentDate);
-                let dayOfWeek = targetDate.getDay() - 1;
-                if (dayOfWeek === -1) dayOfWeek = 6;
-                const wStart = new Date(targetDate);
-                wStart.setDate(wStart.getDate() - dayOfWeek);
-                const wEnd = new Date(wStart);
-                wEnd.setDate(wEnd.getDate() + 6);
-
-                const weekNum = getISOWeekNumber(wStart);
-                const fmtDay = (d) => String(d.getDate()).padStart(2, '0');
-                const fmtMonth = (d) => String(d.getMonth() + 1).padStart(2, '0');
-
-                label.textContent = `Semana ${weekNum} (${fmtDay(wStart)}/${fmtMonth(wStart)} - ${fmtDay(wEnd)}/${fmtMonth(wEnd)})`;
-            } else if (currentView === 'day') {
-                label.textContent = currentDate.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+            const selStatusOS = document.getElementById('filterStatusOS');
+            if (selStatusOS && (!selStatusOS.value || selStatusOS.value === '')) {
+                selStatusOS.value = 'APROVADO';
             }
         }
 
-        function parseValue(val) {
-            if (val === null || val === undefined) return 0;
+        function parseNum(val) {
+            if (!val) return 0;
             if (typeof val === 'number') return val;
-            let str = String(val).trim().replace('R$', '').replace(/\s/g, '');
-            if (str.includes(',') && str.includes('.')) {
-                str = str.replace(/\./g, '').replace(',', '.');
-            } else if (str.includes(',')) {
-                str = str.replace(',', '.');
+            let str = String(val).replace('R$', '').replace(/\s/g, '');
+            if (str.includes(',') && str.includes('.')) str = str.replace(/\./g, '').replace(',', '.');
+            else if (str.includes(',')) str = str.replace(',', '.');
+            const n = parseFloat(str);
+            return isNaN(n) ? 0 : n;
+        }
+
+        function fmtBRL(val) {
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
+        }
+
+        function fmtDate(dtStr) {
+            if (!dtStr || dtStr === 'NaT' || dtStr === 'None' || dtStr === 'null') return '-';
+            const clean = String(dtStr).trim().substring(0, 10);
+            const p = clean.split('-');
+            return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : clean;
+        }
+
+        function debounceRender() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                renderCarteiraView();
+            }, 80);
+        }
+
+        function sortByColumn(colKey) {
+            if (sortColumn === colKey) {
+                sortAsc = !sortAsc;
+            } else {
+                sortColumn = colKey;
+                sortAsc = true;
             }
-            const parsed = parseFloat(str);
-            return isNaN(parsed) ? 0 : parsed;
+            renderCarteiraView();
         }
 
-        function formatBRL(value) {
-            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
+        function updateSortIndicators() {
+            const cols = ['Nº Orçamento', 'Cliente', 'Nº Pedido', 'Nº OS', 'Dt. aprovação', 'Prev. entrega(original)', 'Qtde. Total', 'Saldo a entregar', 'Vl. Total', 'Vl. a faturar', 'Vl. Liberado', 'Valor fat. disp.', 'Valor falta comprar'];
+            for (let i = 0; i < cols.length; i++) {
+                const col = cols[i];
+                const el = document.getElementById(`sort_${col}`);
+                if (el) el.textContent = sortColumn === col ? (sortAsc ? '▲' : '▼') : '';
+            }
         }
 
-        function getFilteredData() {
-            const search = (document.getElementById('searchInput')?.value || '').toLowerCase();
-            const atrasadaFiltro = document.getElementById('atrasadaFilter')?.value || '';
-            const apontamentoFiltro = document.getElementById('apontamentoAbertoFilter')?.value || '';
-            const empresa = document.getElementById('segmentoFilter')?.value || '';
-            const producao = document.getElementById('producaoFilter')?.value || '';
-            const cliente = document.getElementById('clientFilter')?.value || '';
-            const prata = document.getElementById('prataFilter')?.value || '';
-            const classificacao = document.getElementById('classificacaoFilter')?.value || '';
-            const compras = document.getElementById('comprasFilter')?.value || '';
-            const terceiros = document.getElementById('terceirosFilter')?.value || '';
+        function getFilteredCarteira() {
+            const search = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+            const dtFrom = document.getElementById('dateFrom')?.value || '';
+            const dtTo = document.getElementById('dateTo')?.value || '';
 
-            return rawData.filter(item => {
-                const estaNoLimbo = String(item.u_limbo) === '1' || item.u_limbo === 1;
-                if (estaNoLimbo) return false;
+            const emp = document.getElementById('filterEmpresa')?.value || '';
+            const cli = document.getElementById('filterCliente')?.value || '';
+            const cod = document.getElementById('filterCodigo')?.value || '';
+            const osVal = document.getElementById('filterOS')?.value || '';
+            const orcVal = document.getElementById('filterOrcamento')?.value || '';
+            const pedVal = document.getElementById('filterPedido')?.value || '';
+            const analiseVal = document.getElementById('filterAnaliseCritica')?.value || '';
+            const stOS = document.getElementById('filterStatusOS')?.value ?? 'APROVADO';
+            const saldoVal = document.getElementById('filterSaldoEntrega')?.value || '';
+            const listaMatVal = document.getElementById('filterListaMat')?.value || '';
+            const procLMVal = document.getElementById('filterProcessamentoLM')?.value || '';
+            const dispM = document.getElementById('filterDispMat')?.value || '';
+            const ordC = document.getElementById('filterOrdemCompra')?.value || '';
+            const prata = document.getElementById('filterPrata')?.value || '';
+            const capVal = document.getElementById('filterCapacidade')?.value || '';
+            const tipo = document.getElementById('filterTipo')?.value || '';
+            const etapaVal = document.getElementById('filterEtapa')?.value || '';
+            const pcpVal = document.getElementById('filterPCP')?.value || '';
+            const libFatVal = document.getElementById('filterLiberadoFaturar')?.value || '';
+            const prio = document.getElementById('filterPrioridade')?.value || '';
+
+            const filtered = [];
+
+            for (let i = 0; i < rawCarteira.length; i++) {
+                const item = rawCarteira[i];
+
+                if (emp && String(item.Empresa || '') !== emp) continue;
+                if (cli && String(item.Cliente || '') !== cli) continue;
+                if (cod && String(item.Código || '') !== cod) continue;
+                if (osVal && String(item['Nº OS'] || '') !== osVal) continue;
+                if (orcVal && String(item['Nº Orçamento'] || '') !== orcVal) continue;
+                if (pedVal && String(item['Nº Pedido'] || '') !== pedVal) continue;
+                if (stOS && String(item['Status OS'] || '') !== stOS) continue;
+                if (listaMatVal && String(item['Lista de Materiais'] || '') !== listaMatVal) continue;
+                if (procLMVal && String(item['Processamento LM'] || '') !== procLMVal) continue;
+                if (dispM && String(item['Disponibilidade Material'] || '') !== dispM) continue;
+                if (ordC && String(item['Ordem de compra'] || '') !== ordC) continue;
+                if (prata && String(item.Prata || '') !== prata) continue;
+                if (tipo && String(item.Tipo || '') !== tipo) continue;
+                if (etapaVal && String(item.Etapa || '') !== etapaVal) continue;
+                if (prio && String(item.Prioridade || '') !== prio) continue;
+
+                if (pcpVal) {
+                    const rawOS = item['Nº OS'] ? String(item['Nº OS']).trim() : '';
+                    const isPCP = (!rawOS || rawOS === 'null');
+                    if (pcpVal === 'PCP' && !isPCP) continue;
+                    if (pcpVal === 'PRODUCAO' && isPCP) continue;
+                }
+
+                if (analiseVal) {
+                    const hasSim = String(item['Análise critica industrial']||'').toLowerCase()==='sim' || 
+                                   String(item['Análise critica estrutura']||'').toLowerCase()==='sim' || 
+                                   String(item['Análise critica plano controle']||'').toLowerCase()==='sim';
+                    if (analiseVal === 'sim' && !hasSim) continue;
+                    if (analiseVal === 'nao' && hasSim) continue;
+                }
+
+                const sEntrega = parseNum(item['Saldo a entregar']);
+                if (saldoVal) {
+                    if (saldoVal === 'com_saldo' && sEntrega <= 0) continue;
+                    if (saldoVal === 'sem_saldo' && sEntrega > 0) continue;
+                }
+
+                if (capVal) {
+                    const cDisp = parseNum(item['Capacidade disponivel']);
+                    if (capVal === 'sim' && cDisp <= 0) continue;
+                    if (capVal === 'nao' && cDisp > 0) continue;
+                }
+
+                if (libFatVal) {
+                    const vLib = parseNum(item['Vl. Liberado']);
+                    if (libFatVal === 'sim' && vLib <= 0) continue;
+                    if (libFatVal === 'nao' && vLib > 0) continue;
+                }
+
+                const prevEntrega = String(item['Prev. entrega(original)'] || item['Dt. Negociada'] || '').substring(0, 10);
+                if (prevEntrega) {
+                    if (dtFrom && prevEntrega < dtFrom) continue;
+                    if (dtTo && prevEntrega > dtTo) continue;
+                }
 
                 if (search) {
-                    const matchOS = String(item.n_os || '').toLowerCase().includes(search);
-                    const matchTitulo = String(item.titulo || '').toLowerCase().includes(search);
-                    const matchCliente = String(item.cliente || '').toLowerCase().includes(search);
-                    const matchEmpresa = String(item.empresa || '').toLowerCase().includes(search);
-                    const matchOrigem = String(item.origem || '').toLowerCase().includes(search);
-                    const matchCod = String(item.cod_interno || '').toLowerCase().includes(search);
-                    const matchPedido = String(item.n_pedido || '').toLowerCase().includes(search);
-                    const matchPP = String(item.pp_pendentes || '').toLowerCase().includes(search);
-                    const matchApontamento = String(item.apontamentos_abertos_detalhe || '').toLowerCase().includes(search);
-                    const matchJustificativa = String(item.justificativa || '').toLowerCase().includes(search);
-                    const matchOrcamento = String(item.orcamento || '').toLowerCase().includes(search);
-                    const matchClassificacao = String(item.classificacao || '').toLowerCase().includes(search);
-                    
-                    if (!matchOS && !matchTitulo && !matchCliente && !matchEmpresa && !matchOrigem && !matchCod && !matchPedido && !matchPP && !matchApontamento && !matchJustificativa && !matchOrcamento && !matchClassificacao) return false;
+                    const str = `${item['Nº Orçamento']||''} ${item.Cliente||''} ${item.Código||''} ${item.Item||''} ${item['Nº Pedido']||''} ${item['Nº OS']||''} ${item.Empresa||''}`.toLowerCase();
+                    if (!str.includes(search)) continue;
                 }
 
-                if (atrasadaFiltro) {
-                    const isAtrasada = String(item.atrasada || '').toLowerCase() === 'sim' || String(item.atrasada || '').toLowerCase() === 's';
-                    if (atrasadaFiltro === 'sim' && !isAtrasada) return false;
-                    if (atrasadaFiltro === 'nao' && isAtrasada) return false;
+                filtered.push(item);
+            }
+
+            filtered.sort((a, b) => {
+                let valA = a[sortColumn];
+                let valB = b[sortColumn];
+
+                if (sortColumn.includes('Dt.') || sortColumn.includes('Prev.')) {
+                    valA = valA ? String(valA) : '';
+                    valB = valB ? String(valB) : '';
+                } else if (sortColumn.includes('Qtde') || sortColumn.includes('Saldo') || sortColumn.includes('Vl.') || sortColumn.includes('Nº') || sortColumn.includes('Valor')) {
+                    valA = parseNum(valA);
+                    valB = parseNum(valB);
+                } else {
+                    valA = String(valA || '').toLowerCase();
+                    valB = String(valB || '').toLowerCase();
                 }
 
-                if (apontamentoFiltro) {
-                    const temAberto = String(item.tem_apontamento_aberto || '').toLowerCase() === 'sim';
-                    if (apontamentoFiltro === 'sim' && !temAberto) return false;
-                    if (apontamentoFiltro === 'nao' && temAberto) return false;
-                }
-
-                if (empresa && (item.empresa || '') !== empresa) return false;
-                if (cliente && (item.cliente || '') !== cliente) return false;
-                if (prata && (item.possui_prata || '') !== prata) return false;
-                if (classificacao && (item.classificacao || '') !== classificacao) return false;
-                if (compras && (item.status_compras || '') !== compras) return false;
-                if (terceiros && (item.status_terceiros || '') !== terceiros) return false;
-
-                if (producao === 'finalizado') {
-                    const st = String(item.status_producao || '').toLowerCase();
-                    if (!st.includes('100%') && !st.includes('finalizado')) return false;
-                } else if (producao === 'nao_finalizado') {
-                    const st = String(item.status_producao || '').toLowerCase();
-                    if (st.includes('100%') || st.includes('finalizado')) return false;
-                }
-
-                if (onlyWithBudget) {
-                    const hasB = String(item.possui_orcamento || '').toLowerCase();
-                    if (hasB !== 'sim' && hasB !== 's' && hasB !== '1') return false;
-                }
-
-                return true;
+                if (valA < valB) return sortAsc ? -1 : 1;
+                if (valA > valB) return sortAsc ? 1 : -1;
+                return 0;
             });
+
+            return filtered;
         }
 
-        function updateMetrics(filtered) {
-            const totalOS = filtered.length;
-            const atrasadas = filtered.filter(i => String(i.atrasada || '').toLowerCase() === 'sim' || String(i.atrasada || '').toLowerCase() === 's').length;
-            const semOrcamento = filtered.filter(i => {
-                const hasB = String(i.possui_orcamento || '').toLowerCase();
-                return hasB !== 'sim' && hasB !== 's' && hasB !== '1';
-            }).length;
+        function renderCarteiraView() {
+            currentFilteredData = getFilteredCarteira();
+            batchStep = parseInt(document.getElementById('selectBatchSize')?.value || 50);
+            currentRenderLimit = batchStep;
+            
+            const tbody = document.getElementById('carteiraTableBody');
+            const emptyState = document.getElementById('emptyState');
 
-            const valorTotal = filtered.reduce((acc, i) => acc + parseValue(i.preco_geral_a_vista || i.orcamento), 0);
+            updateSortIndicators();
 
-            document.getElementById('metricTotalOS').textContent = totalOS;
-            document.getElementById('metricAtrasadas').textContent = atrasadas;
-            document.getElementById('metricSemOrcamento').textContent = semOrcamento;
-            document.getElementById('metricValorTotal').textContent = formatBRL(valorTotal);
+            const totalItens = currentFilteredData.length;
+            let saldoEntregar = 0, vlTotal = 0, vlAFaturar = 0, vlLiberado = 0;
+            const osComprarMap = {};
 
-            const totalLimbo = rawData.filter(i => String(i.u_limbo) === '1' || i.u_limbo === 1).length;
-            const txtBtnLimbo = document.getElementById('txtBtnLimbo');
-            if (txtBtnLimbo) {
-                txtBtnLimbo.textContent = `OS's no Limbo (${totalLimbo})`;
-            }
-        }
+            for (let i = 0; i < totalItens; i++) {
+                const item = currentFilteredData[i];
+                saldoEntregar += parseNum(item['Saldo a entregar']);
+                vlTotal += parseNum(item['Vl. Total']);
+                vlAFaturar += parseNum(item['Vl. a faturar']);
+                vlLiberado += parseNum(item['Vl. Liberado']);
 
-        function renderView() {
-            if (abaAtiva === 'limbo') {
-                renderPaginaLimboView();
-                lucide.createIcons();
-                return;
-            }
-
-            if (abaAtiva === 'faturamento') {
-                renderPaginaFaturamentoView();
-                lucide.createIcons();
-                return;
-            }
-
-            if (abaAtiva === 'conferencia') {
-                renderPaginaConferenciaView();
-                lucide.createIcons();
-                return;
-            }
-
-            updateDateLabel();
-            const filtered = getFilteredData();
-            updateMetrics(filtered);
-
-            const search = (document.getElementById('searchInput')?.value || '').trim();
-
-            if (search) {
-                renderSearchResultsView(filtered);
-            } else {
-                if (currentView === 'month') {
-                    renderMonthCalendar(filtered);
-                } else if (currentView === 'week') {
-                    renderWeekGrid(filtered);
-                } else if (currentView === 'day') {
-                    renderDayView(filtered);
+                const vlFalta = parseNum(item['Valor falta comprar']);
+                if (vlFalta > 0) {
+                    const osKey = item['Nº OS'] ? String(item['Nº OS']).trim() : `SEM_OS_${i}`;
+                    if (!osComprarMap[osKey]) osComprarMap[osKey] = vlFalta;
                 }
             }
+
+            let vlFaltaComprarUnico = 0;
+            for (let k in osComprarMap) vlFaltaComprarUnico += osComprarMap[k];
+
+            document.getElementById('kpiTotalItens').textContent = totalItens;
+            document.getElementById('kpiSaldoEntregar').textContent = saldoEntregar.toLocaleString('pt-BR');
+            document.getElementById('kpiValorTotal').textContent = fmtBRL(vlTotal);
+            document.getElementById('kpiValorAFaturar').textContent = fmtBRL(vlAFaturar);
+            document.getElementById('kpiValorLiberado').textContent = fmtBRL(vlLiberado);
+            document.getElementById('kpiValorFaltaComprar').textContent = fmtBRL(vlFaltaComprarUnico);
+
+            if (totalItens === 0) {
+                tbody.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+                updatePaginationControls(0, 0);
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            emptyState.classList.remove('flex');
+
+            renderTableBatch();
+        }
+
+        function renderTableBatch() {
+            const tbody = document.getElementById('carteiraTableBody');
+            const itemsToRender = currentFilteredData.slice(0, currentRenderLimit);
+
+            tbody.innerHTML = itemsToRender.map((item, idx) => {
+                const dtAprov = fmtDate(item['Dt. aprovação']);
+                const prevEnt = fmtDate(item['Prev. entrega(original)'] || item['Dt. Negociada']);
+                const entregue = parseNum(item['Qtde. Entregue']);
+                const saldo = parseNum(item['Saldo a entregar']);
+                const total = parseNum(item['Qtde. Total']);
+                
+                const vlUnit = parseNum(item['Vl. Unitário']);
+                const vlTotal = parseNum(item['Vl. Total']);
+                const vlAFat = parseNum(item['Vl. a faturar']);
+                const vlLib = parseNum(item['Vl. Liberado']);
+                const vlFatDisp = parseNum(item['Valor fat. disp.']);
+                const vlFaltaComp = parseNum(item['Valor falta comprar']);
+
+                const isParcial = entregue > 0 && saldo > 0;
+
+                return `
+                    <tr class="${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'} hover:bg-pstec-50/60 transition-colors">
+                        <td class="p-3">
+                            <button onclick="openModal(${idx})" class="p-1.5 bg-pstec-700 hover:bg-pstec-800 text-white rounded-lg font-bold text-[10px] transition shadow-xs" title="Ver Detalhes">
+                                <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </td>
+                        <td class="p-3 font-bold font-mono text-pstec-700">${item['Nº Orçamento'] || '-'}</td>
+                        <td class="p-3 font-bold text-slate-800 uppercase max-w-[140px] truncate" title="${item.Cliente||''}">${item.Cliente || '-'}</td>
+                        <td class="p-3 max-w-[220px] truncate" title="${item.Item||''}">
+                            <span class="font-bold text-slate-700 font-mono block text-[10px]">${item.Código || '-'}</span>
+                            <span class="text-slate-500 font-medium">${item.Item || '-'}</span>
+                        </td>
+                        <td class="p-3 font-mono text-slate-600">${item['Nº Pedido'] || '-'}</td>
+                        <td class="p-3">
+                            <span class="font-bold font-mono text-slate-800 block">${item['Nº OS'] ? 'OS ' + item['Nº OS'] : '-'}</span>
+                            <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded ${item['Status OS'] === 'APROVADO' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}">${item['Status OS'] || 'SEM OS'}</span>
+                        </td>
+                        <td class="p-3 text-center font-semibold text-slate-600">${dtAprov}</td>
+                        <td class="p-3 text-center font-bold text-slate-700">${prevEnt}</td>
+                        <td class="p-3 text-right font-mono">${total.toLocaleString('pt-BR')}</td>
+                        <td class="p-3 text-right font-mono ${isParcial ? 'text-amber-600 font-bold' : ''}">${entregue.toLocaleString('pt-BR')}</td>
+                        <td class="p-3 text-right font-mono font-bold text-pstec-700">${saldo.toLocaleString('pt-BR')}</td>
+                        
+                        <!-- COLUNAS FINANCEIRAS OBRIGATÓRIAS -->
+                        <td class="p-3 text-right font-mono">${fmtBRL(vlUnit)}</td>
+                        <td class="p-3 text-right font-mono font-bold text-slate-800">${fmtBRL(vlTotal)}</td>
+                        <td class="p-3 text-right font-mono font-bold text-blue-600">${fmtBRL(vlAFat)}</td>
+                        <td class="p-3 text-right font-mono font-bold text-emerald-600">${fmtBRL(vlLib)}</td>
+                        <td class="p-3 text-right font-mono font-bold text-purple-700">${fmtBRL(vlFatDisp)}</td>
+                        <td class="p-3 text-right font-mono font-bold text-red-600">${fmtBRL(vlFaltaComp)}</td>
+
+                        <td class="p-3">
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${item['Disponibilidade Material'] === 'Total disponível' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${item['Disponibilidade Material'] || '-'}</span>
+                        </td>
+                        <td class="p-3 font-bold">${item.Prata || '-'}</td>
+                        <td class="p-3 text-slate-500 uppercase max-w-[150px] truncate" title="${item.Empresa||''}">${item.Empresa || '-'}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            updatePaginationControls(itemsToRender.length, currentFilteredData.length);
             lucide.createIcons();
         }
 
-        function renderPaginaConferenciaView() {
-            const grid = document.getElementById('calendarGrid');
-            if (!grid) return;
+        function updatePaginationControls(exibidos, total) {
+            document.getElementById('lblExibidosCount').textContent = exibidos;
+            document.getElementById('lblTotalCount').textContent = total;
+            document.getElementById('lblStepSize').textContent = batchStep;
 
-            updateDateLabel();
-
-            const targetDate = new Date(currentDate);
-            let dayOfWeek = targetDate.getDay() - 1;
-            if (dayOfWeek === -1) dayOfWeek = 6;
-
-            const wStart = new Date(targetDate);
-            wStart.setDate(wStart.getDate() - dayOfWeek);
-            wStart.setHours(0,0,0,0);
-
-            const wEnd = new Date(wStart);
-            wEnd.setDate(wEnd.getDate() + 6);
-            wEnd.setHours(23,59,59,999);
-
-            const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
-            const dayKey = currentDate.toISOString().substring(0, 10);
-
-            const filteredConferencia = rawConferenciaData.filter(item => {
-                const dtBaseStr = item.dt_finalizacao || item.data_fim || '';
-                if (!dtBaseStr) return false;
-                const itemDateStr = String(dtBaseStr).substring(0, 10);
-
-                if (currentView === 'month') {
-                    return itemDateStr.substring(0, 7) === monthKey;
-                } else if (currentView === 'day') {
-                    return itemDateStr === dayKey;
-                } else if (currentView === 'week') {
-                    const parts = itemDateStr.split('-');
-                    if (parts.length === 3) {
-                        const itemDate = new Date(parts[0], parts[1] - 1, parts[2]);
-                        return itemDate >= wStart && itemDate <= wEnd;
-                    }
-                }
-                return false;
-            });
-
-            const totalHorasAMaisPeriodo = filteredConferencia.reduce((acc, i) => acc + (parseFloat(i.horas_a_mais) || 0), 0);
-
-            if (filteredConferencia.length === 0) {
-                grid.innerHTML = `
-                    <div class="bg-white rounded-2xl border border-indigo-200 p-12 text-center text-slate-400 flex flex-col items-center gap-3 shadow-sm">
-                        <i data-lucide="clipboard-x" class="w-12 h-12 text-indigo-300 stroke-1"></i>
-                        <p class="text-xs font-bold text-slate-600">Nenhum apontamento com horas a mais no período selecionado.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            const groupedByDay = {};
-            filteredConferencia.forEach(item => {
-                const dtBaseStr = item.dt_finalizacao || item.data_fim || 'Sem Data';
-                const dateKey = String(dtBaseStr).substring(0, 10);
-                if (!groupedByDay[dateKey]) groupedByDay[dateKey] = [];
-                groupedByDay[dateKey].push(item);
-            });
-
-            const sortedDays = Object.keys(groupedByDay).sort((a, b) => b.localeCompare(a));
-
-            let html = `
-                <div class="bg-white rounded-2xl border border-indigo-200 p-5 shadow-sm mb-4 flex flex-wrap justify-between items-center gap-3">
-                    <div class="flex items-center gap-3">
-                        <div class="p-2.5 bg-indigo-100 text-indigo-800 rounded-xl">
-                            <i data-lucide="clipboard-check" class="w-6 h-6"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-extrabold text-slate-900 text-base">Conferência de Apontamentos (Horas a Mais)</h3>
-                            <p class="text-xs text-slate-500 font-medium">Análise e auditoria dos tempos apontados em excesso.</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <span class="text-xs font-black text-indigo-900 bg-indigo-100 border border-indigo-300 px-3 py-1.5 rounded-xl">
-                            Total: ${filteredConferencia.length} Registro${filteredConferencia.length === 1 ? '' : 's'}
-                        </span>
-                        <span class="text-xs font-extrabold text-red-600 font-mono bg-red-50 px-3 py-1.5 rounded-xl border border-red-200">
-                            Total Excesso: ${formatHours(totalHorasAMaisPeriodo)}
-                        </span>
-                    </div>
-                </div>
-                <div class="space-y-4">
-            `;
-
-            sortedDays.forEach(dateKey => {
-                const dayItems = groupedByDay[dateKey];
-                dayItems.sort((a, b) => (parseFloat(b.horas_a_mais) || 0) - (parseFloat(a.horas_a_mais) || 0));
-
-                const totalHrsDiaAMais = dayItems.reduce((acc, i) => acc + (parseFloat(i.horas_a_mais) || 0), 0);
-
-                html += `
-                    <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-                        <div class="bg-pstec-700 text-white px-4 py-3 flex justify-between items-center flex-wrap gap-2">
-                            <div class="flex items-center gap-2 font-bold text-xs tracking-wide">
-                                <i data-lucide="calendar-days" class="w-4 h-4 text-pstec-100"></i>
-                                <span class="capitalize">${formatDate(dateKey)}</span>
-                                <span class="bg-pstec-900 text-pstec-100 px-2 py-0.5 rounded-lg border border-pstec-600 text-[10px]">
-                                    ${dayItems.length} registro${dayItems.length === 1 ? '' : 's'}
-                                </span>
-                            </div>
-                            <div class="text-xs font-extrabold text-amber-300 font-mono">
-                                Total Excedente no Dia: ${formatHours(totalHrsDiaAMais)}
-                            </div>
-                        </div>
-
-                        <div class="p-4 bg-slate-50/50 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
-                            ${dayItems.map(item => renderApontamentoCard(item)).join('')}
-                        </div>
-                    </div>
-                `;
-            });
-
-            html += `</div>`;
-            grid.innerHTML = html;
-        }
-
-        function renderApontamentoCard(item) {
-            const osCod = item.cod_os_completo || item.n_os || 'S/ OS';
-            const funcionario = item.funcionario || 'NÃO INFORMADO';
-            const maquina = item.maquina || 'NÃO INFORMADA';
-            const servico = item.tiposervico || 'GERAL';
-            const titulo = item.titulo || item.subtitulo || 'SEM TÍTULO';
-            
-            const hrsPrevistas = parseFloat(item.total_hrs) || 0;
-            const hrsRealizadas = parseFloat(item.hs_realizadas) || 0;
-            const hrsAMais = parseFloat(item.horas_a_mais) || 0;
-
-            return `
-                <div class="bg-white border border-slate-200 hover:border-red-400 hover:shadow-md p-3.5 rounded-2xl transition-all duration-200 flex flex-col justify-between gap-3 relative overflow-hidden">
-                    <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-red-500"></div>
-
-                    <div>
-                        <div class="flex justify-between items-center mb-1.5 pl-1">
-                            <span class="font-mono text-xs font-extrabold text-pstec-700 bg-pstec-50 px-2 py-0.5 rounded-lg border border-pstec-100">
-                                OS ${osCod}
-                            </span>
-                            <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-red-50 text-red-700 border border-red-200 font-mono">
-                                +${formatHours(hrsAMais)}
-                            </span>
-                        </div>
-
-                        <div class="pl-1 space-y-0.5">
-                            <p class="text-xs font-black text-slate-800 line-clamp-1 uppercase" title="${funcionario}">
-                                👤 ${funcionario}
-                            </p>
-                            <p class="text-[11px] font-bold text-slate-600 line-clamp-2 leading-snug" title="${titulo}">
-                                ${titulo}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="space-y-2 pl-1">
-                        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-[10px] space-y-1 font-medium">
-                            <div class="flex justify-between items-center"><span class="text-slate-400 font-bold">Máquina:</span> <span class="font-bold text-slate-700 truncate max-w-[140px]" title="${maquina}">${maquina}</span></div>
-                            <div class="flex justify-between items-center"><span class="text-slate-400 font-bold">Serviço:</span> <span class="font-bold text-pstec-700 truncate max-w-[140px]" title="${servico}">${servico}</span></div>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-1.5 text-[10px] bg-red-50/60 p-2 rounded-xl border border-red-100 font-mono">
-                            <div>
-                                <span class="text-slate-500 block text-[9px]">Previsto:</span>
-                                <strong class="text-slate-700 font-bold">${formatHours(hrsPrevistas)}</strong>
-                            </div>
-                            <div>
-                                <span class="text-slate-500 block text-[9px]">Realizado:</span>
-                                <strong class="text-red-700 font-extrabold">${formatHours(hrsRealizadas)}</strong>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function renderPaginaFaturamentoView() {
-            const grid = document.getElementById('calendarGrid');
-            if (!grid) return;
-
-            updateDateLabel();
-
-            const selectedYear = currentDate.getFullYear();
-            const selectedMonth = currentDate.getMonth() + 1;
-            const monthKey = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}`;
-
-            const nowObj = new Date();
-            const currYear = nowObj.getFullYear();
-            const currMonth = nowObj.getMonth() + 1;
-            const currWeekNum = getISOWeekNumber(nowObj);
-
-            const isMesPassado = (selectedYear < currYear) || (selectedYear === currYear && selectedMonth < currMonth);
-
-            const search = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
-            const segmentoFiltro = document.getElementById('segmentoFilter')?.value || '';
-            const clienteFiltro = document.getElementById('clientFilter')?.value || '';
-
-            const filteredFat = rawFaturamentoData.filter(item => {
-                const dtBaseStr = item.dt_previsao_entrega || item.entrega_normalizada || '';
-                if (!dtBaseStr) return false;
-                const itemDateStr = String(dtBaseStr).substring(0, 10);
-
-                if (itemDateStr.substring(0, 7) !== monthKey) return false;
-                if (segmentoFiltro && String(item.empresa || '') !== segmentoFiltro) return false;
-                if (clienteFiltro && String(item.cliente || '') !== clienteFiltro) return false;
-
-                if (search) {
-                    const mCliente = String(item.cliente || '').toLowerCase().includes(search);
-                    const mOrcamento = String(item.n_orcamento || '').toLowerCase().includes(search);
-                    const mOS = String(item.n_os || '').toLowerCase().includes(search);
-                    const mCod = String(item.cod_interno || '').toLowerCase().includes(search);
-                    const mDesc = String(item.descricao || '').toLowerCase().includes(search);
-                    if (!mCliente && !mOrcamento && !mOS && !mCod && !mDesc) return false;
-                }
-
-                return true;
-            });
-
-            if (filteredFat.length === 0) {
-                grid.innerHTML = `
-                    <div class="bg-white rounded-2xl border border-blue-200 p-12 text-center text-slate-400 flex flex-col items-center gap-3 shadow-sm">
-                        <i data-lucide="package-x" class="w-12 h-12 text-blue-300 stroke-1"></i>
-                        <p class="text-xs font-bold text-slate-600">Nenhum registro de faturamento encontrado para o mês selecionado com os filtros atuais.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            const budgetGrouped = {};
-            filteredFat.forEach(item => {
-                const key = String(item.n_orcamento || 'SEM_ORCAMENTO').trim();
-                
-                if (!budgetGrouped[key]) {
-                    budgetGrouped[key] = {
-                        n_orcamento: item.n_orcamento || '-',
-                        cliente: item.cliente || '-',
-                        cod_interno: item.cod_interno || '-',
-                        dt_previsao_entrega: item.dt_previsao_entrega,
-                        entrega_normalizada: item.entrega_normalizada,
-                        dt_emissao: item.dt_emissao,
-                        os_set: new Set(),
-                        vl_faturado: 0,
-                        vl_a_faturar: 0,
-                        numero_nf: item.numero_nf || '',
-                        is_faturado: false
-                    };
-                }
-
-                if (item.n_os) {
-                    budgetGrouped[key].os_set.add(String(item.n_os).trim());
-                }
-
-                const fat = parseFloat(item.vl_faturado) || 0;
-                let aFat = parseFloat(item.vl_a_faturar) || 0;
-
-                if (isMesPassado) {
-                    aFat = 0;
-                }
-
-                budgetGrouped[key].vl_faturado += fat;
-                budgetGrouped[key].vl_a_faturar += aFat;
-
-                if (fat > 0 || (item.numero_nf && String(item.numero_nf).trim() !== '' && String(item.numero_nf) !== 'None')) {
-                    budgetGrouped[key].is_faturado = true;
-                }
-            });
-
-            const consolidatedList = Object.values(budgetGrouped);
-
-            const totalFaturadoVal = consolidatedList.reduce((acc, i) => acc + i.vl_faturado, 0);
-            const totalAFaturarVal = isMesPassado ? 0 : consolidatedList.reduce((acc, i) => acc + i.vl_a_faturar, 0);
-            const totalGeralVal = totalFaturadoVal + totalAFaturarVal;
-
-            const groupedByWeek = {};
-            consolidatedList.forEach(item => {
-                const dtStr = item.dt_previsao_entrega || item.entrega_normalizada || '';
-                const dateObj = new Date(dtStr.substring(0, 10));
-                const weekNum = isNaN(dateObj.getTime()) ? 0 : getISOWeekNumber(dateObj);
-                const weekDateRange = isNaN(dateObj.getTime()) ? '' : getWeekDateRangeStr(dateObj);
-                const weekName = isNaN(dateObj.getTime()) ? 'Outros' : `SEMANA ${weekNum} (${weekDateRange})`;
-
-                if (!groupedByWeek[weekName]) {
-                    groupedByWeek[weekName] = {
-                        num: weekNum,
-                        name: weekName,
-                        items: []
-                    };
-                }
-                groupedByWeek[weekName].items.push(item);
-            });
-
-            let html = `
-                <div class="bg-white rounded-2xl border border-blue-200 p-5 shadow-sm mb-4 flex flex-wrap justify-between items-center gap-3">
-                    <div class="flex items-center gap-3">
-                        <div class="p-2.5 bg-blue-100 text-blue-800 rounded-xl">
-                            <i data-lucide="package-check" class="w-6 h-6"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-extrabold text-slate-900 text-base">Controle de Faturamento & Entregas</h3>
-                            <p class="text-xs text-slate-500 font-medium">Previsão e status de faturamento por cliente e orçamento.</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-3 flex-wrap">
-                        <div class="bg-slate-50 px-3.5 py-2 rounded-xl border border-slate-200 text-right">
-                            <span class="text-[9px] uppercase font-bold text-slate-400 block">Total Faturado</span>
-                            <span class="text-sm font-black text-pstecgreen-600 font-mono">${formatBRL(totalFaturadoVal)}</span>
-                        </div>
-                        <div class="bg-slate-50 px-3.5 py-2 rounded-xl border border-slate-200 text-right">
-                            <span class="text-[9px] uppercase font-bold text-slate-400 block">A Faturar</span>
-                            <span class="text-sm font-black text-blue-600 font-mono">${formatBRL(totalAFaturarVal)}</span>
-                        </div>
-                        <div class="bg-pstec-700 text-white px-4 py-2 rounded-xl text-right shadow-xs">
-                            <span class="text-[9px] uppercase font-bold text-pstec-100 block">Total Geral</span>
-                            <span class="text-base font-extrabold text-amber-300 font-mono">${formatBRL(totalGeralVal)}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="space-y-4">
-            `;
-
-            const sortedWeeks = Object.values(groupedByWeek).sort((a, b) => a.num - b.num);
-
-            sortedWeeks.forEach(weekGroup => {
-                const weekNum = weekGroup.num;
-                const items = weekGroup.items;
-
-                if (weekNum === currWeekNum && !isMesPassado) {
-                    items.sort((a, b) => {
-                        if (a.is_faturado === b.is_faturado) {
-                            return String(a.dt_previsao_entrega).localeCompare(String(b.dt_previsao_entrega));
-                        }
-                        return a.is_faturado ? -1 : 1;
-                    });
+            const btn = document.getElementById('btnLoadMore');
+            if (btn) {
+                if (exibidos >= total) {
+                    btn.disabled = true;
+                    btn.classList.add('opacity-40', 'cursor-not-allowed');
                 } else {
-                    items.sort((a, b) => String(a.dt_previsao_entrega).localeCompare(String(b.dt_previsao_entrega)));
-                }
-
-                const subtotalSemana = items.reduce((acc, i) => acc + (i.is_faturado ? i.vl_faturado : i.vl_a_faturar), 0);
-
-                html += `
-                    <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-                        <div class="bg-pstec-800 text-white px-4 py-2.5 flex justify-between items-center flex-wrap gap-2 border-b border-pstec-900">
-                            <div class="flex items-center gap-2 font-bold text-xs">
-                                <i data-lucide="layers" class="w-4 h-4 text-pstec-100"></i>
-                                <span class="uppercase tracking-wider font-extrabold">${weekGroup.name}</span>
-                                <span class="bg-pstec-900 text-pstec-100 px-2 py-0.5 rounded-md text-[10px] font-mono">
-                                    ${items.length} orçamento${items.length === 1 ? '' : 's'}
-                                </span>
-                            </div>
-                            <div class="text-xs font-extrabold text-pstecgreen-500 font-mono">
-                                TOTAL: ${formatBRL(subtotalSemana)}
-                            </div>
-                        </div>
-
-                        <div class="overflow-x-auto custom-scroll">
-                            <table class="w-full text-left text-[11px] border-collapse">
-                                <thead>
-                                    <tr class="bg-slate-100 text-slate-600 font-bold border-b border-slate-200 uppercase text-[9.5px]">
-                                        <th class="p-2.5">Orçamento</th>
-                                        <th class="p-2.5">Cliente</th>
-                                        <th class="p-2.5">Caixa exportação</th>
-                                        <th class="p-2.5">OS</th>
-                                        <th class="p-2.5 text-center">Data Inicial</th>
-                                        <th class="p-2.5 text-center">Faturado</th>
-                                        <th class="p-2.5 text-center">Data Prevista / Emissão</th>
-                                        <th class="p-2.5 text-right">Valor</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-slate-100 font-medium">
-                                    ${items.map(item => {
-                                        const isFaturado = item.is_faturado;
-                                        const valorExibir = isFaturado ? item.vl_faturado : item.vl_a_faturar;
-                                        const dtInicial = formatDate(item.dt_previsao_entrega);
-                                        const dtPrevistaOuEmissao = isFaturado ? formatDate(item.dt_emissao || item.entrega_normalizada) : formatDate(item.entrega_normalizada);
-                                        const osListStr = Array.from(item.os_set).map(o => `OS ${o}`).join(' - ');
-
-                                        return `
-                                            <tr class="${isFaturado ? 'bg-emerald-50/80 hover:bg-emerald-100/70' : 'hover:bg-slate-50'} transition-colors">
-                                                <td class="p-2.5 font-bold font-mono text-pstec-700">${item.n_orcamento}</td>
-                                                <td class="p-2.5 font-bold text-slate-800 uppercase">${item.cliente}</td>
-                                                <td class="p-2.5 font-mono text-slate-600">${item.cod_interno !== '-' ? item.cod_interno : ''}</td>
-                                                <td class="p-2.5 font-mono font-bold text-slate-700">${osListStr}</td>
-                                                <td class="p-2.5 text-center font-bold text-slate-600">${dtInicial}</td>
-                                                <td class="p-2.5 text-center">
-                                                    <span class="px-2 py-0.5 rounded-md text-[9px] font-black uppercase ${isFaturado ? 'bg-emerald-200 text-emerald-900 border border-emerald-300' : 'bg-slate-100 text-slate-500 border border-slate-200'}">
-                                                        ${isFaturado ? 'Faturado' : '-'}
-                                                    </span>
-                                                </td>
-                                                <td class="p-2.5 text-center font-bold ${isFaturado ? 'text-emerald-700' : 'text-red-600'}">${dtPrevistaOuEmissao}</td>
-                                                <td class="p-2.5 text-right font-mono font-bold ${isFaturado ? 'text-emerald-700' : 'text-slate-800'}">${formatBRL(valorExibir)}</td>
-                                            </tr>
-                                        `;
-                                    }).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                `;
-            });
-
-            html += `</div>`;
-            grid.innerHTML = html;
-        }
-
-        function renderPaginaLimboView() {
-            const grid = document.getElementById('calendarGrid');
-            if (!grid) return;
-
-            let limboItems = rawData.filter(i => String(i.u_limbo) === '1' || i.u_limbo === 1);
-
-            limboItems.sort((a, b) => {
-                const dateA = a.entrega_normalizada || '';
-                const dateB = b.entrega_normalizada || '';
-                return dateA.localeCompare(dateB);
-            });
-
-            const totalValorLimbo = limboItems.reduce((acc, i) => acc + parseValue(i.preco_geral_a_vista || i.orcamento), 0);
-
-            let html = `
-                <div class="bg-white rounded-2xl border border-amber-300 p-5 shadow-md">
-                    <div class="flex flex-wrap justify-between items-center border-b border-amber-100 pb-4 mb-5 gap-3">
-                        <div class="flex items-center gap-3">
-                            <div class="p-2 bg-amber-100 text-amber-900 rounded-xl">
-                                <i data-lucide="ghost" class="w-6 h-6"></i>
-                            </div>
-                            <div>
-                                <h3 class="font-extrabold text-slate-900 text-base">Ordens de Serviço no Limbo (Arquivadas)</h3>
-                                <p class="text-xs text-slate-500 font-medium">Lista de OSs removidas temporariamente do planejamento de produção.</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="text-xs font-black text-amber-900 bg-amber-100 border border-amber-300 px-3 py-1.5 rounded-xl">
-                                Total: ${limboItems.length} OS${limboItems.length === 1 ? '' : 's'}
-                            </span>
-                            <span class="text-xs font-extrabold text-pstecgreen-600 font-mono bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
-                                ${formatBRL(totalValorLimbo)}
-                            </span>
-                        </div>
-                    </div>
-
-                    ${limboItems.length === 0 ? `
-                        <div class="flex flex-col items-center justify-center py-16 text-slate-400 gap-3">
-                            <i data-lucide="sparkles" class="w-12 h-12 stroke-1 text-amber-400"></i>
-                            <p class="text-xs font-bold text-slate-600">Nenhuma Ordem de Serviço no Limbo no momento!</p>
-                        </div>
-                    ` : `
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
-                            ${limboItems.map(item => renderOSCard(item)).join('')}
-                        </div>
-                    `}
-                </div>
-            `;
-            grid.innerHTML = html;
-        }
-
-        function renderSearchResultsView(filtered) {
-            const grid = document.getElementById('calendarGrid');
-            if (!grid) return;
-
-            filtered.sort((a, b) => {
-                const dateA = a.entrega_normalizada || '';
-                const dateB = b.entrega_normalizada || '';
-                return dateA.localeCompare(dateB);
-            });
-
-            const totalValorBusca = filtered.reduce((acc, i) => acc + parseValue(i.preco_geral_a_vista || i.orcamento), 0);
-
-            let html = `
-                <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
-                    <div class="flex flex-wrap justify-between items-center border-b border-slate-100 pb-3 mb-4 gap-2">
-                        <div class="flex items-center gap-2">
-                            <i data-lucide="search-check" class="w-5 h-5 text-pstec-700"></i>
-                            <h3 class="font-extrabold text-slate-800 text-sm">
-                                Resultado da Busca Global (${filtered.length} OS${filtered.length === 1 ? '' : 's'} Encontradas)
-                            </h3>
-                        </div>
-                        <span class="text-xs font-extrabold text-pstecgreen-600 font-mono">
-                            Total: ${formatBRL(totalValorBusca)}
-                        </span>
-                    </div>
-
-                    ${filtered.length === 0 ? `
-                        <div class="flex flex-col items-center justify-center py-12 text-slate-400 gap-2">
-                            <i data-lucide="file-x" class="w-10 h-10 stroke-1 text-slate-300"></i>
-                            <p class="text-xs font-semibold">Nenhuma Ordem de Serviço encontrada para o termo pesquisado.</p>
-                        </div>
-                    ` : `
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
-                            ${filtered.map(item => renderOSCard(item)).join('')}
-                        </div>
-                    `}
-                </div>
-            `;
-            grid.innerHTML = html;
-        }
-
-        function renderOSCard(item) {
-            const isAtrasado = String(item.atrasada || '').toLowerCase() === 'sim' || String(item.atrasada || '').toLowerCase() === 's';
-            const prodStatus = item.status_producao || '0%';
-            const clienteNome = item.cliente || 'CLIENTE NÃO INFORMADO';
-            const orcamentoNum = item.orcamento || 'SEM ORÇAMENTO';
-            const osNome = item.titulo || 'SEM NOME';
-            const empresa = item.empresa || 'SEM EMPRESA';
-
-            const compras = item.status_compras || 'N/A';
-            const terceiros = item.status_terceiros || 'N/A';
-            const prata = item.possui_prata || 'N/A';
-            const classificacao = item.classificacao || 'N/A';
-            const ppPendentes = item.pp_pendentes || 'Nenhum processo pendente';
-
-            const temApontamentoAberto = String(item.tem_apontamento_aberto || '').toLowerCase() === 'sim';
-            const detalheApontamento = item.apontamentos_abertos_detalhe || 'Nenhum operador apontando no momento';
-
-            const dtAbertura = formatDate(item.abertura_os);
-            const dtPrevOrcamento = formatDate(item.prev_entrega_orcamento);
-            const dtRenegociada = formatDate(item.dt_renegociada || item.u_data_renegociacao);
-            const dtUltimoApontamento = formatDate(item.ultimo_apontamento);
-
-            const valorOS = formatBRL(parseValue(item.preco_geral_a_vista || item.orcamento));
-
-            return `
-                <div onclick="openModal('${item.n_os}')" class="group bg-white border border-slate-200 hover:border-pstec-500 hover:shadow-md p-3.5 rounded-2xl cursor-pointer transition-all duration-200 flex flex-col justify-between gap-2.5 relative overflow-hidden">
-                    <div class="absolute left-0 top-0 bottom-0 w-1.5 ${isAtrasado ? 'bg-red-500' : 'bg-emerald-500'}"></div>
-
-                    <div>
-                        <div class="flex justify-between items-center mb-1 pl-1">
-                            <span class="font-mono text-xs font-extrabold text-pstec-700 bg-pstec-50 px-2 py-0.5 rounded-lg border border-pstec-100">
-                                OS ${item.n_os}
-                            </span>
-                            <div class="flex items-center gap-1.5">
-                                <span class="text-xs font-extrabold text-pstecgreen-600 font-mono bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                                    ${valorOS}
-                                </span>
-                                <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full ${isAtrasado ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-emerald-50 text-emerald-600 border border-emerald-200'}">
-                                    ${isAtrasado ? 'Atrasado' : 'No prazo'}
-                                </span>
-                            </div>
-                        </div>
-
-                        <div class="pl-1 space-y-0.5">
-                            <div class="flex justify-between items-center text-xs font-black tracking-tight uppercase">
-                                <p class="text-slate-800"><span class="text-[9px] text-slate-400 font-normal">Orçamento:</span> ${orcamentoNum}</p>
-                                <span class="text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-100 px-1.5 py-0.2 rounded font-bold uppercase truncate max-w-[100px]" title="${classificacao}">${classificacao}</span>
-                            </div>
-                            <p class="text-[11px] font-bold text-slate-700 line-clamp-2 leading-snug" title="${osNome}">${osNome}</p>
-                        </div>
-                    </div>
-
-                    <div class="space-y-2 pl-1">
-                        <div class="flex items-center justify-between text-[10px] pt-1.5 border-t border-slate-100 gap-1">
-                            <span class="bg-slate-100 text-slate-700 font-bold px-2 py-0.5 rounded-md border border-slate-200 uppercase truncate max-w-[120px]" title="${empresa}">${empresa}</span>
-                            <span class="text-slate-500 font-semibold uppercase truncate max-w-[120px]" title="${clienteNome}">${clienteNome}</span>
-                        </div>
-
-                        <div class="grid grid-cols-1 gap-1 text-[10px] bg-slate-50/80 p-2.5 rounded-xl border border-slate-100 font-medium">
-                            <div class="flex justify-between items-center"><span class="text-slate-400 font-bold">Compras:</span> <span class="font-bold text-slate-700 truncate max-w-[140px]">${compras}</span></div>
-                            <div class="flex justify-between items-center"><span class="text-slate-400 font-bold">Terceiros:</span> <span class="font-bold text-slate-700 truncate max-w-[140px]">${terceiros}</span></div>
-                            <div class="flex justify-between items-center"><span class="text-slate-400 font-bold">Possui Prata:</span> <span class="font-bold text-slate-700 truncate max-w-[140px]">${prata}</span></div>
-                            <div class="flex justify-between items-center pt-1 border-t border-slate-200/60 mt-0.5"><span class="text-slate-500 font-extrabold">Produção:</span> <span class="font-black text-pstec-700 font-mono text-xs">${prodStatus}</span></div>
-                        </div>
-
-                        <div class="bg-amber-50/70 border border-amber-200/70 p-2 rounded-xl text-[10px]">
-                            <span class="font-extrabold text-amber-800 uppercase block text-[9px] mb-0.5">PP Pendentes:</span>
-                            <p class="text-slate-700 font-medium line-clamp-2 leading-tight" title="${ppPendentes}">${ppPendentes}</p>
-                        </div>
-
-                        <div class="${temApontamentoAberto ? 'bg-emerald-50 border-emerald-300' : 'bg-red-50 border-red-200'} border p-2 rounded-xl text-[10px] transition-all">
-                            <div class="flex items-center justify-between gap-1 mb-1">
-                                <div class="flex items-center gap-1.5">
-                                    <span class="relative flex h-2.5 w-2.5">
-                                        ${temApontamentoAberto ? `<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>` : ''}
-                                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 ${temApontamentoAberto ? 'bg-emerald-500' : 'bg-red-500'}"></span>
-                                    </span>
-                                    <span class="font-extrabold uppercase text-[9px] ${temApontamentoAberto ? 'text-emerald-800' : 'text-red-800'}">
-                                        Apontamento
-                                    </span>
-                                </div>
-                                <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded ${temApontamentoAberto ? 'bg-emerald-200 text-emerald-900 animate-pulse' : 'bg-red-200 text-red-800'}">
-                                    ${temApontamentoAberto ? 'Em Andamento ⚙️' : 'Parado'}
-                                </span>
-                            </div>
-                            <p class="font-mono text-[9.5px] leading-tight ${temApontamentoAberto ? 'text-emerald-900 font-bold' : 'text-red-600 italic'}" title="${detalheApontamento}">
-                                ${detalheApontamento}
-                            </p>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-1 text-[9px] text-slate-400 border-t border-slate-100 pt-1.5 font-medium leading-tight">
-                            <div><span>Abertura:</span> <strong class="text-slate-600">${dtAbertura}</strong></div>
-                            <div><span>Prev. Orç:</span> <strong class="text-slate-600">${dtPrevOrcamento}</strong></div>
-                            <div><span>Renegociada:</span> <strong class="text-purple-700 font-bold">${dtRenegociada}</strong></div>
-                            <div><span>Últ. Apont:</span> <strong class="text-slate-600">${dtUltimoApontamento}</strong></div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function renderMonthCalendar(filtered) {
-            const grid = document.getElementById('calendarGrid');
-            if (!grid) return;
-            grid.innerHTML = '';
-
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
-
-            const firstDay = new Date(year, month, 1);
-            const lastDay = new Date(year, month + 1, 0);
-
-            let startingDay = firstDay.getDay() - 1;
-            if (startingDay === -1) startingDay = 6;
-
-            const daysInMonth = lastDay.getDate();
-
-            const osByDate = {};
-            filtered.forEach(item => {
-                const dateKey = item.entrega_normalizada ? String(item.entrega_normalizada).substring(0, 10) : '';
-                if (dateKey) {
-                    if (!osByDate[dateKey]) osByDate[dateKey] = [];
-                    osByDate[dateKey].push(item);
-                }
-            });
-
-            const todayStr = new Date().toISOString().substring(0, 10);
-
-            const allWeeks = [];
-            let currentWeek = [];
-
-            for (let i = 0; i < startingDay; i++) {
-                currentWeek.push({ isPadding: true });
-            }
-
-            for (let day = 1; day <= daysInMonth; day++) {
-                const monthFormatted = String(month + 1).padStart(2, '0');
-                const dayFormatted = String(day).padStart(2, '0');
-                const dateKey = `${year}-${monthFormatted}-${dayFormatted}`;
-
-                currentWeek.push({
-                    isPadding: false,
-                    day: day,
-                    dateKey: dateKey,
-                    dayItems: osByDate[dateKey] || []
-                });
-
-                if (currentWeek.length === 7) {
-                    allWeeks.push(currentWeek);
-                    currentWeek = [];
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-40', 'cursor-not-allowed');
                 }
             }
+        }
 
-            if (currentWeek.length > 0) {
-                while (currentWeek.length < 7) {
-                    currentWeek.push({ isPadding: true });
-                }
-                allWeeks.push(currentWeek);
+        function carregarMaisLinhas() {
+            if (currentRenderLimit < currentFilteredData.length) {
+                currentRenderLimit += batchStep;
+                renderTableBatch();
             }
-
-            const weeksToRender = allWeeks;
-
-            let calendarHTML = `
-                <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-                    <div class="grid grid-cols-7 bg-pstec-700 text-white text-center text-xs font-bold py-2 border-b border-pstec-800">
-                        <div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div><div>Dom</div>
-                    </div>
-                    <div class="grid grid-cols-7 auto-rows-fr bg-slate-200 gap-px">
-            `;
-
-            weeksToRender.forEach(week => {
-                week.forEach(cell => {
-                    if (cell.isPadding) {
-                        calendarHTML += `<div class="bg-slate-50 min-h-[120px] p-1.5 opacity-40"></div>`;
-                    } else {
-                        const { day, dateKey, dayItems } = cell;
-                        const dayTotalVal = dayItems.reduce((acc, i) => acc + parseValue(i.preco_geral_a_vista || i.orcamento), 0);
-                        const isToday = dateKey === todayStr;
-
-                        const empresaCounts = {};
-                        dayItems.forEach(i => {
-                            const emp = (i.empresa || 'Outros').trim();
-                            empresaCounts[emp] = (empresaCounts[emp] || 0) + 1;
-                        });
-
-                        const topEmpresas = Object.entries(empresaCounts)
-                            .sort((a, b) => b[1] - a[1])
-                            .slice(0, 3);
-
-                        const formattedValStr = formatBRL(dayTotalVal);
-                        
-                        let valFontSizeClass = "text-xs";
-                        if (formattedValStr.length > 14) {
-                            valFontSizeClass = "text-[9px]";
-                        } else if (formattedValStr.length > 10) {
-                            valFontSizeClass = "text-[10px]";
-                        }
-
-                        calendarHTML += `
-                            <div onclick="selectDayView('${dateKey}')" class="bg-white min-h-[125px] p-2 flex flex-col justify-between hover:bg-pstec-50/60 cursor-pointer transition">
-                                <div>
-                                    <div class="flex justify-between items-start mb-1.5">
-                                        <span class="text-xs font-extrabold rounded-full w-6 h-6 flex items-center justify-center ${isToday ? 'bg-pstec-700 text-white shadow-sm' : 'text-slate-800'}">${day}</span>
-                                        ${dayItems.length > 0 ? `<span class="bg-pstec-50 text-pstec-800 border border-pstec-200 text-[10px] font-mono font-extrabold px-1.5 py-0.5 rounded-md">OS's: ${dayItems.length}</span>` : ''}
-                                    </div>
-                                    ${topEmpresas.length > 0 ? `
-                                        <div class="space-y-0.5 my-1">
-                                            ${topEmpresas.map(([empName, count]) => `
-                                                <div class="flex justify-between items-center bg-slate-50 border border-slate-100 rounded px-1.5 py-0.5 text-[9px]">
-                                                    <span class="font-bold text-slate-700 truncate max-w-[70px]" title="${empName}">${empName}</span>
-                                                    <span class="font-extrabold text-pstec-700">${count}</span>
-                                                </div>
-                                            `).join('')}
-                                        </div>
-                                    ` : ''}
-                                </div>
-                                ${dayItems.length > 0 ? `
-                                    <div class="mt-1 pt-1 border-t border-slate-100 flex items-center justify-center">
-                                        <span class="${valFontSizeClass} font-extrabold text-pstecgreen-600 tracking-tight text-center break-all leading-tight">
-                                            ${formattedValStr}
-                                        </span>
-                                    </div>
-                                ` : '<div class="text-[10px] text-slate-300 italic text-center">Sem entregas</div>'}
-                            </div>
-                        `;
-                    }
-                });
-            });
-
-            calendarHTML += `</div></div>`;
-            grid.innerHTML = calendarHTML;
         }
 
-        function renderWeekGrid(filtered) {
-            const grid = document.getElementById('calendarGrid');
-            if (!grid) return;
-
-            const targetDate = new Date(currentDate);
-            let dayOfWeek = targetDate.getDay() - 1; 
-            if (dayOfWeek === -1) dayOfWeek = 6;
-
-            const wStart = new Date(targetDate);
-            wStart.setDate(wStart.getDate() - dayOfWeek);
-
-            const wEnd = new Date(wStart);
-            wEnd.setDate(wEnd.getDate() + 6);
-
-            const weekNum = getISOWeekNumber(wStart);
-
-            const fmtDay = (d) => String(d.getDate()).padStart(2, '0');
-            const fmtMonth = (d) => String(d.getMonth() + 1).padStart(2, '0');
-            
-            const startStr = `${wStart.getFullYear()}-${fmtMonth(wStart)}-${fmtDay(wStart)}`;
-            const endStr = `${wEnd.getFullYear()}-${fmtMonth(wEnd)}-${fmtDay(wEnd)}`;
-            const rangeText = `${fmtDay(wStart)}/${fmtMonth(wStart)} a ${fmtDay(wEnd)}/${fmtMonth(wEnd)}/${wStart.getFullYear()}`;
-
-            const weekItems = filtered.filter(i => {
-                if (!i.entrega_normalizada) return false;
-                const dateKey = String(i.entrega_normalizada).substring(0, 10);
-                return dateKey >= startStr && dateKey <= endStr;
-            });
-
-            weekItems.sort((a, b) => {
-                const dateA = a.entrega_normalizada || '';
-                const dateB = b.entrega_normalizada || '';
-                return dateA.localeCompare(dateB);
-            });
-
-            const weekTotalVal = weekItems.reduce((acc, i) => acc + parseValue(i.preco_geral_a_vista || i.orcamento), 0);
-
-            let html = `
-                <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-md flex flex-col">
-                    <div class="bg-pstec-700 text-white p-4 flex flex-wrap justify-between items-center gap-3">
-                        <div class="flex items-center gap-3">
-                            <span class="bg-pstec-900 border border-pstec-500 text-white font-extrabold text-sm px-3 py-1 rounded-xl shadow-xs">
-                                Semana ${weekNum}
-                            </span>
-                            <div>
-                                <h4 class="font-extrabold text-sm tracking-wide">Programação Semanal</h4>
-                                <p class="text-xs text-pstec-100 font-medium">${rangeText}</p>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center gap-4">
-                            <div class="text-right">
-                                <span class="text-[10px] uppercase font-bold text-pstec-200 block">Total Previsto na Semana</span>
-                                <span class="text-base font-extrabold text-pstecgreen-500 font-mono">${formatBRL(weekTotalVal)}</span>
-                            </div>
-                            <span class="bg-pstec-800 text-white text-xs font-bold px-3 py-1.5 rounded-xl border border-pstec-600">
-                                ${weekItems.length} OS${weekItems.length === 1 ? '' : 's'}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="p-4 bg-slate-50/50">
-                        ${weekItems.length === 0 ? `
-                            <div class="flex flex-col items-center justify-center py-16 text-slate-400 gap-2">
-                                <i data-lucide="calendar-x" class="w-10 h-10 stroke-1 text-slate-300"></i>
-                                <p class="text-xs font-semibold">Nenhuma Ordem de Serviço agendada para esta semana.</p>
-                            </div>
-                        ` : `
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
-                                ${weekItems.map(item => renderOSCard(item)).join('')}
-                            </div>
-                        `}
-                    </div>
-                </div>
-            `;
-
-            grid.innerHTML = html;
+        function alterarTamanhoLote() {
+            batchStep = parseInt(document.getElementById('selectBatchSize').value || 50);
+            currentRenderLimit = batchStep;
+            renderTableBatch();
         }
 
-        function renderDayView(filtered) {
-            const grid = document.getElementById('calendarGrid');
-            if (!grid) return;
-            const dateKey = currentDate.toISOString().substring(0, 10);
-            const dayItems = filtered.filter(i => i.entrega_normalizada && String(i.entrega_normalizada).substring(0, 10) === dateKey);
-
-            dayItems.sort((a, b) => {
-                const dateA = a.entrega_normalizada || '';
-                const dateB = b.entrega_normalizada || '';
-                return dateA.localeCompare(dateB);
-            });
-
-            let html = `
-                <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
-                    <div class="flex justify-between items-center border-b border-slate-100 pb-3 mb-4">
-                        <h3 class="font-extrabold text-slate-800 text-sm">Ordens de Serviço do Dia (${dayItems.length})</h3>
-                        <span class="text-xs font-extrabold text-pstecgreen-600 font-mono">${formatBRL(dayItems.reduce((acc, i) => acc + parseValue(i.preco_geral_a_vista || i.orcamento), 0))}</span>
-                    </div>
-                    ${dayItems.length === 0 ? `
-                        <p class="text-xs text-slate-400 italic text-center py-12">Nenhuma Ordem de Serviço agendada para este dia.</p>
-                    ` : `
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
-                            ${dayItems.map(item => renderOSCard(item)).join('')}
-                        </div>
-                    `}
-                </div>
-            `;
-            grid.innerHTML = html;
-        }
-
-        function selectDayView(dateKey) {
-            const parts = dateKey.split('-');
-            currentDate = new Date(parts[0], parts[1] - 1, parts[2]);
-            setViewMode('day');
-        }
-
-        function toggleOrcamentoFilter() {
-            onlyWithBudget = !onlyWithBudget;
-            const btn = document.getElementById('btnToggleOrcamento');
-            const txt = document.getElementById('txtToggleOrcamento');
-            if (!onlyWithBudget) {
-                txt.textContent = 'Exibir somente com Orçamentos';
-                btn.className = "px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-xl text-xs font-semibold transition flex items-center gap-1.5";
-            } else {
-                txt.textContent = 'Exibir todas as OS';
-                btn.className = "px-3 py-2 bg-pstecgreen-600 text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-sm";
-            }
-            renderView();
-        }
-
-        function clearAllFilters() {
-            document.getElementById('searchInput').value = '';
-            document.getElementById('atrasadaFilter').value = '';
-            document.getElementById('apontamentoAbertoFilter').value = '';
-            document.getElementById('segmentoFilter').value = '';
-            document.getElementById('producaoFilter').value = '';
-            document.getElementById('clientFilter').value = '';
-            document.getElementById('prataFilter').value = '';
-            document.getElementById('classificacaoFilter').value = '';
-            document.getElementById('comprasFilter').value = '';
-            document.getElementById('terceirosFilter').value = '';
-            renderView();
-        }
-
-        function openModal(n_os) {
-            const item = rawData.find(i => String(i.n_os) === String(n_os));
+        // NOVO MODAL ELEGANTE E ORGANIZADO POR BLOCOS
+        function openModal(filteredIdx) {
+            const item = currentFilteredData[filteredIdx];
             if (!item) return;
-            selectedItemModal = item;
 
-            const safeText = (val) => (!val || val === 'NaT' || val === 'None' || val === 'null' || String(val).trim() === '') ? '-' : val;
-
-            document.getElementById('mOS').textContent = `OS ${item.n_os || 'N/A'}`;
-            document.getElementById('mTitulo').textContent = item.titulo || 'Sem Título';
-            document.getElementById('mPedido').textContent = safeText(item.n_pedido);
-            document.getElementById('mCliente').textContent = safeText(item.cliente);
-            document.getElementById('mCnpj').textContent = safeText(item.cnpj);
-            document.getElementById('mSegmento').textContent = safeText(item.empresa);
-            document.getElementById('mCodInterno').textContent = safeText(item.cod_interno);
-            document.getElementById('mOrigem').textContent = safeText(item.origem);
-            document.getElementById('mClassificacao').textContent = safeText(item.classificacao);
-            document.getElementById('mPrata').textContent = safeText(item.possui_prata);
-            document.getElementById('mOsFilhosQuais').textContent = safeText(item.os_filhos_quais);
-            document.getElementById('mPossuiOrcamento').textContent = safeText(item.possui_orcamento);
-            document.getElementById('mPreco').textContent = formatBRL(parseValue(item.preco_geral_a_vista || item.orcamento));
-            document.getElementById('mNumOrcamento').textContent = safeText(item.orcamento);
-
-            document.getElementById('mCompras').textContent = safeText(item.status_compras);
-            document.getElementById('mTerceiros').textContent = safeText(item.status_terceiros);
-            document.getElementById('mProducao').textContent = safeText(item.status_producao);
-            document.getElementById('mPpPendentes').textContent = safeText(item.pp_pendentes);
+            document.getElementById('mOrcamentoBadge').textContent = `Orçamento Nº ${item['Nº Orçamento'] || 'N/A'}`;
+            document.getElementById('mItemTitle').textContent = `${item.Código ? item.Código + ' - ' : ''}${item.Item || 'Sem Descrição'}`;
             
-            document.getElementById('mJustificativa').textContent = safeText(item.justificativa);
+            const stOS = item['Status OS'] || 'SEM OS';
+            document.getElementById('mStatusOSBadge').innerHTML = `<span class="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-lg ${stOS === 'APROVADO' ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-800'}">${stOS}</span>`;
 
-            const estaNoLimbo = String(item.u_limbo) === '1' || item.u_limbo === 1;
-            const btnLimbo = document.getElementById('btnEnviarLimbo');
-            const txtLabelBtnLimbo = document.getElementById('txtLabelBtnLimbo');
+            // DADOS FINANCEIROS TOP
+            document.getElementById('mVlTotal').textContent = fmtBRL(parseNum(item['Vl. Total']));
+            document.getElementById('mVlAFaturar').textContent = fmtBRL(parseNum(item['Vl. a faturar']));
+            document.getElementById('mVlLiberado').textContent = fmtBRL(parseNum(item['Vl. Liberado']));
+            document.getElementById('mVlFaltaComprar').textContent = fmtBRL(parseNum(item['Valor falta comprar']));
 
-            if (estaNoLimbo) {
-                btnLimbo.className = "px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition shadow-sm flex items-center gap-1.5";
-                txtLabelBtnLimbo.textContent = "Tirar do Limbo 🟢";
-            } else {
-                btnLimbo.className = "px-3.5 py-1.5 bg-slate-800 hover:bg-slate-900 text-amber-400 border border-slate-700 rounded-xl font-bold text-xs transition shadow-sm flex items-center gap-1.5";
-                txtLabelBtnLimbo.textContent = "Enviar para o Limbo";
-            }
+            // BLOCO CLIENTE E PEDIDO
+            document.getElementById('mCliente').textContent = item.Cliente || '-';
+            document.getElementById('mEmpresa').textContent = item.Empresa || '-';
+            document.getElementById('mPedido').textContent = item['Nº Pedido'] || '-';
+            document.getElementById('mCodigo').textContent = item.Código || '-';
 
-            const temAberto = String(item.tem_apontamento_aberto || '').toLowerCase() === 'sim';
-            const containerAp = document.getElementById('mApontamentoContainer');
-            const titleAp = document.getElementById('mApontamentoStatusTitle');
-            const badgeAp = document.getElementById('mApontamentoBadge');
-            const textAp = document.getElementById('mApontamentoDetalheText');
+            // BLOCO DATAS
+            document.getElementById('mDtAprov').textContent = fmtDate(item['Dt. aprovação']);
+            document.getElementById('mPrevOriginal').textContent = fmtDate(item['Prev. entrega(original)']);
+            document.getElementById('mDtNegociada').textContent = fmtDate(item['Dt. Negociada']);
+            
+            const hasAnalise = String(item['Análise critica industrial']||'').toLowerCase()==='sim' || 
+                               String(item['Análise critica estrutura']||'').toLowerCase()==='sim' || 
+                               String(item['Análise critica plano controle']||'').toLowerCase()==='sim';
+            document.getElementById('mAnalise').textContent = hasAnalise ? 'Sim (Pendente)' : 'Não';
 
-            if (temAberto) {
-                containerAp.className = "p-3 rounded-xl border border-emerald-300 bg-emerald-50/80 flex flex-col gap-1.5";
-                titleAp.textContent = "Apontamento Aberto no Momento";
-                titleAp.className = "font-extrabold text-xs text-emerald-900";
-                badgeAp.innerHTML = `<span class="bg-emerald-200 text-emerald-900 border border-emerald-300 text-[10px] font-black px-2 py-0.5 rounded-md animate-pulse">EM ANDAMENTO ⚙️</span>`;
-                textAp.textContent = safeText(item.apontamentos_abertos_detalhe);
-                textAp.className = "text-[11px] font-mono leading-relaxed text-emerald-900 font-bold";
-            } else {
-                containerAp.className = "p-3 rounded-xl border border-red-200 bg-red-50/60 flex flex-col gap-1.5";
-                titleAp.textContent = "Sem Apontamentos em Andamento";
-                titleAp.className = "font-bold text-xs text-red-800";
-                badgeAp.innerHTML = `<span class="bg-red-200 text-red-800 border border-red-300 text-[10px] font-bold px-2 py-0.5 rounded-md">PARADO</span>`;
-                textAp.textContent = "Nenhum operador realizando apontamento nesta OS atualmente.";
-                textAp.className = "text-[11px] font-mono leading-relaxed text-red-600 italic";
-            }
+            // BLOCO QUANTIDADES
+            document.getElementById('mQtdeTotal').textContent = parseNum(item['Qtde. Total']).toLocaleString('pt-BR');
+            document.getElementById('mQtdeEntregue').textContent = parseNum(item['Qtde. Entregue']).toLocaleString('pt-BR');
+            document.getElementById('mSaldoEntregar').textContent = parseNum(item['Saldo a entregar']).toLocaleString('pt-BR');
+            document.getElementById('mVlUnitario').textContent = fmtBRL(parseNum(item['Vl. Unitário']));
 
-            const elAtrasada = document.getElementById('mAtrasada');
-            const isAtrasada = String(item.atrasada).toLowerCase() === 'sim' || String(item.atrasada).toLowerCase() === 's';
-            elAtrasada.textContent = isAtrasada ? 'Sim' : 'Não';
-            elAtrasada.className = `font-bold ${isAtrasada ? 'text-red-600' : 'text-emerald-600'}`;
+            // BLOCO MATERIAIS
+            document.getElementById('mDispMat').textContent = item['Disponibilidade Material'] || '-';
+            document.getElementById('mListaMat').textContent = item['Lista de Materiais'] || '-';
+            document.getElementById('mPrata').textContent = item.Prata || '-';
+            document.getElementById('mVlFatDisp').textContent = fmtBRL(parseNum(item['Valor fat. disp.']));
 
-            document.getElementById('mAbertura').textContent = formatDate(item.abertura_os);
-            document.getElementById('mDtRenegociada').textContent = formatDate(item.dt_renegociada || item.u_data_renegociacao);
-            document.getElementById('mPrevEntregaOrcamento').textContent = formatDate(item.prev_entrega_orcamento);
-            document.getElementById('mPrevEntregaOS').textContent = formatDate(item.prev_entrega_os);
-            document.getElementById('mApontamento').textContent = formatDate(item.ultimo_apontamento);
-            document.getElementById('mEntregaNorm').textContent = formatDate(item.entrega_normalizada);
-
-            const modal = document.getElementById('osModal');
+            const modal = document.getElementById('detailsModal');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
             lucide.createIcons();
         }
 
         function closeModal() {
-            const modal = document.getElementById('osModal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-            selectedItemModal = null;
-        }
-
-        // GERADOR DE CÓDIGO DE ACESSO DO CLIENTE
-// GERADOR DE CÓDIGO DE ACESSO DO CLIENTE
-function gerarCodigoClienteAcesso() {
-    if (!selectedItemModal) return;
-
-    const cnpjRaw = String(selectedItemModal.cnpj || '').replace(/\D/g, '');
-    if (!cnpjRaw || cnpjRaw.length < 8) {
-        alert('Esta OS não possui um CNPJ de cliente válido cadastrado.');
-        return;
-    }
-
-    const clientCode = calculateCustomClientPassword(cnpjRaw);
-    const cnpjFormatted = selectedItemModal.cnpj;
-    
-    // Link direto com Login Automático
-    const directLink = `https://consultoriarf.net/pstec/cliente.html?cnpj=${encodeURIComponent(cnpjFormatted)}&code=${clientCode}`;
-
-    const mensagemPronta = `Prezado(a) Cliente,\n\nAcompanhe o status e a evolução da produção dos seus pedidos em tempo real no nosso portal:\n\n🔗 *Acesse o Portal (Login Automático):*\n${directLink}\n\n---\nCaso prefira acessar manualmente:\n🏢 *CNPJ:* ${cnpjFormatted}\n🔑 *Senha:* ${clientCode}\n\nQualquer dúvida, estamos à disposição!\n*GRUPO PSTEC*`;
-
-    document.getElementById('caClientName').textContent = selectedItemModal.cliente || selectedItemModal.empresa || 'Cliente';
-    document.getElementById('caClientCNPJ').textContent = cnpjFormatted;
-    document.getElementById('caClientCode').textContent = clientCode;
-    document.getElementById('caMessageText').value = mensagemPronta;
-
-    const modal = document.getElementById('clientAccessModal');
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-    lucide.createIcons();
-}
-
-        function closeClientAccessModal() {
-            const modal = document.getElementById('clientAccessModal');
+            const modal = document.getElementById('detailsModal');
             modal.classList.add('hidden');
             modal.classList.remove('flex');
         }
 
-        function copiarMensagemCliente() {
-            const textEl = document.getElementById('caMessageText');
-            textEl.select();
-            navigator.clipboard.writeText(textEl.value);
-            alert('Mensagem copiada para a área de transferência! Pronta para colar no WhatsApp.');
-        }
-
-        function openAltRenegociationFormModal() {
-            if (!selectedItemModal) return;
-
-            document.getElementById('altRenHeaderTitle').textContent = `OS ${selectedItemModal.n_os} - Alterar Renegociação`;
+        function clearAllFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('dateFrom').value = '';
+            document.getElementById('dateTo').value = '';
+            document.getElementById('filterEmpresa').value = '';
+            document.getElementById('filterCliente').value = '';
+            document.getElementById('filterCodigo').value = '';
+            document.getElementById('filterOS').value = '';
+            document.getElementById('filterOrcamento').value = '';
+            document.getElementById('filterPedido').value = '';
+            document.getElementById('filterAnaliseCritica').value = '';
+            document.getElementById('filterStatusOS').value = 'APROVADO';
+            document.getElementById('filterSaldoEntrega').value = '';
+            document.getElementById('filterListaMat').value = '';
+            document.getElementById('filterProcessamentoLM').value = '';
+            document.getElementById('filterDispMat').value = '';
+            document.getElementById('filterOrdemCompra').value = '';
+            document.getElementById('filterPrata').value = '';
+            document.getElementById('filterCapacidade').value = '';
+            document.getElementById('filterTipo').value = '';
+            document.getElementById('filterEtapa').value = '';
+            document.getElementById('filterPCP').value = '';
+            document.getElementById('filterLiberadoFaturar').value = '';
+            document.getElementById('filterPrioridade').value = '';
             
-            const currentDt = selectedItemModal.dt_renegociada || selectedItemModal.u_data_renegociacao || '';
-            const inputDate = document.getElementById('inputNewRenegociationDate');
-            if (currentDt && currentDt.length >= 10 && currentDt !== 'NaT') {
-                inputDate.value = currentDt.substring(0, 10);
-            } else {
-                inputDate.value = '';
-            }
-
-            document.getElementById('textareaJustification').value = '';
-            document.getElementById('altRenegociationFormError').classList.add('hidden');
-
-            const modal = document.getElementById('altRenegociationFormModal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            lucide.createIcons();
-        }
-
-        function closeAltRenegociationFormModal() {
-            const modal = document.getElementById('altRenegociationFormModal');
-            if (modal) {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-            }
-        }
-
-        async function submitAltRenegociation() {
-            if (!selectedItemModal) return;
-
-            const newDate = document.getElementById('inputNewRenegociationDate').value;
-            const userTexto = document.getElementById('textareaJustification').value.trim();
-            const err = document.getElementById('altRenegociationFormError');
-            const btnSave = document.getElementById('btnSaveRenegociation');
-
-            if (!userTexto) {
-                err.textContent = 'A justificativa é obrigatória.';
-                err.classList.remove('hidden');
-                return;
-            }
-
-            const usuarioLogado = localStorage.getItem('pstec_usuario_nome') || 'SISTEMA';
-            const justificativaComUsuario = `[${usuarioLogado.toUpperCase()}] ${userTexto}`;
-
-            try {
-                btnSave.disabled = true;
-                btnSave.classList.add('opacity-50');
-
-                const patchUrl = `${API_URL}/${selectedItemModal.n_os}/alterar-renegociacao`;
-
-                const response = await fetch(patchUrl, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        u_data_renegociacao: newDate || null,
-                        U_JUST_ALT_DT_REN: justificativaComUsuario,
-                        enviar_email: true,
-                        email_destino: 'richard@consultoriarf.net',
-                        usuario_alteracao: usuarioLogado,
-                        n_os: selectedItemModal.n_os,
-                        nova_data: formatDate(newDate),
-                        justificativa: userTexto
-                    })
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.detail || 'Falha ao salvar a alteração no banco.');
-                }
-
-                closeAltRenegociationFormModal();
-                closeModal();
-                fetchData();
-
-            } catch (error) {
-                console.error('Erro ao salvar renegociação:', error);
-                err.textContent = error.message;
-                err.classList.remove('hidden');
-            } finally {
-                btnSave.disabled = false;
-                btnSave.classList.remove('opacity-50');
-            }
-        }
-
-        async function alterarStatusLimbo(n_os, valorLimbo) {
-            const btnLimbo = document.getElementById('btnEnviarLimbo');
-            const acaoTexto = valorLimbo === 1 ? 'enviar para o limbo' : 'tirar do limbo';
+            sortColumn = 'Dt. aprovação';
+            sortAsc = false;
             
-            if (!confirm(`Deseja realmente ${acaoTexto} a OS ${n_os}?`)) {
-                return;
-            }
-
-            try {
-                if (btnLimbo) {
-                    btnLimbo.disabled = true;
-                    btnLimbo.classList.add('opacity-50');
-                }
-
-                const limboUrl = `${API_URL}/${n_os}/limbo`;
-
-                const response = await fetch(limboUrl, {
-                    method: 'PATCH',
-                    headers: { 
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ u_limbo: valorLimbo })
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.detail || 'Falha ao alterar o status de limbo da OS.');
-                }
-
-                closeModal();
-                fetchData();
-
-            } catch (error) {
-                console.error('Erro ao alterar limbo:', error);
-                alert(`Erro: ${error.message}`);
-            } finally {
-                if (btnLimbo) {
-                    btnLimbo.disabled = false;
-                    btnLimbo.classList.remove('opacity-50');
-                }
-            }
+            renderCarteiraView();
         }
 
-        function executarAcaoLimbo() {
-            if (!selectedItemModal) return;
-            const estaNoLimbo = String(selectedItemModal.u_limbo) === '1' || selectedItemModal.u_limbo === 1;
-            const novoValor = estaNoLimbo ? 0 : 1;
-            alterarStatusLimbo(selectedItemModal.n_os, novoValor);
+        function efetuarLogout() {
+            localStorage.removeItem('pstec_token');
+            localStorage.removeItem('pstec_usuario_nome');
+            window.location.href = 'login-pstec.html';
         }
     </script>
 </body>
