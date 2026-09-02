@@ -14,7 +14,7 @@
     <meta property="og:image" content="https://consultoriarf.net/producao_pstec/LOGO MINIMALISTA.png">
     <meta property="og:type" content="website">
 
-    <title>Carteira de Produção - PSTEC V2.5 Pro</title>
+    <title>Carteira de Produção - PSTEC V2.6 Pro</title>
 
     <!-- Autenticação Token -->
     <script>
@@ -72,7 +72,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-extrabold tracking-wide text-white">GRUPO PSTEC</h1>
-                    <p class="text-xs text-pstec-100">Carteira de Produção V2.5 Pro</p>
+                    <p class="text-xs text-pstec-100">Carteira de Produção V2.6 Pro</p>
                 </div>
             </div>
 
@@ -278,7 +278,7 @@
     <!-- FOOTER -->
     <footer class="bg-white border-t border-slate-200 py-3 mt-auto">
         <div class="max-w-[96%] mx-auto px-4 flex justify-between items-center text-xs text-slate-500">
-            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V2.5 Pro</span>
+            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V2.6 Pro</span>
             <span id="lastUpdateLabel">Atualizado: -</span>
         </div>
     </footer>
@@ -502,7 +502,7 @@
         </div>
     </div>
 
-    <!-- LOGICA JS DA V2.4 PRO -->
+    <!-- LOGICA JS DA V2.6 PRO -->
     <script>
         const API_CARTEIRA = 'https://pstec.consultoriarf.net/CARTEIRA';
         let rawCarteira = [];
@@ -542,7 +542,7 @@
 
         const colFilterState = {};
 
-        // TODAS AS COLUNAS DA TABELA PRINCIPAL
+        // TODAS AS COLUNAS POSSÍVEIS DA TABELA PRINCIPAL (INCLUINDO DADOS DO MODAL)
         const tableColumnsConfig = [
             { key: 'Nº Orçamento', label: 'Orçamento', align: 'left', sortable: true },
             { key: 'Cliente', label: 'Cliente', align: 'left', sortable: true },
@@ -551,6 +551,8 @@
             { key: 'Nº OS', label: 'Nº OS / Status', align: 'left', sortable: true },
             { key: 'Dt. aprovação', label: 'Dt. Aprovação', align: 'center', sortable: true },
             { key: 'Prev. entrega(original)', label: 'Prev. Entrega', align: 'center', sortable: true },
+            { key: 'Dt. Negociada', label: 'Dt. Negociada', align: 'center', sortable: true },
+            { key: 'Dt. Pesquisa', label: 'Dt. Pesquisa', align: 'center', sortable: true },
             { key: 'Qtde. Total', label: 'Qtde Total', align: 'right', sortable: true },
             { key: 'Qtde. Entregue', label: 'Entregue', align: 'right', sortable: false },
             { key: 'Saldo a entregar', label: 'Saldo Entregar', align: 'right', sortable: true },
@@ -562,46 +564,53 @@
             { key: 'Vl. Lucro', label: 'Vl. Lucro', align: 'right', sortable: true },
             { key: 'Margem Lucro', label: 'Margem Lucro', align: 'right', sortable: true },
             { key: 'Valor falta comprar', label: 'Vl. Falta Comprar', align: 'right', sortable: true },
+            { key: 'Etapa', label: 'Etapa', align: 'left', sortable: true },
             { key: 'Disponibilidade Material', label: 'Disp. Material', align: 'left', sortable: false },
+            { key: 'Lista de Materiais', label: 'Lista Materiais', align: 'left', sortable: false },
+            { key: 'Processamento LM', label: 'Processamento LM', align: 'left', sortable: false },
+            { key: 'Ordem de compra', label: 'Ordem Compra', align: 'left', sortable: false },
             { key: 'Prata', label: 'Prata', align: 'left', sortable: false },
+            { key: 'Capacidade disponivel', label: 'Capacidade Disp.', align: 'right', sortable: true },
+            { key: 'Tipo', label: 'Tipo', align: 'left', sortable: false },
+            { key: 'Prioridade', label: 'Prioridade', align: 'left', sortable: false },
             { key: 'Empresa', label: 'Empresa', align: 'left', sortable: false }
         ];
 
-        // CONFIGURAÇÃO TODAS AS COLUNAS EXPORTÁVEIS PARA O MODAL DO EXCEL
+        // MAPEAMENTO DAS COLUNAS EXPORTÁVEIS DO EXCEL
         const exportableColsConfig = [
-            { id: 'col_AcaoIndex', label: 'ID Ação / Sequência', defaultVisible: true, defaultAll: true },
-            { id: 'Nº Orçamento', label: 'Nº Orçamento', defaultVisible: true, defaultAll: true },
-            { id: 'Cliente', label: 'Cliente', defaultVisible: true, defaultAll: true },
-            { id: 'Código', label: 'Código do Item', defaultVisible: true, defaultAll: true },
-            { id: 'Item', label: 'Descrição do Item', defaultVisible: true, defaultAll: true },
-            { id: 'Nº Pedido', label: 'Nº Pedido', defaultVisible: true, defaultAll: true },
-            { id: 'Nº OS', label: 'Nº OS', defaultVisible: true, defaultAll: true },
-            { id: 'Status OS', label: 'Status OS', defaultVisible: true, defaultAll: true },
-            { id: 'Dt. aprovação', label: 'Dt. Aprovação', defaultVisible: true, defaultAll: true },
-            { id: 'Prev. entrega(original)', label: 'Prev. Entrega (Original)', defaultVisible: true, defaultAll: true },
-            { id: 'Dt. Negociada', label: 'Dt. Negociada', defaultVisible: false, defaultAll: true },
-            { id: 'Dt. Pesquisa', label: 'Dt. Pesquisa', defaultVisible: false, defaultAll: true },
-            { id: 'Qtde. Total', label: 'Qtde. Total', defaultVisible: true, defaultAll: true },
-            { id: 'Qtde. Entregue', label: 'Qtde. Entregue', defaultVisible: true, defaultAll: true },
-            { id: 'Saldo a entregar', label: 'Saldo a Entregar', defaultVisible: true, defaultAll: true },
-            { id: 'Vl. Unitário', label: 'Vl. Unitário', defaultVisible: true, defaultAll: true },
-            { id: 'Vl. Total', label: 'Vl. Total', defaultVisible: true, defaultAll: true },
-            { id: 'Vl. a faturar', label: 'Vl. a Faturar', defaultVisible: true, defaultAll: true },
-            { id: 'Vl. Liberado', label: 'Vl. Liberado', defaultVisible: true, defaultAll: true },
-            { id: 'Valor fat. disp.', label: 'Valor Fat. Disp.', defaultVisible: true, defaultAll: true },
-            { id: 'Vl. Lucro', label: 'Vl. Lucro', defaultVisible: true, defaultAll: true },
-            { id: 'Margem Lucro', label: 'Margem Lucro (%)', defaultVisible: true, defaultAll: true },
-            { id: 'Valor falta comprar', label: 'Vl. Falta Comprar', defaultVisible: true, defaultAll: true },
-            { id: 'Etapa', label: 'Etapa do Processo', defaultVisible: false, defaultAll: true },
-            { id: 'Disponibilidade Material', label: 'Disp. Material', defaultVisible: true, defaultAll: true },
-            { id: 'Lista de Materiais', label: 'Lista de Materiais', defaultVisible: false, defaultAll: true },
-            { id: 'Processamento LM', label: 'Processamento LM', defaultVisible: false, defaultAll: true },
-            { id: 'Ordem de compra', label: 'Ordem de Compra', defaultVisible: false, defaultAll: true },
-            { id: 'Prata', label: 'Prata', defaultVisible: true, defaultAll: true },
-            { id: 'Capacidade disponivel', label: 'Capacidade Disponível', defaultVisible: false, defaultAll: true },
-            { id: 'Tipo', label: 'Tipo', defaultVisible: false, defaultAll: true },
-            { id: 'Prioridade', label: 'Prioridade', defaultVisible: false, defaultAll: true },
-            { id: 'Empresa', label: 'Empresa', defaultVisible: true, defaultAll: true }
+            { id: 'col_AcaoIndex', label: 'ID Ação / Sequência', tableKey: null },
+            { id: 'Nº Orçamento', label: 'Nº Orçamento', tableKey: 'Nº Orçamento' },
+            { id: 'Cliente', label: 'Cliente', tableKey: 'Cliente' },
+            { id: 'Código', label: 'Código do Item', tableKey: 'Código' },
+            { id: 'Item', label: 'Descrição do Item', tableKey: 'Código' },
+            { id: 'Nº Pedido', label: 'Nº Pedido', tableKey: 'Nº Pedido' },
+            { id: 'Nº OS', label: 'Nº OS', tableKey: 'Nº OS' },
+            { id: 'Status OS', label: 'Status OS', tableKey: 'Nº OS' },
+            { id: 'Dt. aprovação', label: 'Dt. Aprovação', tableKey: 'Dt. aprovação' },
+            { id: 'Prev. entrega(original)', label: 'Prev. Entrega (Original)', tableKey: 'Prev. entrega(original)' },
+            { id: 'Dt. Negociada', label: 'Dt. Negociada', tableKey: 'Dt. Negociada' },
+            { id: 'Dt. Pesquisa', label: 'Dt. Pesquisa', tableKey: 'Dt. Pesquisa' },
+            { id: 'Qtde. Total', label: 'Qtde. Total', tableKey: 'Qtde. Total' },
+            { id: 'Qtde. Entregue', label: 'Qtde. Entregue', tableKey: 'Qtde. Entregue' },
+            { id: 'Saldo a entregar', label: 'Saldo a Entregar', tableKey: 'Saldo a entregar' },
+            { id: 'Vl. Unitário', label: 'Vl. Unitário', tableKey: 'Vl. Unitário' },
+            { id: 'Vl. Total', label: 'Vl. Total', tableKey: 'Vl. Total' },
+            { id: 'Vl. a faturar', label: 'Vl. a Faturar', tableKey: 'Vl. a faturar' },
+            { id: 'Vl. Liberado', label: 'Vl. Liberado', tableKey: 'Vl. Liberado' },
+            { id: 'Valor fat. disp.', label: 'Valor Fat. Disp.', tableKey: 'Valor fat. disp.' },
+            { id: 'Vl. Lucro', label: 'Vl. Lucro', tableKey: 'Vl. Lucro' },
+            { id: 'Margem Lucro', label: 'Margem Lucro (%)', tableKey: 'Margem Lucro' },
+            { id: 'Valor falta comprar', label: 'Vl. Falta Comprar', tableKey: 'Valor falta comprar' },
+            { id: 'Etapa', label: 'Etapa do Processo', tableKey: 'Etapa' },
+            { id: 'Disponibilidade Material', label: 'Disp. Material', tableKey: 'Disponibilidade Material' },
+            { id: 'Lista de Materiais', label: 'Lista de Materiais', tableKey: 'Lista de Materiais' },
+            { id: 'Processamento LM', label: 'Processamento LM', tableKey: 'Processamento LM' },
+            { id: 'Ordem de compra', label: 'Ordem de Compra', tableKey: 'Ordem de compra' },
+            { id: 'Prata', label: 'Prata', tableKey: 'Prata' },
+            { id: 'Capacidade disponivel', label: 'Capacidade Disponível', tableKey: 'Capacidade disponivel' },
+            { id: 'Tipo', label: 'Tipo', tableKey: 'Tipo' },
+            { id: 'Prioridade', label: 'Prioridade', tableKey: 'Prioridade' },
+            { id: 'Empresa', label: 'Empresa', tableKey: 'Empresa' }
         ];
 
         const configDropdowns = [
@@ -634,7 +643,12 @@
             // Restaura colunas ocultas da tabela do localStorage
             const savedHiddenCols = localStorage.getItem('pstec_carteira_hidden_table_cols');
             if (savedHiddenCols) {
-                try { hiddenTableCols = new Set(JSON.parse(savedHiddenCols)); } catch(e){}
+                try { 
+                    hiddenTableCols = new Set(JSON.parse(savedHiddenCols)); 
+                } catch(e){}
+            } else {
+                // Se for a primeira vez, oculta por padrão os campos secundários do modal para manter a tabela limpa
+                ['Dt. Negociada', 'Dt. Pesquisa', 'Etapa', 'Lista de Materiais', 'Processamento LM', 'Ordem de compra', 'Capacidade disponivel', 'Tipo', 'Prioridade'].forEach(k => hiddenTableCols.add(k));
             }
 
             if (localStorage.getItem('pstec_carteira_filtros_collapsed') === 'true') {
@@ -725,7 +739,6 @@
             }
         }
 
-        // GERENCIADOR DE COLUNAS VISÍVEIS NA TABELA (EXIBIR / OCULTAR)
         function renderTableColsVisibilityDropdown() {
             const container = document.getElementById('tableColsVisibilityCheckboxes');
             if (!container) return;
@@ -754,7 +767,8 @@
 
         function resetTableColsVisibility() {
             hiddenTableCols.clear();
-            localStorage.removeItem('pstec_carteira_hidden_table_cols');
+            ['Dt. Negociada', 'Dt. Pesquisa', 'Etapa', 'Lista de Materiais', 'Processamento LM', 'Ordem de compra', 'Capacidade disponivel', 'Tipo', 'Prioridade'].forEach(k => hiddenTableCols.add(k));
+            localStorage.setItem('pstec_carteira_hidden_table_cols', JSON.stringify(Array.from(hiddenTableCols)));
             renderTableColsVisibilityDropdown();
             renderTableHeader();
             renderCarteiraView();
@@ -767,7 +781,7 @@
             let trHTML = '<tr><th class="p-3">Ação</th>';
 
             tableColumnsConfig.forEach(col => {
-                if (hiddenTableCols.has(col.key)) return; // Pula se oculto
+                if (hiddenTableCols.has(col.key)) return;
 
                 const isFiltered = Boolean(colFilterState[col.key] && colFilterState[col.key].size > 0);
                 const alignClass = col.align === 'center' ? 'text-center' : (col.align === 'right' ? 'text-right' : 'text-left');
@@ -1293,6 +1307,9 @@
             tbody.innerHTML = itemsToRender.map((item, idx) => {
                 const dtAprov = fmtDate(item['Dt. aprovação']);
                 const prevEnt = fmtDate(item['Prev. entrega(original)']);
+                const dtNeg = fmtDate(item['Dt. Negociada']);
+                const dtPesq = fmtDate(item['Dt. Pesquisa']);
+
                 const entregue = parseNum(item['Qtde. Entregue']);
                 const saldo = parseNum(item['Saldo a entregar']);
                 const total = parseNum(item['Qtde. Total']);
@@ -1308,7 +1325,6 @@
 
                 const isParcial = entregue > 0 && saldo > 0;
 
-                // CÉLULAS DINÂMICAS DE ACORDO COM A VISIBILIDADE DAS COLUNAS
                 let cellsHTML = `
                     <td class="p-3">
                         <button onclick="openModal(${idx})" class="p-1.5 bg-pstec-700 hover:bg-pstec-800 text-white rounded-lg font-bold text-[10px] transition shadow-xs" title="Ver Detalhes">
@@ -1334,6 +1350,8 @@
                 `;
                 if (!hiddenTableCols.has('Dt. aprovação')) cellsHTML += `<td class="p-3 text-center font-semibold text-slate-600">${dtAprov}</td>`;
                 if (!hiddenTableCols.has('Prev. entrega(original)')) cellsHTML += `<td class="p-3 text-center font-bold text-slate-700">${prevEnt}</td>`;
+                if (!hiddenTableCols.has('Dt. Negociada')) cellsHTML += `<td class="p-3 text-center font-bold text-purple-700 font-mono">${dtNeg}</td>`;
+                if (!hiddenTableCols.has('Dt. Pesquisa')) cellsHTML += `<td class="p-3 text-center font-bold text-slate-600 font-mono">${dtPesq}</td>`;
                 if (!hiddenTableCols.has('Qtde. Total')) cellsHTML += `<td class="p-3 text-right font-mono">${total.toLocaleString('pt-BR')}</td>`;
                 if (!hiddenTableCols.has('Qtde. Entregue')) cellsHTML += `<td class="p-3 text-right font-mono ${isParcial ? 'text-amber-600 font-bold' : ''}">${entregue.toLocaleString('pt-BR')}</td>`;
                 if (!hiddenTableCols.has('Saldo a entregar')) cellsHTML += `<td class="p-3 text-right font-mono font-bold text-pstec-700">${saldo.toLocaleString('pt-BR')}</td>`;
@@ -1345,12 +1363,19 @@
                 if (!hiddenTableCols.has('Vl. Lucro')) cellsHTML += `<td class="p-3 text-right font-mono font-bold text-emerald-700 bg-emerald-50/50">${fmtBRL(vlLucro)}</td>`;
                 if (!hiddenTableCols.has('Margem Lucro')) cellsHTML += `<td class="p-3 text-right font-mono font-bold text-emerald-700 bg-emerald-50/50">${margemLucroStr}</td>`;
                 if (!hiddenTableCols.has('Valor falta comprar')) cellsHTML += `<td class="p-3 text-right font-mono font-bold text-red-600">${fmtBRL(vlFaltaComp)}</td>`;
+                if (!hiddenTableCols.has('Etapa')) cellsHTML += `<td class="p-3 font-semibold text-slate-700 max-w-[160px] truncate" title="${item.Etapa||''}">${item.Etapa || '-'}</td>`;
                 if (!hiddenTableCols.has('Disponibilidade Material')) cellsHTML += `
                     <td class="p-3">
                         <span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${item['Disponibilidade Material'] === 'Total disponível' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${item['Disponibilidade Material'] || '-'}</span>
                     </td>
                 `;
+                if (!hiddenTableCols.has('Lista de Materiais')) cellsHTML += `<td class="p-3 font-mono text-slate-600">${item['Lista de Materiais'] || '-'}</td>`;
+                if (!hiddenTableCols.has('Processamento LM')) cellsHTML += `<td class="p-3 text-slate-600">${item['Processamento LM'] || '-'}</td>`;
+                if (!hiddenTableCols.has('Ordem de compra')) cellsHTML += `<td class="p-3 font-mono text-slate-600">${item['Ordem de compra'] || '-'}</td>`;
                 if (!hiddenTableCols.has('Prata')) cellsHTML += `<td class="p-3 font-bold">${item.Prata || '-'}</td>`;
+                if (!hiddenTableCols.has('Capacidade disponivel')) cellsHTML += `<td class="p-3 text-right font-mono">${parseNum(item['Capacidade disponivel']).toLocaleString('pt-BR')}</td>`;
+                if (!hiddenTableCols.has('Tipo')) cellsHTML += `<td class="p-3 text-slate-600">${item.Tipo || '-'}</td>`;
+                if (!hiddenTableCols.has('Prioridade')) cellsHTML += `<td class="p-3 font-bold text-slate-700">${item.Prioridade || '-'}</td>`;
                 if (!hiddenTableCols.has('Empresa')) cellsHTML += `<td class="p-3 text-slate-500 uppercase max-w-[150px] truncate" title="${item.Empresa||''}">${item.Empresa || '-'}</td>`;
 
                 return `<tr class="${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'} hover:bg-pstec-50/60 transition-colors">${cellsHTML}</tr>`;
@@ -1390,7 +1415,7 @@
             renderTableBatch();
         }
 
-        // LÓGICA DO MODAL DE EXPORTAÇÃO EXCEL PARA DADOS FILTRADOS
+        // LÓGICA DO MODAL DE EXPORTAÇÃO EXCEL SINCRONIZADO COM AS COLUNAS DA TABELA
         function openExportModal() {
             const m = document.getElementById('exportModal');
             if (!m) return;
@@ -1406,8 +1431,14 @@
             const container = document.getElementById('exportColsCheckboxes');
             if (container) {
                 container.innerHTML = exportableColsConfig.map(col => {
-                    // Padrão atual baseado no preset selecionado
-                    const isChecked = savedColsSet ? savedColsSet.has(col.id) : col.defaultVisible;
+                    let isChecked = false;
+                    if (savedColsSet) {
+                        isChecked = savedColsSet.has(col.id);
+                    } else {
+                        // Por padrão, se a coluna não está oculta na tabela, ela fica marcada
+                        isChecked = col.tableKey ? !hiddenTableCols.has(col.tableKey) : col.defaultVisible;
+                    }
+
                     return `
                         <label class="flex items-center gap-2 p-1.5 hover:bg-white rounded-lg cursor-pointer font-semibold text-slate-700">
                             <input type="checkbox" value="${col.id}" ${isChecked ? 'checked' : ''} class="export-col-checkbox rounded text-emerald-600 focus:ring-emerald-500">
@@ -1434,7 +1465,11 @@
             document.querySelectorAll('.export-col-checkbox').forEach(cb => {
                 const colConf = exportableColsConfig.find(c => c.id === cb.value);
                 if (colConf) {
-                    cb.checked = preset === 'all' ? colConf.defaultAll : colConf.defaultVisible;
+                    if (preset === 'visible') {
+                        cb.checked = colConf.tableKey ? !hiddenTableCols.has(colConf.tableKey) : true;
+                    } else {
+                        cb.checked = true;
+                    }
                 }
             });
         }
