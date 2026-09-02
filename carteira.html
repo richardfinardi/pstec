@@ -14,7 +14,7 @@
     <meta property="og:image" content="https://consultoriarf.net/producao_pstec/LOGO MINIMALISTA.png">
     <meta property="og:type" content="website">
 
-    <title>Carteira de Produção - PSTEC V2.0.1 Pro</title>
+    <title>Carteira de Produção - PSTEC V2.1 Pro</title>
 
     <!-- Autenticação Token -->
     <script>
@@ -72,7 +72,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-extrabold tracking-wide text-white">GRUPO PSTEC</h1>
-                    <p class="text-xs text-pstec-100">Carteira de Produção V2.0.1 Pro</p>
+                    <p class="text-xs text-pstec-100">Carteira de Produção V2.1 Pro</p>
                 </div>
             </div>
 
@@ -204,7 +204,7 @@
             </div>
         </div>
 
-        <!-- TABELA PRINCIPAL DE CARTEIRA -->
+        <!-- TABELA PRINCIPAL DE CARTEIRA COM FILTROS CRUZADOS NO ESTILO EXCEL -->
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
             <div id="tableScrollContainer" class="overflow-x-auto custom-scroll max-h-[60vh]">
                 <table class="w-full text-left text-[11px] border-collapse whitespace-nowrap">
@@ -249,7 +249,7 @@
     <!-- FOOTER -->
     <footer class="bg-white border-t border-slate-200 py-3 mt-auto">
         <div class="max-w-[96%] mx-auto px-4 flex justify-between items-center text-xs text-slate-500">
-            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V2.0.1 Pro</span>
+            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V2.1 Pro</span>
             <span id="lastUpdateLabel">Atualizado: -</span>
         </div>
     </footer>
@@ -358,7 +358,7 @@
         </div>
     </div>
 
-    <!-- LOGICA JS DE MULTISSELEÇÃO E BUSCA WILD CARD -->
+    <!-- LOGICA JS DE FILTRO CRUZADO SELETIVO E BUSCA CORINGA AVANÇADA -->
     <script>
         const API_CARTEIRA = 'https://pstec.consultoriarf.net/CARTEIRA';
         let rawCarteira = [];
@@ -507,6 +507,7 @@
             }
         }
 
+        // RENDERIZAÇÃO DO CABEÇALHO DA TABELA COM FILTROS INDIVIDUALIZADOS ESTILO EXCEL
         function renderTableHeader() {
             const thead = document.getElementById('mainTableHeader');
             if (!thead) return;
@@ -530,6 +531,7 @@
                             </button>
                         </div>
 
+                        <!-- POPOVER FILTRO EXCEL DA COLUNA COM FILTRAGEM CRUZADA SELETIVA -->
                         <div id="col_popover_${col.key}" class="hidden absolute left-0 top-full mt-1 w-64 bg-white text-slate-800 border border-slate-200 rounded-2xl shadow-2xl z-40 p-3 text-xs normal-case font-normal col-filter-popover">
                             <div class="flex justify-between items-center pb-2 border-b border-slate-100 mb-2 font-bold">
                                 <span>Filtro: ${col.label}</span>
@@ -556,10 +558,14 @@
             lucide.createIcons();
         }
 
+        // NOVO: FILTRO CRUZADO SELETIVO (SÓ EXIBE NO DROPDOWN O QUE PERTENCE AOS DADOS JÁ FILTRADOS)
         function renderColOptionsListHTML(key) {
+            // Obtém os dados ignorando apenas o filtro da própria coluna para permitir remarcar opções
+            const availableData = getFilteredCarteira(key);
+            
             const set = new Set();
-            for (let i = 0; i < rawCarteira.length; i++) {
-                const val = rawCarteira[i][key];
+            for (let i = 0; i < availableData.length; i++) {
+                const val = availableData[i][key];
                 if (val !== null && val !== undefined && String(val).trim() !== '') {
                     set.add(String(val).trim());
                 }
@@ -581,6 +587,13 @@
         function toggleColFilterPopover(e, key) {
             e.stopPropagation();
             const popoverId = `col_popover_${key}`;
+            
+            // Re-renderiza as opções com o filtro cruzado atualizado no momento que abre
+            const container = document.getElementById(`col_opts_${key}`);
+            if (container) {
+                container.innerHTML = renderColOptionsListHTML(key);
+            }
+
             document.querySelectorAll('.col-filter-popover').forEach(p => {
                 if (p.id !== popoverId) p.classList.add('hidden');
             });
@@ -588,6 +601,7 @@
             if (popover) popover.classList.toggle('hidden');
         }
 
+        // SUPORTE COMPLETO A WILDCARD (%) E NEGAÇÃO (-) NOS FILTROS DE CABEÇALHO DA TABELA
         function filterColOptionsUI(inputEl, key) {
             const term = inputEl.value.trim().toLowerCase();
             const container = document.getElementById(`col_opts_${key}`);
@@ -614,8 +628,9 @@
             colFilterState[key].clear();
 
             if (enableAll) {
-                for (let i = 0; i < rawCarteira.length; i++) {
-                    const val = rawCarteira[i][key];
+                const availableData = getFilteredCarteira(key);
+                for (let i = 0; i < availableData.length; i++) {
+                    const val = availableData[i][key];
                     if (val !== null && val !== undefined && String(val).trim() !== '') {
                         colFilterState[key].add(String(val).trim());
                     }
@@ -791,7 +806,6 @@
             renderCarteiraView();
         }
 
-        // FUNÇÃO DE ATUALIZAÇÃO DOS INDICADORES DE ORDENAÇÃO
         function updateSortIndicators() {
             const cols = ['Nº Orçamento', 'Cliente', 'Nº Pedido', 'Nº OS', 'Dt. aprovação', 'Prev. entrega(original)', 'Qtde. Total', 'Saldo a entregar', 'Vl. Total', 'Vl. a faturar', 'Vl. Liberado', 'Valor fat. disp.', 'Valor falta comprar'];
             for (let i = 0; i < cols.length; i++) {
@@ -826,7 +840,8 @@
             return true;
         }
 
-        function getFilteredCarteira() {
+        // FILTRAGEM DE CARTEIRA COM SUPORTE A EXCLUSÃO DE COLUNA ATUAL (PARA FILTRO SELETIVO CRUZADO)
+        function getFilteredCarteira(ignoreColKey = null) {
             const search = (document.getElementById('searchInput')?.value || '').trim();
             const dtFrom = document.getElementById('dateFrom')?.value || '';
             const dtTo = document.getElementById('dateTo')?.value || '';
@@ -840,6 +855,8 @@
                 // FILTROS DE CABEÇALHO DA TABELA (ESTILO EXCEL)
                 let colFilterMatch = true;
                 for (const colKey in colFilterState) {
+                    if (ignoreColKey && colKey === ignoreColKey) continue;
+
                     const selSet = colFilterState[colKey];
                     if (selSet && selSet.size > 0) {
                         const cellVal = String(item[colKey] || '').trim();
