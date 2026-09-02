@@ -14,7 +14,7 @@
     <meta property="og:image" content="https://consultoriarf.net/producao_pstec/LOGO MINIMALISTA.png">
     <meta property="og:type" content="website">
 
-    <title>Carteira de Produção - PSTEC V1.9 Pro</title>
+    <title>Carteira de Produção - PSTEC V1.9.3 Pro</title>
 
     <!-- Autenticação Token -->
     <script>
@@ -70,7 +70,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-extrabold tracking-wide text-white">GRUPO PSTEC</h1>
-                    <p class="text-xs text-pstec-100">Carteira de Produção V1.9 Pro</p>
+                    <p class="text-xs text-pstec-100">Carteira de Produção V1.9.3 Pro</p>
                 </div>
             </div>
 
@@ -163,13 +163,13 @@
                 <!-- DATES & CHECKBOX FILTERS GRID -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 text-xs" id="filterDropdownsGrid">
                     
-                    <!-- Previsão de Entrega (De / Até) -->
+                    <!-- Dt. Pesquisa (De / Até) -->
                     <div class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 flex items-center gap-1.5">
-                        <span class="text-[10px] text-slate-400 font-bold">De:</span>
+                        <span class="text-[10px] text-slate-400 font-bold whitespace-nowrap">Dt. Pesq. De:</span>
                         <input type="date" id="dateFrom" onchange="renderCarteiraView()" class="bg-transparent w-full text-slate-800 focus:outline-none font-medium">
                     </div>
                     <div class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 flex items-center gap-1.5">
-                        <span class="text-[10px] text-slate-400 font-bold">Até:</span>
+                        <span class="text-[10px] text-slate-400 font-bold whitespace-nowrap">Dt. Pesq. Até:</span>
                         <input type="date" id="dateTo" onchange="renderCarteiraView()" class="bg-transparent w-full text-slate-800 focus:outline-none font-medium">
                     </div>
 
@@ -264,12 +264,12 @@
     <!-- FOOTER -->
     <footer class="bg-white border-t border-slate-200 py-3 mt-auto">
         <div class="max-w-[96%] mx-auto px-4 flex justify-between items-center text-xs text-slate-500">
-            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V1.9 Pro</span>
+            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V1.9.3 Pro</span>
             <span id="lastUpdateLabel">Atualizado: -</span>
         </div>
     </footer>
 
-    <!-- MODAL DE DETALHES TOTALMENTE REFORMULADO E ELEGANTE -->
+    <!-- MODAL DE DETALHES COMPLETO -->
     <div id="detailsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-white text-slate-800 rounded-3xl shadow-2xl max-w-4xl w-full flex flex-col max-h-[90vh] overflow-hidden border border-slate-200">
             
@@ -285,10 +285,10 @@
                 <button onclick="closeModal()" class="text-pstec-100 hover:text-white p-1 rounded-lg transition hover:bg-pstec-800"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
             
-            <!-- CORPO DO MODAL ORGANIZADO EM CARDS E SEÇÕES -->
+            <!-- CORPO DO MODAL -->
             <div class="p-6 space-y-4 text-xs overflow-y-auto custom-scroll flex-1 bg-slate-50/60">
                 
-                <!-- CARDS FINANCEIROS DE TOPO NO MODAL -->
+                <!-- CARDS FINANCEIROS -->
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                     <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs">
                         <span class="text-[9px] uppercase font-bold text-slate-400 block">Valor Total</span>
@@ -308,7 +308,7 @@
                     </div>
                 </div>
 
-                <!-- SEÇÃO 1: CLIENTE E IDENTIFICAÇÃO DO PEDIDO -->
+                <!-- SEÇÃO 1: CLIENTE E PEDIDO -->
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-2.5 shadow-xs">
                     <div class="flex items-center gap-2 text-pstec-700 font-extrabold border-b pb-1.5 text-xs">
                         <i data-lucide="building-2" class="w-4 h-4"></i>
@@ -322,7 +322,7 @@
                     </div>
                 </div>
 
-                <!-- SEÇÃO 2: DATAS E PRAZOS -->
+                <!-- SEÇÃO 2: DATAS -->
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-2.5 shadow-xs">
                     <div class="flex items-center gap-2 text-pstec-700 font-extrabold border-b pb-1.5 text-xs">
                         <i data-lucide="calendar-days" class="w-4 h-4"></i>
@@ -336,7 +336,7 @@
                     </div>
                 </div>
 
-                <!-- SEÇÃO 3: QUANTIDADES E VALORES -->
+                <!-- SEÇÃO 3: QUANTIDADES -->
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-2.5 shadow-xs">
                     <div class="flex items-center gap-2 text-pstec-700 font-extrabold border-b pb-1.5 text-xs">
                         <i data-lucide="boxes" class="w-4 h-4"></i>
@@ -350,7 +350,7 @@
                     </div>
                 </div>
 
-                <!-- SEÇÃO 4: MATERIAIS E ETAPAS -->
+                <!-- SEÇÃO 4: MATERIAIS -->
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-2.5 shadow-xs">
                     <div class="flex items-center gap-2 text-pstec-700 font-extrabold border-b pb-1.5 text-xs">
                         <i data-lucide="layers" class="w-4 h-4"></i>
@@ -440,7 +440,6 @@
                 toggleFiltros(true);
             }
 
-            // Fecha dropdowns se clicar fora
             document.addEventListener('click', (e) => {
                 if (!e.target.closest('.custom-dd-container')) {
                     document.querySelectorAll('.custom-dd-menu').forEach(m => m.classList.add('hidden'));
@@ -497,7 +496,6 @@
             }
         }
 
-        // RENDERIZAÇÃO DOS DROPDOWNS MULTISSELEÇÃO COM CHECKBOX E BUSCA
         function renderDropdownsHTML() {
             configDropdowns.forEach(conf => {
                 const container = document.getElementById(conf.id);
@@ -666,11 +664,9 @@
             }
         }
 
-        // BUSCA AVANÇADA COM SUPORTE A WILD CARDS (%termo1%termo2%)
         function matchesWildcardSearch(itemStr, searchInput) {
             if (!searchInput) return true;
             
-            // Trata formatos tipo %PCP%EXPEDIÇÃO% ou PCP EXPEDIÇÃO
             const cleanTerms = searchInput
                 .split(/%|\s+/)
                 .map(t => t.trim().toLowerCase())
@@ -689,12 +685,12 @@
             const dtFrom = document.getElementById('dateFrom')?.value || '';
             const dtTo = document.getElementById('dateTo')?.value || '';
 
+            const hasDateFilter = Boolean(dtFrom || dtTo);
             const filtered = [];
 
             for (let i = 0; i < rawCarteira.length; i++) {
                 const item = rawCarteira[i];
 
-                // Filtros de Multisseleção
                 if (filterState.Empresa.size > 0 && !filterState.Empresa.has(String(item.Empresa || '').trim())) continue;
                 if (filterState.Cliente.size > 0 && !filterState.Cliente.has(String(item.Cliente || '').trim())) continue;
                 if (filterState.Código.size > 0 && !filterState.Código.has(String(item.Código || '').trim())) continue;
@@ -711,7 +707,6 @@
                 if (filterState.Tipo.size > 0 && !filterState.Tipo.has(String(item.Tipo || '').trim())) continue;
                 if (filterState.Prioridade.size > 0 && !filterState.Prioridade.has(String(item.Prioridade || '').trim())) continue;
 
-                // DAX PCP / PRODUÇÃO
                 if (filterState.PCP.size > 0) {
                     const rawOS = item['Nº OS'] ? String(item['Nº OS']).trim() : '';
                     const isPCP = (!rawOS || rawOS === 'null');
@@ -719,28 +714,28 @@
                     if (!filterState.PCP.has(currentPos)) continue;
                 }
 
-                // Saldo
                 if (filterState.SaldoEntrega.size > 0) {
                     const sEntrega = parseNum(item['Saldo a entregar']);
                     const statusSaldo = sEntrega > 0 ? 'com_saldo' : 'sem_saldo';
                     if (!filterState.SaldoEntrega.has(statusSaldo)) continue;
                 }
 
-                // Capacidade
                 if (filterState.Capacidade.size > 0) {
                     const cDisp = parseNum(item['Capacidade disponivel']);
                     const statusCap = cDisp > 0 ? 'sim' : 'nao';
                     if (!filterState.Capacidade.has(statusCap)) continue;
                 }
 
-                // Datas
-                const prevEntrega = String(item['Prev. entrega(original)'] || item['Dt. Negociada'] || '').substring(0, 10);
-                if (prevEntrega) {
-                    if (dtFrom && prevEntrega < dtFrom) continue;
-                    if (dtTo && prevEntrega > dtTo) continue;
+                // FILTRAGEM RÍGIDA POR 'Dt. Pesquisa'
+                const rawDtPesquisa = item['Dt. Pesquisa'];
+                const dtPesquisa = (rawDtPesquisa && rawDtPesquisa !== 'NaT' && rawDtPesquisa !== 'None' && rawDtPesquisa !== 'null') ? String(rawDtPesquisa).substring(0, 10) : '';
+
+                if (hasDateFilter) {
+                    if (!dtPesquisa) continue; // Exclui itens sem Dt. Pesquisa cadastrada
+                    if (dtFrom && dtPesquisa < dtFrom) continue;
+                    if (dtTo && dtPesquisa > dtTo) continue;
                 }
 
-                // Busca Coringa Geral
                 if (search) {
                     const fullItemStr = `${item['Nº Orçamento']||''} ${item.Cliente||''} ${item.Código||''} ${item.Item||''} ${item['Nº Pedido']||''} ${item['Nº OS']||''} ${item.Empresa||''} ${item.Etapa||''} ${item['Status OS']||''}`.toLowerCase();
                     if (!matchesWildcardSearch(fullItemStr, search)) continue;
@@ -749,7 +744,6 @@
                 filtered.push(item);
             }
 
-            // Ordenação
             filtered.sort((a, b) => {
                 let valA = a[sortColumn];
                 let valB = b[sortColumn];
@@ -805,7 +799,6 @@
             let vlFaltaComprarUnico = 0;
             for (let k in osComprarMap) vlFaltaComprarUnico += osComprarMap[k];
 
-            // ATUALIZAÇÃO DOS KPIS DE ACORDO COM OS FILTROS
             document.getElementById('kpiTotalItens').textContent = totalItens;
             document.getElementById('kpiSaldoEntregar').textContent = saldoEntregar.toLocaleString('pt-BR');
             document.getElementById('kpiValorTotal').textContent = fmtBRL(vlTotal);
@@ -834,7 +827,7 @@
 
             tbody.innerHTML = itemsToRender.map((item, idx) => {
                 const dtAprov = fmtDate(item['Dt. aprovação']);
-                const prevEnt = fmtDate(item['Prev. entrega(original)'] || item['Dt. Negociada']);
+                const prevEnt = fmtDate(item['Prev. entrega(original)']);
                 const entregue = parseNum(item['Qtde. Entregue']);
                 const saldo = parseNum(item['Saldo a entregar']);
                 const total = parseNum(item['Qtde. Total']);
@@ -926,52 +919,69 @@
             const item = currentFilteredData[filteredIdx];
             if (!item) return;
 
-            document.getElementById('mOrcamentoBadge').textContent = `Orçamento Nº ${item['Nº Orçamento'] || 'N/A'}`;
-            document.getElementById('mItemTitle').textContent = `${item.Código ? item.Código + ' - ' : ''}${item.Item || 'Sem Descrição'}`;
+            const setSafeText = (id, txt) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = txt || '-';
+            };
+
+            setSafeText('mOrcamentoBadge', `Orçamento Nº ${item['Nº Orçamento'] || 'N/A'}`);
+            setSafeText('mItemTitle', `${item.Código ? item.Código + ' - ' : ''}${item.Item || 'Sem Descrição'}`);
             
             const stOS = item['Status OS'] || 'SEM OS';
-            document.getElementById('mStatusOSBadge').innerHTML = `<span class="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-lg ${stOS === 'APROVADO' ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-800'}">${stOS}</span>`;
+            const badgeEl = document.getElementById('mStatusOSBadge');
+            if (badgeEl) {
+                badgeEl.innerHTML = `<span class="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-lg ${stOS === 'APROVADO' ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-800'}">${stOS}</span>`;
+            }
 
-            document.getElementById('mVlTotal').textContent = fmtBRL(parseNum(item['Vl. Total']));
-            document.getElementById('mVlAFaturar').textContent = fmtBRL(parseNum(item['Vl. a faturar']));
-            document.getElementById('mVlLiberado').textContent = fmtBRL(parseNum(item['Vl. Liberado']));
-            document.getElementById('mVlFaltaComprar').textContent = fmtBRL(parseNum(item['Valor falta comprar']));
+            // CARDS FINANCIALS
+            setSafeText('mVlTotal', fmtBRL(parseNum(item['Vl. Total'])));
+            setSafeText('mVlAFaturar', fmtBRL(parseNum(item['Vl. a faturar'])));
+            setSafeText('mVlLiberado', fmtBRL(parseNum(item['Vl. Liberado'])));
+            setSafeText('mVlFaltaComprar', fmtBRL(parseNum(item['Valor falta comprar'])));
 
-            document.getElementById('mCliente').textContent = item.Cliente || '-';
-            document.getElementById('mEmpresa').textContent = item.Empresa || '-';
-            document.getElementById('mPedido').textContent = item['Nº Pedido'] || '-';
-            document.getElementById('mCodigo').textContent = item.Código || '-';
+            // SEÇÃO CLIENTE
+            setSafeText('mCliente', item.Cliente);
+            setSafeText('mEmpresa', item.Empresa);
+            setSafeText('mPedido', item['Nº Pedido']);
+            setSafeText('mCodigo', item.Código);
 
-            document.getElementById('mDtAprov').textContent = fmtDate(item['Dt. aprovação']);
-            document.getElementById('mPrevOriginal').textContent = fmtDate(item['Prev. entrega(original)']);
-            document.getElementById('mDtNegociada').textContent = fmtDate(item['Dt. Negociada']);
-            
+            // SEÇÃO DATAS
+            setSafeText('mDtAprov', fmtDate(item['Dt. aprovação']));
+            setSafeText('mPrevOriginal', fmtDate(item['Prev. entrega(original)']));
+            setSafeText('mDtNegociada', fmtDate(item['Dt. Negociada']));
+
             const hasAnalise = String(item['Análise critica industrial']||'').toLowerCase()==='sim' || 
                                String(item['Análise critica estrutura']||'').toLowerCase()==='sim' || 
                                String(item['Análise critica plano controle']||'').toLowerCase()==='sim';
-            document.getElementById('mAnalise').textContent = hasAnalise ? 'Sim (Pendente)' : 'Não';
+            setSafeText('mAnalise', hasAnalise ? 'Sim (Pendente)' : 'Não');
 
-            document.getElementById('mQtdeTotal').textContent = parseNum(item['Qtde. Total']).toLocaleString('pt-BR');
-            document.getElementById('mQtdeEntregue').textContent = parseNum(item['Qtde. Entregue']).toLocaleString('pt-BR');
-            document.getElementById('mSaldoEntregar').textContent = parseNum(item['Saldo a entregar']).toLocaleString('pt-BR');
-            document.getElementById('mVlUnitario').textContent = fmtBRL(parseNum(item['Vl. Unitário']));
+            // SEÇÃO QUANTIDADES
+            setSafeText('mQtdeTotal', parseNum(item['Qtde. Total']).toLocaleString('pt-BR'));
+            setSafeText('mQtdeEntregue', parseNum(item['Qtde. Entregue']).toLocaleString('pt-BR'));
+            setSafeText('mSaldoEntregar', parseNum(item['Saldo a entregar']).toLocaleString('pt-BR'));
+            setSafeText('mVlUnitario', fmtBRL(parseNum(item['Vl. Unitário'])));
 
-            document.getElementById('mEtapa').textContent = item.Etapa || '-';
-            document.getElementById('mDispMat').textContent = item['Disponibilidade Material'] || '-';
-            document.getElementById('mListaMat').textContent = item['Lista de Materiais'] || '-';
-            document.getElementById('mPrata').textContent = item.Prata || '-';
-            document.getElementById('mVlFatDisp').textContent = fmtBRL(parseNum(item['Valor fat. disp.']));
+            // SEÇÃO MATERIAIS
+            setSafeText('mEtapa', item.Etapa);
+            setSafeText('mDispMat', item['Disponibilidade Material']);
+            setSafeText('mListaMat', item['Lista de Materiais']);
+            setSafeText('mPrata', item.Prata);
+            setSafeText('mVlFatDisp', fmtBRL(parseNum(item['Valor fat. disp.'])));
 
             const modal = document.getElementById('detailsModal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
             lucide.createIcons();
         }
 
         function closeModal() {
             const modal = document.getElementById('detailsModal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
         }
 
         function clearAllFilters() {
@@ -979,7 +989,6 @@
             document.getElementById('dateFrom').value = '';
             document.getElementById('dateTo').value = '';
             
-            // Reseta o Estado dos Filtros Multisseleção
             Object.keys(filterState).forEach(k => {
                 filterState[k].clear();
             });
