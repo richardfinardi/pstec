@@ -14,7 +14,7 @@
     <meta property="og:image" content="https://consultoriarf.net/producao_pstec/LOGO MINIMALISTA.png">
     <meta property="og:type" content="website">
 
-    <title>Carteira de Produção - PSTEC V2.9 Pro</title>
+    <title>Carteira de Produção - PSTEC V3.0 Pro</title>
 
     <!-- Autenticação Token -->
     <script>
@@ -78,7 +78,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-extrabold tracking-wide text-white">GRUPO PSTEC</h1>
-                    <p class="text-xs text-pstec-100">Carteira de Produção V2.9 Pro</p>
+                    <p class="text-xs text-pstec-100">Carteira de Produção V3.0 Pro</p>
                 </div>
             </div>
 
@@ -230,16 +230,8 @@
                         <span class="text-[10px] text-slate-500 font-bold whitespace-nowrap">Pesquisa por Data:</span>
                         <span class="text-[10px] text-pstec-700 font-black whitespace-nowrap">Dt. Pesquisa</span>
                     </div>
-                    <div class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 flex items-center gap-1.5">
-                        <span class="text-[10px] text-slate-400 font-bold whitespace-nowrap">Ano:</span>
-                        <select id="yearFilter" onchange="renderCarteiraView()" class="bg-transparent w-full text-slate-800 focus:outline-none font-bold text-[11px]"><option value="">Todos</option></select>
-                    </div>
-                    <div class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 flex items-center gap-1.5">
-                        <span class="text-[10px] text-slate-400 font-bold whitespace-nowrap">Mês:</span>
-                        <select id="monthFilter" onchange="renderCarteiraView()" class="bg-transparent w-full text-slate-800 focus:outline-none font-bold text-[11px]">
-                            <option value="">Todos</option><option value="01">Janeiro</option><option value="02">Fevereiro</option><option value="03">Março</option><option value="04">Abril</option><option value="05">Maio</option><option value="06">Junho</option><option value="07">Julho</option><option value="08">Agosto</option><option value="09">Setembro</option><option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
-                        </select>
-                    </div>
+                    <div id="dd_Ano"></div>
+                    <div id="dd_Mes"></div>
                     <div class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 flex items-center gap-1.5">
                         <span class="text-[10px] text-slate-400 font-bold whitespace-nowrap">Dt. Pesquisa — de:</span>
                         <input type="date" id="dateFrom" onchange="renderCarteiraView()" class="bg-transparent w-full text-slate-800 focus:outline-none font-medium">
@@ -354,7 +346,7 @@
     <!-- FOOTER -->
     <footer class="bg-white border-t border-slate-200 py-3 mt-auto">
         <div class="max-w-[96%] mx-auto px-4 flex justify-between items-center text-xs text-slate-500">
-            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V2.9 Pro</span>
+            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V3.0 Pro</span>
             <span id="lastUpdateLabel">Atualizado: -</span>
         </div>
     </footer>
@@ -625,6 +617,8 @@
         let hiddenTableCols = new Set();
 
         const filterState = {
+            Ano: new Set(),
+            Mes: new Set(),
             Empresa: new Set(),
             Cliente: new Set(),
             Código: new Set(),
@@ -722,6 +716,8 @@
         ];
 
         const configDropdowns = [
+            { id: 'dd_Ano', key: 'Ano', label: 'Ano' },
+            { id: 'dd_Mes', key: 'Mes', label: 'Mês', staticOpts: [{v:'01',l:'Janeiro'},{v:'02',l:'Fevereiro'},{v:'03',l:'Março'},{v:'04',l:'Abril'},{v:'05',l:'Maio'},{v:'06',l:'Junho'},{v:'07',l:'Julho'},{v:'08',l:'Agosto'},{v:'09',l:'Setembro'},{v:'10',l:'Outubro'},{v:'11',l:'Novembro'},{v:'12',l:'Dezembro'}] },
             { id: 'dd_Empresa', key: 'Empresa', label: 'Empresa' },
             { id: 'dd_Cliente', key: 'Cliente', label: 'Cliente' },
             { id: 'dd_Codigo', key: 'Código', label: 'Código' },
@@ -1245,19 +1241,7 @@
             renderCarteiraView();
         }
 
-        function populateCarteiraYearFilter() {
-            const el = document.getElementById('yearFilter');
-            if (!el) return;
-            const current = el.value;
-            const years = [...new Set(rawCarteira.map(item => {
-                const raw = item['Dt. Pesquisa'];
-                if (!raw || ['NaT','None','null'].includes(String(raw))) return '';
-                const d = String(raw).substring(0,10);
-                return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d.substring(0,4) : '';
-            }).filter(Boolean))].sort((a,b)=>b.localeCompare(a));
-            el.innerHTML = '<option value="">Todos</option>' + years.map(y => `<option value="${y}">${y}</option>`).join('');
-            if (current && years.includes(current)) el.value = current;
-        }
+        function populateCarteiraYearFilter() { /* Ano agora usa multisseleção */ }
 
         const PSTEC_EMPTY_VALUE = '(Vazio)';
         const PSTEC_NONE_SENTINEL = '__PSTEC_NONE__';
@@ -1284,6 +1268,14 @@
             if (!conf) return [];
             if (conf.staticOpts) return conf.staticOpts.map(o => typeof o === 'object' ? {v:String(o.v),l:String(o.l)} : {v:String(o),l:String(o)});
             const set = new Set();
+            if (conf.key === 'Ano') {
+                rawCarteira.forEach(item => {
+                    const raw=item['Dt. Pesquisa'];
+                    const d=(raw && !['NaT','None','null'].includes(String(raw))) ? String(raw).substring(0,10) : '';
+                    if (/^\d{4}-\d{2}-\d{2}$/.test(d)) set.add(d.substring(0,4));
+                });
+                return [...set].sort((a,b)=>b.localeCompare(a)).map(v=>({v,l:v}));
+            }
             rawCarteira.forEach(item => set.add(carteiraFilterValue(item[conf.key])));
             return [...set].sort((a,b)=>a.localeCompare(b,'pt-BR',{numeric:true,sensitivity:'base'})).map(v=>({v,l:v}));
         }
@@ -1532,10 +1524,7 @@
             const search = (document.getElementById('searchInput')?.value || '').trim();
             const dtFrom = document.getElementById('dateFrom')?.value || '';
             const dtTo = document.getElementById('dateTo')?.value || '';
-            const yearFilter = document.getElementById('yearFilter')?.value || '';
-            const monthFilter = document.getElementById('monthFilter')?.value || '';
-
-            const hasDateFilter = Boolean(dtFrom || dtTo || yearFilter || monthFilter);
+            const hasDateFilter = Boolean(dtFrom || dtTo || filterState.Ano.size || filterState.Mes.size);
             const filtered = [];
 
             for (let i = 0; i < rawCarteira.length; i++) {
@@ -1597,8 +1586,8 @@
 
                 if (hasDateFilter) {
                     if (!dtPesquisa) continue;
-                    if (yearFilter && dtPesquisa.substring(0,4) !== yearFilter) continue;
-                    if (monthFilter && dtPesquisa.substring(5,7) !== monthFilter) continue;
+                    if (!mainFilterMatches('Ano', dtPesquisa.substring(0,4))) continue;
+                    if (!mainFilterMatches('Mes', dtPesquisa.substring(5,7))) continue;
                     if (dtFrom && dtPesquisa < dtFrom) continue;
                     if (dtTo && dtPesquisa > dtTo) continue;
                 }
@@ -2481,8 +2470,6 @@
             document.getElementById('searchInput').value = '';
             document.getElementById('dateFrom').value = '';
             document.getElementById('dateTo').value = '';
-            if (document.getElementById('yearFilter')) document.getElementById('yearFilter').value = '';
-            if (document.getElementById('monthFilter')) document.getElementById('monthFilter').value = '';
             
             Object.keys(filterState).forEach(k => {
                 filterState[k].clear();

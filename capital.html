@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/png" href="LOGO MINIMALISTA.png">
 <link rel="apple-touch-icon" href="LOGO MINIMALISTA.png">
-<title>Capital de Giro - PSTEC V1.5</title>
+<title>Capital de Giro - PSTEC V1.6</title>
 <script>if(!localStorage.getItem('pstec_token')) window.location.href='login-pstec.html';</script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
@@ -37,6 +37,8 @@ th{user-select:none}.col-filter-popover{display:none}.col-filter-popover.active{
 .capital-dashboard-card canvas{max-height:245px!important}
 .capital-dashboard-mini{background:rgba(255,255,255,.96);border:1px solid rgba(255,255,255,.72);border-radius:1rem;box-shadow:0 8px 24px rgba(15,23,42,.08)}
 .dashboard-toggle-active{background:#003B96!important;color:white!important;border-color:#003B96!important}
+.capital-multi-wrap{position:relative;width:100%}.capital-multi-btn{width:100%;background:#f8fafc;border:1px solid #e2e8f0;border-radius:.75rem;padding:.5rem .65rem;font-size:.75rem;font-weight:700;color:#334155;min-height:36px;display:flex;align-items:center;justify-content:space-between;gap:.5rem}.capital-multi-btn:hover{background:#f1f5f9}.capital-multi-menu{position:absolute;left:0;top:calc(100% + 4px);width:min(290px,90vw);background:white;border:1px solid #e2e8f0;border-radius:1rem;box-shadow:0 16px 35px rgba(15,23,42,.16);z-index:70;padding:.5rem}.capital-multi-menu.hidden{display:none}.capital-multi-options{max-height:230px;overflow:auto}.capital-multi-option{display:flex;align-items:center;gap:.5rem;padding:.4rem .55rem;border-radius:.6rem;font-size:.75rem;color:#334155;cursor:pointer}.capital-multi-option:hover{background:#f8fafc}
+
 @media(max-width:1023px){.capital-table-scroll{max-height:62vh;min-height:300px}}
 @media(max-width:639px){.capital-table-scroll{max-height:58vh;min-height:260px}}
 </style>
@@ -146,11 +148,11 @@ th{user-select:none}.col-filter-popover{display:none}.col-filter-popover.active{
 
       <!-- FILTROS COMUNS: permanecem ativos ao trocar Carteira / Faturamento / Financeiro -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2">
-        <div class="capital-filter-group"><label class="capital-filter-label">Empresa</label><select id="empresaFilter" onchange="render()" class="capital-filter-control"><option value="">Todos</option></select></div>
-        <div class="capital-filter-group"><label class="capital-filter-label">Cliente</label><select id="clienteFilter" onchange="render()" class="capital-filter-control"><option value="">Todos</option></select></div>
+        <div class="capital-filter-group"><label class="capital-filter-label">Empresa</label><div id="empresaFilter"></div></div>
+        <div class="capital-filter-group"><label class="capital-filter-label">Cliente</label><div id="clienteFilter"></div></div>
         <div class="capital-filter-group sm:col-span-2"><label class="capital-filter-label">Código, Item</label><input id="codigoItemFilter" oninput="debounceGlobalSearch()" placeholder="Código ou descrição do item..." class="capital-filter-control"></div>
-        <div class="capital-filter-group"><label id="capitalYearLabel" class="capital-filter-label">Ano — Previsão de entrega</label><select id="capitalYearFilter" onchange="render()" class="capital-filter-control"><option value="">Todos</option></select></div>
-        <div class="capital-filter-group"><label id="capitalMonthLabel" class="capital-filter-label">Mês — Previsão de entrega</label><select id="capitalMonthFilter" onchange="render()" class="capital-filter-control"><option value="">Todos</option><option value="01">Janeiro</option><option value="02">Fevereiro</option><option value="03">Março</option><option value="04">Abril</option><option value="05">Maio</option><option value="06">Junho</option><option value="07">Julho</option><option value="08">Agosto</option><option value="09">Setembro</option><option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option></select></div>
+        <div class="capital-filter-group"><label id="capitalYearLabel" class="capital-filter-label">Ano — Previsão de entrega</label><div id="capitalYearFilter"></div></div>
+        <div class="capital-filter-group"><label id="capitalMonthLabel" class="capital-filter-label">Mês — Previsão de entrega</label><div id="capitalMonthFilter"></div></div>
       </div>
       <div class="text-[10px] text-slate-500 flex items-center gap-1 px-1"><i data-lucide="calendar-search" class="w-3 h-3"></i><span>Pesquisa por Data:</span><b id="capitalCommonDateField" class="text-pstec-700">Previsão de entrega</b><span>— Ano e Mês permanecem ativos ao trocar entre as 3 telas.</span></div>
 
@@ -158,33 +160,33 @@ th{user-select:none}.col-filter-popover{display:none}.col-filter-popover.active{
       <div id="filterTabCarteira" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 xl:grid-cols-12 gap-2">
         <div class="capital-filter-group lg:col-span-2 xl:col-span-2"><label class="capital-filter-label">Previsão de entrega — de</label><input id="carteiraDateFrom" type="date" onchange="render()" class="capital-filter-control"></div>
         <div class="capital-filter-group lg:col-span-2 xl:col-span-2"><label class="capital-filter-label">Previsão de entrega — até</label><input id="carteiraDateTo" type="date" onchange="render()" class="capital-filter-control"></div>
-        <div class="capital-filter-group xl:col-span-2"><label class="capital-filter-label">Status OS</label><select id="carteiraStatusOsFilter" onchange="render()" class="capital-filter-control"><option value="">Todos</option></select></div>
-        <div class="capital-filter-group xl:col-span-2"><label class="capital-filter-label">Nº OS</label><select id="carteiraOsFilter" onchange="render()" class="capital-filter-control"><option value="">Todos</option></select></div>
-        <div class="capital-filter-group xl:col-span-2"><label class="capital-filter-label">Nº Orçamento</label><select id="carteiraOrcFilter" onchange="render()" class="capital-filter-control"><option value="">Todos</option></select></div>
-        <div class="capital-filter-group xl:col-span-2"><label class="capital-filter-label">Nº Pedido</label><select id="carteiraPedidoFilter" onchange="render()" class="capital-filter-control"><option value="">Todos</option></select></div>
-        <div class="capital-filter-group xl:col-span-3"><label class="capital-filter-label">Disponibilidade Material</label><select id="carteiraDisponibilidadeFilter" onchange="render()" class="capital-filter-control"><option value="">Todos</option></select></div>
-        <div class="capital-filter-group xl:col-span-2"><label class="capital-filter-label">Prata</label><select id="carteiraPrataFilter" onchange="render()" class="capital-filter-control"><option value="">Todos</option></select></div>
-        <div class="capital-filter-group xl:col-span-3"><label class="capital-filter-label">Tipo</label><select id="carteiraTipoFilter" onchange="render()" class="capital-filter-control"><option value="">Todos</option></select></div>
-        <div id="carteiraEtapaWrap" class="capital-filter-group xl:col-span-4"><label class="capital-filter-label">Etapa</label><select id="carteiraEtapaFilter" onchange="render()" class="capital-filter-control"><option value="">Todos</option></select></div>
+        <div class="capital-filter-group xl:col-span-2"><label class="capital-filter-label">Status OS</label><div id="carteiraStatusOsFilter"></div></div>
+        <div class="capital-filter-group xl:col-span-2"><label class="capital-filter-label">Nº OS</label><div id="carteiraOsFilter"></div></div>
+        <div class="capital-filter-group xl:col-span-2"><label class="capital-filter-label">Nº Orçamento</label><div id="carteiraOrcFilter"></div></div>
+        <div class="capital-filter-group xl:col-span-2"><label class="capital-filter-label">Nº Pedido</label><div id="carteiraPedidoFilter"></div></div>
+        <div class="capital-filter-group xl:col-span-3"><label class="capital-filter-label">Disponibilidade Material</label><div id="carteiraDisponibilidadeFilter"></div></div>
+        <div class="capital-filter-group xl:col-span-2"><label class="capital-filter-label">Prata</label><div id="carteiraPrataFilter"></div></div>
+        <div class="capital-filter-group xl:col-span-3"><label class="capital-filter-label">Tipo</label><div id="carteiraTipoFilter"></div></div>
+        <div id="carteiraEtapaWrap" class="capital-filter-group xl:col-span-4"><label class="capital-filter-label">Etapa</label><div id="carteiraEtapaFilter"></div></div>
       </div>
 
       <!-- EXCLUSIVOS DO FATURAMENTO -->
       <div id="filterTabFaturamento" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 xl:grid-cols-12 gap-2">
         <div class="capital-filter-group xl:col-span-2"><label class="capital-filter-label">Data de emissão — de</label><input id="faturamentoDateFrom" type="date" onchange="render()" class="capital-filter-control"></div>
         <div class="capital-filter-group xl:col-span-2"><label class="capital-filter-label">Data de emissão — até</label><input id="faturamentoDateTo" type="date" onchange="render()" class="capital-filter-control"></div>
-        <div class="capital-filter-group xl:col-span-2"><label class="capital-filter-label">NF</label><select id="faturamentoNfFilter" onchange="render()" class="capital-filter-control"><option value="">Todos</option></select></div>
-        <div class="capital-filter-group xl:col-span-2"><label class="capital-filter-label">Orçamento</label><select id="faturamentoOrcFilter" onchange="render()" class="capital-filter-control"><option value="">Todos</option></select></div>
-        <div id="faturamentoPlanoWrap" class="capital-filter-group xl:col-span-2"><label class="capital-filter-label">Plano de contas</label><select id="faturamentoPlanoFilter" onchange="render()" class="capital-filter-control"><option value="">Todos</option></select></div>
-        <div class="capital-filter-group xl:col-span-2"><label class="capital-filter-label">Prata</label><select id="faturamentoPrataFilter" onchange="render()" class="capital-filter-control"><option value="">Todos</option></select></div>
-        <div class="capital-filter-group xl:col-span-3"><label class="capital-filter-label">Controle recebimento</label><select id="faturamentoStatusFilter" onchange="render()" class="capital-filter-control"><option value="">Todos</option></select></div>
+        <div class="capital-filter-group xl:col-span-2"><label class="capital-filter-label">NF</label><div id="faturamentoNfFilter"></div></div>
+        <div class="capital-filter-group xl:col-span-2"><label class="capital-filter-label">Orçamento</label><div id="faturamentoOrcFilter"></div></div>
+        <div id="faturamentoPlanoWrap" class="capital-filter-group xl:col-span-2"><label class="capital-filter-label">Plano de contas</label><div id="faturamentoPlanoFilter"></div></div>
+        <div class="capital-filter-group xl:col-span-2"><label class="capital-filter-label">Prata</label><div id="faturamentoPrataFilter"></div></div>
+        <div class="capital-filter-group xl:col-span-3"><label class="capital-filter-label">Controle recebimento</label><div id="faturamentoStatusFilter"></div></div>
       </div>
 
       <!-- EXCLUSIVOS DO FINANCEIRO -->
       <div id="filterTabFinanceiro" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 xl:grid-cols-12 gap-2">
         <div class="capital-filter-group xl:col-span-2"><label class="capital-filter-label">Data de emissão — de</label><input id="financeiroDateFrom" type="date" onchange="render()" class="capital-filter-control"></div>
         <div class="capital-filter-group xl:col-span-2"><label class="capital-filter-label">Data de emissão — até</label><input id="financeiroDateTo" type="date" onchange="render()" class="capital-filter-control"></div>
-        <div class="capital-filter-group xl:col-span-2"><label class="capital-filter-label">NF</label><select id="financeiroNfFilter" onchange="render()" class="capital-filter-control"><option value="">Todos</option></select></div>
-        <div class="capital-filter-group xl:col-span-3"><label class="capital-filter-label">Controle recebimento</label><select id="financeiroStatusFilter" onchange="render()" class="capital-filter-control"><option value="">Todos</option></select></div>
+        <div class="capital-filter-group xl:col-span-2"><label class="capital-filter-label">NF</label><div id="financeiroNfFilter"></div></div>
+        <div class="capital-filter-group xl:col-span-3"><label class="capital-filter-label">Controle recebimento</label><div id="financeiroStatusFilter"></div></div>
       </div>
     </div>
   </section>
@@ -253,6 +255,9 @@ let hiddenCols={carteira:new Set(),faturamento:new Set(),financeiro:new Set()};
 let colSelections={carteira:{},faturamento:{},financeiro:{}};
 let sortState={carteira:{key:null,asc:true},faturamento:{key:null,asc:true},financeiro:{key:null,asc:true}};
 let searchTimer=null;
+const capitalFilterState={};
+const CAPITAL_EMPTY_VALUE='(Vazio)';
+const CAPITAL_NONE_SENTINEL='__PSTEC_NONE__';
 
 const n=v=>{if(v===null||v===undefined||v==='')return 0;if(typeof v==='number')return Number.isFinite(v)?v:0;let s=String(v).replace(/R\$/g,'').replace(/%/g,'').replace(/\s/g,'');if(/^\(.*\)$/.test(s))s='-'+s.slice(1,-1);if(s.includes(',')&&s.includes('.'))s=s.replace(/\./g,'').replace(',','.');else if(s.includes(','))s=s.replace(',','.');const x=parseFloat(s);return Number.isFinite(x)?x:0};
 const brl=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(n(v));
@@ -372,74 +377,23 @@ function baseRows(){
  if(activeTab==='carteira')rows=rows.filter(r=>String(r['Status orçamento']||'').toUpperCase()==='APROVADO'&&n(r['Saldo a entregar'])>0&&String(r['Nº Orçamento']||'').trim()!=='');
  return rows;
 }
-function uniqueVals(rows,key,getter=null){return [...new Set(rows.map(r=>{const s=String(getter?getter(r):(r[key]??'')).trim();return s||'(Vazio)'}))].sort((a,b)=>a.localeCompare(b,'pt-BR',{numeric:true,sensitivity:'base'}))}
-function setOpts(id,vals,label='Todos'){const el=document.getElementById(id);if(!el)return;const cur=el.value;const all=[...vals];if(cur&&!all.includes(cur))all.unshift(cur);el.innerHTML=`<option value="">${label}</option>`+all.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');el.value=cur}
-function rowDateForTab(r,tab){
- if(tab==='carteira')return isoDate(r.previsao_ent_pesq||r['Dt. Negociada']||r['Prev. entrega(original)']);
- return isoDate(r.Emissão);
-}
-function populateFilters(){
- const rows=baseRows();
- const allLoadedRows=Object.entries(capitalData).flatMap(([tab,data])=>(data||[]).map(deriv));
- const years=new Set();
- Object.entries(capitalData).forEach(([tab,data])=>(data||[]).forEach(raw=>{const d=rowDateForTab(deriv(raw),tab);if(d)years.add(d.slice(0,4));}));
- setOpts('capitalYearFilter',[...years].sort((a,b)=>b.localeCompare(a)),'Todos');
- // Empresa/Cliente são filtros comuns. Enquanto só uma aba estiver carregada, usam os dados disponíveis;
- // após visitar outras abas, o domínio é ampliado sem perder a seleção atual.
- setOpts('empresaFilter',uniqueVals(allLoadedRows.length?allLoadedRows:rows,'Empresa'),'Todos');
- setOpts('clienteFilter',uniqueVals(allLoadedRows.length?allLoadedRows:rows,'Cliente'),'Todos');
- if(activeTab==='carteira'){
-   setOpts('carteiraStatusOsFilter',uniqueVals(rows,'Status OS'),'Todos');
-   setOpts('carteiraOsFilter',uniqueVals(rows,'Nº OS'),'Todos');
-   setOpts('carteiraOrcFilter',uniqueVals(rows,'Nº Orçamento'),'Todos');
-   setOpts('carteiraPedidoFilter',uniqueVals(rows,'Nº Pedido'),'Todos');
-   setOpts('carteiraDisponibilidadeFilter',uniqueVals(rows,'Disponibilidade Material'),'Todos');
-   setOpts('carteiraPrataFilter',uniqueVals(rows,'Prata'),'Todos');
-   setOpts('carteiraTipoFilter',uniqueVals(rows,'Tipo'),'Todos');
-   const etapas=uniqueVals(rows,'Etapa').filter(v=>v!=='(Vazio)');setOpts('carteiraEtapaFilter',etapas,'Todos');document.getElementById('carteiraEtapaWrap')?.classList.toggle('hidden',etapas.length===0);
- } else if(activeTab==='faturamento'){
-   setOpts('faturamentoNfFilter',uniqueVals(rows,'NF'),'Todos');
-   setOpts('faturamentoOrcFilter',uniqueVals(rows,'Orçamento'),'Todos');
-   const planos=uniqueVals(rows,'Plano de contas').filter(v=>v!=='(Vazio)');
-   setOpts('faturamentoPlanoFilter',planos,'Todos');
-   document.getElementById('faturamentoPlanoWrap')?.classList.toggle('hidden',planos.length===0);
-   setOpts('faturamentoPrataFilter',uniqueVals(rows,'Prata'),'Todos');
-   setOpts('faturamentoStatusFilter',uniqueVals(rows,'status_nf'),'Todos');
- } else {
-   setOpts('financeiroNfFilter',uniqueVals(rows,'NF'),'Todos');
-   setOpts('financeiroStatusFilter',uniqueVals(rows,'status_nf'),'Todos');
- }
-}
+function uniqueVals(rows,key,getter=null){return [...new Set(rows.map(r=>{const s=String(getter?getter(r):(r[key]??'')).trim();return s||CAPITAL_EMPTY_VALUE}))].sort((a,b)=>a.localeCompare(b,'pt-BR',{numeric:true,sensitivity:'base'}))}
+function capitalFilterSet(id){if(!capitalFilterState[id])capitalFilterState[id]=new Set();return capitalFilterState[id]}
+function capitalAllFilterValues(id){const el=document.getElementById(id);if(!el)return new Set();return new Set([...el.querySelectorAll('input[data-capital-multi]')].map(x=>x.value))}
+function capitalMultiMatches(id,raw){const set=capitalFilterSet(id);if(set.size===0)return true;if(set.has(CAPITAL_NONE_SENTINEL))return false;const v=String(raw??'').trim()||CAPITAL_EMPTY_VALUE;return set.has(v)}
+function capitalFilterLabelText(label,set){if(set.has(CAPITAL_NONE_SENTINEL))return `${label} (0 sel.)`;return set.size===0?`${label} (Todos)`:`${label} (${set.size} sel.)`}
+function renderCapitalMultiFilter(id,label,options){const host=document.getElementById(id);if(!host)return;const set=capitalFilterSet(id),vals=[...new Set(options.map(o=>typeof o==='object'?String(o.v):String(o)))];[...set].forEach(v=>{if(v!==CAPITAL_NONE_SENTINEL&&!vals.includes(v))set.delete(v)});const normalized=options.map(o=>typeof o==='object'?{v:String(o.v),l:String(o.l)}:{v:String(o),l:String(o)});const opts=normalized.map(o=>{const checked=set.size===0?true:(!set.has(CAPITAL_NONE_SENTINEL)&&set.has(o.v));return `<label class="capital-multi-option"><input data-capital-multi type="checkbox" value="${esc(o.v)}" ${checked?'checked':''} onchange="event.stopPropagation();toggleCapitalMultiOption('${id}',this.value,this.checked)" class="rounded text-pstec-700 focus:ring-pstec-500"><span class="truncate" title="${esc(o.l)}">${esc(o.l)}</span></label>`}).join('');host.dataset.filterLabel=label;host.innerHTML=`<div class="capital-multi-wrap"><button type="button" onclick="event.stopPropagation();toggleCapitalMultiMenu('${id}_menu')" class="capital-multi-btn"><span id="${id}_label" class="truncate">${esc(capitalFilterLabelText(label,set))}</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i></button><div id="${id}_menu" class="capital-multi-menu hidden" onclick="event.stopPropagation()"><div class="flex items-center justify-between pb-2 mb-1 border-b border-slate-100"><button type="button" onclick="event.stopPropagation();setCapitalMultiAll('${id}',true)" class="text-[10px] font-black text-pstec-700 hover:underline">Marcar Todos</button><button type="button" onclick="event.stopPropagation();setCapitalMultiAll('${id}',false)" class="text-[10px] font-black text-red-600 hover:underline">Desmarcar</button></div>${normalized.length>8?`<input type="text" placeholder="Pesquisar..." oninput="filterCapitalMultiOptions(this,'${id}_opts')" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 mb-1.5 text-[11px] font-semibold outline-none">`:''}<div id="${id}_opts" class="capital-multi-options custom-scroll">${opts}</div></div></div>`}
+function toggleCapitalMultiMenu(menuId){document.querySelectorAll('.capital-multi-menu').forEach(m=>{if(m.id!==menuId)m.classList.add('hidden')});document.getElementById(menuId)?.classList.toggle('hidden')}
+function filterCapitalMultiOptions(input,id){const q=normalizeText(input.value);document.getElementById(id)?.querySelectorAll('.capital-multi-option').forEach(l=>l.style.display=!q||normalizeText(l.textContent).includes(q)?'flex':'none')}
+function refreshCapitalMultiUI(id){const host=document.getElementById(id),set=capitalFilterSet(id);if(!host)return;const lbl=document.getElementById(`${id}_label`);if(lbl)lbl.textContent=capitalFilterLabelText(host.dataset.filterLabel||id,set);host.querySelectorAll('input[data-capital-multi]').forEach(cb=>cb.checked=set.size===0?true:(!set.has(CAPITAL_NONE_SENTINEL)&&set.has(cb.value)))}
+function toggleCapitalMultiOption(id,val,checked){const set=capitalFilterSet(id),all=capitalAllFilterValues(id);if(set.size===0)all.forEach(v=>set.add(v));if(set.has(CAPITAL_NONE_SENTINEL))set.clear();if(checked)set.add(val);else set.delete(val);if(all.size&&set.size===all.size&&[...all].every(v=>set.has(v)))set.clear();else if(set.size===0)set.add(CAPITAL_NONE_SENTINEL);refreshCapitalMultiUI(id);render()}
+function setCapitalMultiAll(id,enable){const set=capitalFilterSet(id);set.clear();if(!enable)set.add(CAPITAL_NONE_SENTINEL);refreshCapitalMultiUI(id);render()}
+function rowDateForTab(r,tab){if(tab==='carteira')return isoDate(r.previsao_ent_pesq||r['Dt. Negociada']||r['Prev. entrega(original)']);return isoDate(r.Emissão)}
+function populateFilters(){const rows=baseRows(),allLoadedRows=Object.entries(capitalData).flatMap(([tab,data])=>(data||[]).map(deriv)),years=new Set();Object.entries(capitalData).forEach(([tab,data])=>(data||[]).forEach(raw=>{const d=rowDateForTab(deriv(raw),tab);if(d)years.add(d.slice(0,4))}));const months=[{v:'01',l:'Janeiro'},{v:'02',l:'Fevereiro'},{v:'03',l:'Março'},{v:'04',l:'Abril'},{v:'05',l:'Maio'},{v:'06',l:'Junho'},{v:'07',l:'Julho'},{v:'08',l:'Agosto'},{v:'09',l:'Setembro'},{v:'10',l:'Outubro'},{v:'11',l:'Novembro'},{v:'12',l:'Dezembro'}],defs=[['capitalYearFilter','Ano',[...years].sort((a,b)=>b.localeCompare(a))],['capitalMonthFilter','Mês',months],['empresaFilter','Empresa',uniqueVals(allLoadedRows.length?allLoadedRows:rows,'Empresa')],['clienteFilter','Cliente',uniqueVals(allLoadedRows.length?allLoadedRows:rows,'Cliente')]];if(activeTab==='carteira')defs.push(['carteiraStatusOsFilter','Status OS',uniqueVals(rows,'Status OS')],['carteiraOsFilter','Nº OS',uniqueVals(rows,'Nº OS')],['carteiraOrcFilter','Nº Orçamento',uniqueVals(rows,'Nº Orçamento')],['carteiraPedidoFilter','Nº Pedido',uniqueVals(rows,'Nº Pedido')],['carteiraDisponibilidadeFilter','Disponibilidade Material',uniqueVals(rows,'Disponibilidade Material')],['carteiraPrataFilter','Prata',uniqueVals(rows,'Prata')],['carteiraTipoFilter','Tipo',uniqueVals(rows,'Tipo')],['carteiraEtapaFilter','Etapa',uniqueVals(rows,'Etapa')]);else if(activeTab==='faturamento')defs.push(['faturamentoNfFilter','NF',uniqueVals(rows,'NF')],['faturamentoOrcFilter','Orçamento',uniqueVals(rows,'Orçamento')],['faturamentoPlanoFilter','Plano de contas',uniqueVals(rows,'Plano de contas')],['faturamentoPrataFilter','Prata',uniqueVals(rows,'Prata')],['faturamentoStatusFilter','Controle recebimento',uniqueVals(rows,'status_nf')]);else defs.push(['financeiroNfFilter','NF',uniqueVals(rows,'NF')],['financeiroStatusFilter','Controle recebimento',uniqueVals(rows,'status_nf')]);defs.forEach(([id,label,opts])=>renderCapitalMultiFilter(id,label,opts));const etapas=activeTab==='carteira'?uniqueVals(rows,'Etapa').filter(v=>v!==CAPITAL_EMPTY_VALUE):[];document.getElementById('carteiraEtapaWrap')?.classList.toggle('hidden',activeTab==='carteira'&&etapas.length===0);const planos=activeTab==='faturamento'?uniqueVals(rows,'Plano de contas').filter(v=>v!==CAPITAL_EMPTY_VALUE):[];document.getElementById('faturamentoPlanoWrap')?.classList.toggle('hidden',activeTab==='faturamento'&&planos.length===0);lucide.createIcons()}
 function rowDate(r){return rowDateForTab(r,activeTab)}
-function activeExclusiveFilters(){
- if(activeTab==='carteira')return{
-   d1:document.getElementById('carteiraDateFrom').value,d2:document.getElementById('carteiraDateTo').value,
-   pairs:[['Status OS',document.getElementById('carteiraStatusOsFilter').value],['Nº OS',document.getElementById('carteiraOsFilter').value],['Nº Orçamento',document.getElementById('carteiraOrcFilter').value],['Nº Pedido',document.getElementById('carteiraPedidoFilter').value],['Disponibilidade Material',document.getElementById('carteiraDisponibilidadeFilter').value],['Prata',document.getElementById('carteiraPrataFilter').value],['Tipo',document.getElementById('carteiraTipoFilter').value],['Etapa',document.getElementById('carteiraEtapaFilter').value]]
- };
- if(activeTab==='faturamento')return{
-   d1:document.getElementById('faturamentoDateFrom').value,d2:document.getElementById('faturamentoDateTo').value,
-   pairs:[['NF',document.getElementById('faturamentoNfFilter').value],['Orçamento',document.getElementById('faturamentoOrcFilter').value],['Plano de contas',document.getElementById('faturamentoPlanoFilter').value],['Prata',document.getElementById('faturamentoPrataFilter').value],['status_nf',document.getElementById('faturamentoStatusFilter').value]]
- };
- return{
-   d1:document.getElementById('financeiroDateFrom').value,d2:document.getElementById('financeiroDateTo').value,
-   pairs:[['NF',document.getElementById('financeiroNfFilter').value],['status_nf',document.getElementById('financeiroStatusFilter').value]]
- };
-}
-function exclusiveValue(r,key){let v;if(key==='NF'&&activeTab==='faturamento')v=String(r.NF||'');else v=String(r[key]??'');v=v.trim();return v||'(Vazio)'}
-function rowMatchesFilters(r,ignoreColId=null){
- const search=document.getElementById('searchInput').value||'',emp=document.getElementById('empresaFilter').value,cli=document.getElementById('clienteFilter').value,codeItem=normalizeText(document.getElementById('codigoItemFilter').value||'');
- const commonYear=document.getElementById('capitalYearFilter')?.value||'', commonMonth=document.getElementById('capitalMonthFilter')?.value||'';
- if(emp&&((String(r.Empresa||'').trim()||'(Vazio)')!==emp))return false;
- if(cli&&((String(r.Cliente||'').trim()||'(Vazio)')!==cli))return false;
- if(codeItem&&!normalizeText(`${r['Código']||r['Cód. Produto']||''} ${r.Item||''}`).includes(codeItem))return false;
- if(search&&!matchesWildcardSearch(Object.values(r).join(' '),search))return false;
- if(commonYear||commonMonth){const cd=rowDate(r);if(!cd)return false;if(commonYear&&cd.slice(0,4)!==commonYear)return false;if(commonMonth&&cd.slice(5,7)!==commonMonth)return false;}
- const ex=activeExclusiveFilters();
- for(const [key,val] of ex.pairs){if(val&&exclusiveValue(r,key)!==val)return false}
- if(ex.d1||ex.d2){const dv=rowDate(r);if(!dv)return false;if(ex.d1&&dv<ex.d1)return false;if(ex.d2&&dv>ex.d2)return false}
- for(const [colId,set] of Object.entries(colSelections[activeTab])){if(colId===ignoreColId||!set)continue;const c=getCol(colId);if(!c)continue;if(!set.has(formatForFilter(r,c)))return false}
- return true;
-}
+function activeExclusiveFilters(){if(activeTab==='carteira')return{d1:document.getElementById('carteiraDateFrom').value,d2:document.getElementById('carteiraDateTo').value,pairs:[['Status OS','carteiraStatusOsFilter'],['Nº OS','carteiraOsFilter'],['Nº Orçamento','carteiraOrcFilter'],['Nº Pedido','carteiraPedidoFilter'],['Disponibilidade Material','carteiraDisponibilidadeFilter'],['Prata','carteiraPrataFilter'],['Tipo','carteiraTipoFilter'],['Etapa','carteiraEtapaFilter']]};if(activeTab==='faturamento')return{d1:document.getElementById('faturamentoDateFrom').value,d2:document.getElementById('faturamentoDateTo').value,pairs:[['NF','faturamentoNfFilter'],['Orçamento','faturamentoOrcFilter'],['Plano de contas','faturamentoPlanoFilter'],['Prata','faturamentoPrataFilter'],['status_nf','faturamentoStatusFilter']]};return{d1:document.getElementById('financeiroDateFrom').value,d2:document.getElementById('financeiroDateTo').value,pairs:[['NF','financeiroNfFilter'],['status_nf','financeiroStatusFilter']]}}
+function exclusiveValue(r,key){let v;if(key==='NF'&&activeTab==='faturamento')v=String(r.NF||'');else v=String(r[key]??'');v=v.trim();return v||CAPITAL_EMPTY_VALUE}
+function rowMatchesFilters(r,ignoreColId=null){const search=document.getElementById('searchInput').value||'',codeItem=normalizeText(document.getElementById('codigoItemFilter').value||'');if(!capitalMultiMatches('empresaFilter',r.Empresa)||!capitalMultiMatches('clienteFilter',r.Cliente))return false;if(codeItem&&!normalizeText(`${r['Código']||r['Cód. Produto']||''} ${r.Item||''}`).includes(codeItem))return false;if(search&&!matchesWildcardSearch(Object.values(r).join(' '),search))return false;const cd=rowDate(r),ys=capitalFilterSet('capitalYearFilter'),ms=capitalFilterSet('capitalMonthFilter');if(ys.size||ms.size){if(!cd)return false;if(!capitalMultiMatches('capitalYearFilter',cd.slice(0,4))||!capitalMultiMatches('capitalMonthFilter',cd.slice(5,7)))return false}const ex=activeExclusiveFilters();for(const [key,id] of ex.pairs){if(!capitalMultiMatches(id,exclusiveValue(r,key)))return false}if(ex.d1||ex.d2){const dv=rowDate(r);if(!dv)return false;if(ex.d1&&dv<ex.d1)return false;if(ex.d2&&dv>ex.d2)return false}for(const [colId,set] of Object.entries(colSelections[activeTab])){if(colId===ignoreColId||!set)continue;const c=getCol(colId);if(!c)continue;if(!set.has(formatForFilter(r,c)))return false}return true}
 function compareRows(a,b,c,asc){let av=getValue(a,c),bv=getValue(b,c);if(['brl','num','pct'].includes(c.type)){av=n(av);bv=n(bv);if(av===bv)return 0;return av<bv?(asc?-1:1):(asc?1:-1)}if(c.type==='date'){av=isoDate(av)||'';bv=isoDate(bv)||'';if(av===bv)return 0;return av<bv?(asc?-1:1):(asc?1:-1)}const cmp=String(av??'').localeCompare(String(bv??''),'pt-BR',{numeric:true,sensitivity:'base'});return asc?cmp:-cmp}
 function filteredRows(ignoreColId=null,skipSort=false){let rows=baseRows().filter(r=>rowMatchesFilters(r,ignoreColId));if(!skipSort){const s=sortState[activeTab],c=s.key?getCol(s.key):null;if(c)rows.sort((a,b)=>compareRows(a,b,c,s.asc));else rows.sort((a,b)=>(rowDate(b)||'').localeCompare(rowDate(a)||''))}return rows}
 
@@ -589,25 +543,7 @@ function capitalMultiChart(canvasId,labels,datasets,opts={}){
  const ch=new Chart(el,{type:'bar',data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:24,right:18,left:8,bottom:4}},plugins:{legend:{display:true,position:'top',labels:{usePointStyle:true,pointStyle:'circle',boxWidth:8,boxHeight:8,font:{size:10,weight:'600'},color:'#475569'}},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${brl(ctx.raw)}`}},datalabels:window.ChartDataLabels?{display:ctx=>n(ctx.dataset.data[ctx.dataIndex])!==0,formatter:v=>capitalDashboardValueLabel(v,true),color:'#334155',anchor:'end',align:'top',offset:2,clamp:true,clip:false,font:{size:8,weight:'700'}}:false},scales:{y:{beginAtZero:true,ticks:{callback:v=>new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1}).format(v)}},x:{ticks:{autoSkip:true,maxRotation:0}}},onClick:(evt,elements)=>{if(!elements.length||!opts.onClick)return;opts.onClick(labels[elements[0].index],elements[0].index)}}});capitalCharts[canvasId]=ch;return ch;
 }
 function setCapitalDashboardTitle(i,text){const el=document.getElementById(`capChartTitle${i}`);if(el)el.textContent=text}
-function applyCapitalDashboardFilter(kind,value,rawKey=''){
- const states=capitalDashboardClickState[activeTab]||(capitalDashboardClickState[activeTab]={});
- if(kind==='month'){
-   if(!rawKey)return;
-   const [y,m]=rawKey.split('-').map(Number),last=new Date(y,m,0).getDate(),pre=activeTab==='carteira'?'carteira':activeTab==='faturamento'?'faturamento':'financeiro';
-   const d1=document.getElementById(`${pre}DateFrom`),d2=document.getElementById(`${pre}DateTo`);if(!d1||!d2)return;
-   const from=`${y}-${String(m).padStart(2,'0')}-01`,to=`${y}-${String(m).padStart(2,'0')}-${String(last).padStart(2,'0')}`,state=states.month,currentMatches=d1.value===from&&d2.value===to;
-   if(state&&state.value===rawKey&&currentMatches){d1.value=state.previousFrom||'';d2.value=state.previousTo||'';delete states.month}else{states.month={value:rawKey,previousFrom:d1.value,previousTo:d2.value};d1.value=from;d2.value=to}render();return;
- }
- let id='';
- if(kind==='cliente')id='clienteFilter';
- else if(kind==='status')id=activeTab==='carteira'?'carteiraStatusOsFilter':activeTab==='faturamento'?'faturamentoStatusFilter':'financeiroStatusFilter';
- else if(kind==='material')id='carteiraDisponibilidadeFilter';
- else if(kind==='prata')id=activeTab==='carteira'?'carteiraPrataFilter':'faturamentoPrataFilter';
- if(!id)return;const el=document.getElementById(id);if(!el)return;
- const normalized=value?String(value):'(Vazio)';
- const stateKey=`${kind}:${id}`,state=states[stateKey],currentMatches=el.value===normalized;
- if(state&&state.value===normalized&&currentMatches){el.value=state.previous||'';delete states[stateKey]}else{states[stateKey]={value:normalized,previous:el.value};el.value=normalized}render();
-}
+function applyCapitalDashboardFilter(kind,value,rawKey=''){const states=capitalDashboardClickState[activeTab]||(capitalDashboardClickState[activeTab]={});if(kind==='month'){if(!rawKey)return;const[y,m]=rawKey.split('-').map(Number),last=new Date(y,m,0).getDate(),pre=activeTab==='carteira'?'carteira':activeTab==='faturamento'?'faturamento':'financeiro',d1=document.getElementById(`${pre}DateFrom`),d2=document.getElementById(`${pre}DateTo`);if(!d1||!d2)return;const from=`${y}-${String(m).padStart(2,'0')}-01`,to=`${y}-${String(m).padStart(2,'0')}-${String(last).padStart(2,'0')}`,state=states.month,currentMatches=d1.value===from&&d2.value===to;if(state&&state.value===rawKey&&currentMatches){d1.value=state.previousFrom||'';d2.value=state.previousTo||'';delete states.month}else{states.month={value:rawKey,previousFrom:d1.value,previousTo:d2.value};d1.value=from;d2.value=to}render();return}let id='';if(kind==='cliente')id='clienteFilter';else if(kind==='status')id=activeTab==='carteira'?'carteiraStatusOsFilter':activeTab==='faturamento'?'faturamentoStatusFilter':'financeiroStatusFilter';else if(kind==='material')id='carteiraDisponibilidadeFilter';else if(kind==='prata')id=activeTab==='carteira'?'carteiraPrataFilter':'faturamentoPrataFilter';if(!id)return;const normalized=value?String(value):CAPITAL_EMPTY_VALUE,set=capitalFilterSet(id),stateKey=`${kind}:${id}`,state=states[stateKey],currentMatches=set.size===1&&set.has(normalized);if(state&&state.value===normalized&&currentMatches){set.clear();(state.previous||[]).forEach(v=>set.add(v));delete states[stateKey]}else{states[stateKey]={value:normalized,previous:[...set]};set.clear();set.add(normalized)}refreshCapitalMultiUI(id);render()}
 function renderCapitalDashboard(rows){
  if(capitalViewMode!=='dashboard')return;destroyCapitalCharts();
  const title=activeTab==='carteira'?'Carteira':activeTab==='faturamento'?'Faturamento':'Financeiro';
@@ -637,12 +573,7 @@ function renderCapitalDashboard(rows){
  }
 }
 
-function clearFilters(){
- capitalDashboardClickState[activeTab]={};
- ['searchInput','empresaFilter','clienteFilter','codigoItemFilter','capitalYearFilter','capitalMonthFilter'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
- const ids=activeTab==='carteira'?['carteiraDateFrom','carteiraDateTo','carteiraStatusOsFilter','carteiraOsFilter','carteiraOrcFilter','carteiraPedidoFilter','carteiraDisponibilidadeFilter','carteiraPrataFilter','carteiraTipoFilter','carteiraEtapaFilter']:activeTab==='faturamento'?['faturamentoDateFrom','faturamentoDateTo','faturamentoNfFilter','faturamentoOrcFilter','faturamentoPlanoFilter','faturamentoPrataFilter','faturamentoStatusFilter']:['financeiroDateFrom','financeiroDateTo','financeiroNfFilter','financeiroStatusFilter'];
- ids.forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});colSelections[activeTab]={};populateFilters();render();
-}
+function clearFilters(){capitalDashboardClickState[activeTab]={};['searchInput','codigoItemFilter'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});['empresaFilter','clienteFilter','capitalYearFilter','capitalMonthFilter'].forEach(id=>capitalFilterSet(id).clear());const ids=activeTab==='carteira'?['carteiraStatusOsFilter','carteiraOsFilter','carteiraOrcFilter','carteiraPedidoFilter','carteiraDisponibilidadeFilter','carteiraPrataFilter','carteiraTipoFilter','carteiraEtapaFilter']:activeTab==='faturamento'?['faturamentoNfFilter','faturamentoOrcFilter','faturamentoPlanoFilter','faturamentoPrataFilter','faturamentoStatusFilter']:['financeiroNfFilter','financeiroStatusFilter'];ids.forEach(id=>capitalFilterSet(id).clear());const dateIds=activeTab==='carteira'?['carteiraDateFrom','carteiraDateTo']:activeTab==='faturamento'?['faturamentoDateFrom','faturamentoDateTo']:['financeiroDateFrom','financeiroDateTo'];dateIds.forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});colSelections[activeTab]={};populateFilters();render()}
 function toggleFiltersPanel(){const body=document.getElementById('filtersBody'),collapsed=!body.classList.contains('hidden');body.classList.toggle('hidden',collapsed);localStorage.setItem(FILTERS_COLLAPSED_KEY,collapsed?'1':'0');const ch=document.getElementById('filterChevron');ch.setAttribute('data-lucide',collapsed?'chevron-down':'chevron-up');lucide.createIcons()}
 function applySavedFiltersState(){const collapsed=localStorage.getItem(FILTERS_COLLAPSED_KEY)==='1';document.getElementById('filtersBody').classList.toggle('hidden',collapsed);document.getElementById('filterChevron').setAttribute('data-lucide',collapsed?'chevron-down':'chevron-up')}
 
@@ -722,6 +653,8 @@ function startCapitalAutoRefresh(){
 
 document.addEventListener('click',e=>{if(!e.target.closest('#columnsMenu')&&!e.target.closest('button[onclick="toggleColumnsMenu()"]'))document.getElementById('columnsMenu')?.classList.add('hidden');if(!e.target.closest('.col-filter-popover')&&!e.target.closest('[id^="filterBtn_"]'))document.querySelectorAll('.col-filter-popover').forEach(p=>p.classList.remove('active'))});
 document.addEventListener('DOMContentLoaded',()=>{loadHiddenCols();applySavedFiltersState();applyTabTheme(activeTab);document.getElementById('userDisplayName').textContent=localStorage.getItem('pstec_usuario_nome')||'Usuário';setCapitalView(capitalViewMode);lucide.createIcons();loadCapitalTab(activeTab);startCapitalAutoRefresh()});
+
+document.addEventListener('click',()=>document.querySelectorAll('.capital-multi-menu').forEach(m=>m.classList.add('hidden')));
 </script>
 
 <div id="capitalDashboardHelpModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[120]">
