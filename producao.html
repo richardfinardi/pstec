@@ -117,18 +117,7 @@
                     <i data-lucide="layout-grid" class="w-4 h-4"></i>
                     <span class="hidden lg:inline">Menu</span>
                 </a>
-
-                <a href="carteira.html" class="hidden lg:flex items-center gap-1.5 px-3 py-2 bg-pstec-800 hover:bg-pstec-900 text-white font-extrabold rounded-xl text-xs transition shadow-md">
-                    <i data-lucide="briefcase-business" class="w-4 h-4"></i>
-                    <span>Carteira</span>
-                </a>
-
-                <a href="capital.html" class="hidden lg:flex items-center gap-1.5 px-3 py-2 bg-pstec-800 hover:bg-pstec-900 text-white font-extrabold rounded-xl text-xs transition shadow-md">
-                    <i data-lucide="landmark" class="w-4 h-4"></i>
-                    <span>Capital</span>
-                </a>
-
-                <!-- Botão Atualizar Manual -->
+<!-- Botão Atualizar Manual -->
                 <button id="btnRefresh" onclick="fetchData(false)" class="flex items-center gap-2 px-3.5 py-2 bg-pstecgreen-500 hover:bg-pstecgreen-600 text-slate-950 font-bold text-xs transition-all shadow" title="Atualizar Dados">
                     <i data-lucide="refresh-cw" class="w-4 h-4" id="refreshIcon"></i>
                 </button>
@@ -169,11 +158,13 @@
         
         <div id="filtersBar" class="bg-white p-3.5 rounded-2xl border border-slate-200 flex flex-wrap items-center justify-between gap-3 shadow-sm">
             
-            <!-- Busca Geral Universal -->
-            <div class="flex items-center gap-2 flex-1 min-w-[200px] bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
-                <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
-                <input type="text" id="searchInput" oninput="renderView()" placeholder="Pesquisar (OS, Título, Cliente, Empresa, Classificação, Cod. Interno...)" 
-                       class="w-full text-xs bg-transparent text-slate-800 focus:outline-none placeholder-slate-400 font-medium">
+            <!-- Pesquisa Coringa Global -->
+            <div class="w-full basis-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 flex items-center gap-2 text-xs">
+                <i data-lucide="search" class="w-4 h-4 text-pstec-600 shrink-0"></i>
+                <input type="text" id="searchInput" oninput="debounceGlobalSearch()" placeholder="Pesquisa Coringa (ex: GRID, MAURI ou %PCP%EXPEDIÇÃO% ou use '-' para Excluir)..." class="w-full bg-transparent text-slate-800 focus:outline-none font-bold placeholder-slate-400 py-1">
+                <button onclick="openSearchHelpModal()" class="p-1.5 bg-pstec-100 hover:bg-pstec-200 text-pstec-700 rounded-lg font-black transition flex items-center justify-center shrink-0 border border-pstec-200" title="Como funciona a pesquisa?">
+                    <i data-lucide="help-circle" class="w-4 h-4 text-pstec-700"></i>
+                </button>
             </div>
 
             <!-- Filtro Geral por Empresa -->
@@ -352,6 +343,43 @@
                     <i data-lucide="save" class="w-3.5 h-3.5"></i>
                     <span>Salvar Alteração</span>
                 </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- MODAL DE AJUDA / GUIA DA PESQUISA CORINGA -->
+    <div id="searchHelpModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[70]">
+        <div class="bg-white text-slate-800 rounded-3xl shadow-2xl max-w-lg w-full p-6 space-y-4 border border-slate-200 relative">
+            <div class="flex justify-between items-center border-b pb-3">
+                <div class="flex items-center gap-2 text-pstec-700 font-extrabold text-sm">
+                    <i data-lucide="help-circle" class="w-5 h-5 text-pstecgreen-600"></i>
+                    <span>Guia de Pesquisa Rápida & Operadores</span>
+                </div>
+                <button onclick="closeSearchHelpModal()" class="text-slate-400 hover:text-slate-700 p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="space-y-3 text-xs leading-relaxed">
+                <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-1">
+                    <span class="font-extrabold text-pstec-700 uppercase block text-[11px]">1. Buscar vários termos ao mesmo tempo (OU)</span>
+                    <p class="text-slate-600">Use <strong>vírgula (,)</strong>, <strong>ponto e vírgula (;)</strong> ou barra vertical <strong>(|)</strong>.</p>
+                    <p class="font-mono text-xs bg-white p-2 rounded-xl border border-slate-200 font-bold text-slate-800">GRID, MAURI</p>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-1">
+                    <span class="font-extrabold text-pstec-700 uppercase block text-[11px]">2. Combinar termos obrigatórios (E)</span>
+                    <p class="text-slate-600">Use <strong>espaço</strong> ou <strong>%</strong> para exigir todos os termos no mesmo registro.</p>
+                    <p class="font-mono text-xs bg-white p-2 rounded-xl border border-slate-200 font-bold text-slate-800">%PCP%EXPEDIÇÃO%</p>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-1">
+                    <span class="font-extrabold text-pstec-700 uppercase block text-[11px]">3. Excluir termos (NÃO CONTÉM)</span>
+                    <p class="text-slate-600">Use <strong>-</strong> ou <strong>!</strong> antes da palavra que deve ser excluída.</p>
+                    <p class="font-mono text-xs bg-white p-2 rounded-xl border border-slate-200 font-bold text-slate-800">GRID -CANCELADO</p>
+                </div>
+                <div class="bg-pstec-50 p-3 rounded-2xl border border-pstec-100 text-pstec-900 font-medium text-[11px]">
+                    💡 A pesquisa ignora acentos e maiúsculas/minúsculas.
+                </div>
+            </div>
+            <div class="flex justify-end pt-2">
+                <button onclick="closeSearchHelpModal()" class="px-5 py-2 bg-pstec-700 text-white font-bold text-xs rounded-xl hover:bg-pstec-800 shadow-sm transition">Entendi</button>
             </div>
         </div>
     </div>
@@ -965,6 +993,48 @@
             }
         }
 
+
+        function normalizeSearchStr(str) {
+            if (!str) return '';
+            return String(str).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        }
+
+        function matchesWildcardSearch(itemStr, searchInput) {
+            if (!searchInput) return true;
+            const normItem = normalizeSearchStr(itemStr);
+            const normInput = normalizeSearchStr(searchInput);
+            const orGroups = normInput.replace(/;/g, ',').replace(/\|/g, ',').split(',').map(g => g.trim()).filter(Boolean);
+            for (const group of orGroups) {
+                const tokens = group.replace(/%/g, ' ').split(/\s+/).map(t => t.trim()).filter(Boolean);
+                if (!tokens.length) continue;
+                let groupMatch = true;
+                for (const token of tokens) {
+                    if (token.startsWith('-') || token.startsWith('!')) {
+                        const excludeTerm = token.substring(1).trim();
+                        if (excludeTerm && normItem.includes(excludeTerm)) { groupMatch = false; break; }
+                    } else if (!normItem.includes(token)) { groupMatch = false; break; }
+                }
+                if (groupMatch) return true;
+            }
+            return false;
+        }
+
+        function debounceGlobalSearch() {
+            clearTimeout(window._pstecSearchDebounce);
+            window._pstecSearchDebounce = setTimeout(() => renderView(), 80);
+        }
+
+        function openSearchHelpModal() {
+            const m = document.getElementById('searchHelpModal');
+            if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
+            lucide.createIcons();
+        }
+
+        function closeSearchHelpModal() {
+            const m = document.getElementById('searchHelpModal');
+            if (m) { m.classList.add('hidden'); m.classList.remove('flex'); }
+        }
+
         function parseValue(val) {
             if (val === null || val === undefined) return 0;
             if (typeof val === 'number') return val;
@@ -983,7 +1053,7 @@
         }
 
         function getFilteredData() {
-            const search = (document.getElementById('searchInput')?.value || '').toLowerCase();
+            const search = (document.getElementById('searchInput')?.value || '').trim();
             const atrasadaFiltro = document.getElementById('atrasadaFilter')?.value || '';
             const apontamentoFiltro = document.getElementById('apontamentoAbertoFilter')?.value || '';
             const empresa = document.getElementById('segmentoFilter')?.value || '';
@@ -997,22 +1067,9 @@
             return rawData.filter(item => {
                 const estaNoLimbo = String(item.u_limbo) === '1' || item.u_limbo === 1;
                 if (estaNoLimbo) return false;
-
                 if (search) {
-                    const matchOS = String(item.n_os || '').toLowerCase().includes(search);
-                    const matchTitulo = String(item.titulo || '').toLowerCase().includes(search);
-                    const matchCliente = String(item.cliente || '').toLowerCase().includes(search);
-                    const matchEmpresa = String(item.empresa || '').toLowerCase().includes(search);
-                    const matchOrigem = String(item.origem || '').toLowerCase().includes(search);
-                    const matchCod = String(item.cod_interno || '').toLowerCase().includes(search);
-                    const matchPedido = String(item.n_pedido || '').toLowerCase().includes(search);
-                    const matchPP = String(item.pp_pendentes || '').toLowerCase().includes(search);
-                    const matchApontamento = String(item.apontamentos_abertos_detalhe || '').toLowerCase().includes(search);
-                    const matchJustificativa = String(item.justificativa || '').toLowerCase().includes(search);
-                    const matchOrcamento = String(item.orcamento || '').toLowerCase().includes(search);
-                    const matchClassificacao = String(item.classificacao || '').toLowerCase().includes(search);
-                    
-                    if (!matchOS && !matchTitulo && !matchCliente && !matchEmpresa && !matchOrigem && !matchCod && !matchPedido && !matchPP && !matchApontamento && !matchJustificativa && !matchOrcamento && !matchClassificacao) return false;
+                    const fullItemStr = Object.values(item).join(' ');
+                    if (!matchesWildcardSearch(fullItemStr, search)) return false;
                 }
 
                 if (atrasadaFiltro) {
@@ -1133,23 +1190,27 @@
             const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
             const dayKey = currentDate.toISOString().substring(0, 10);
 
+            const search = (document.getElementById('searchInput')?.value || '').trim();
             const filteredConferencia = rawConferenciaData.filter(item => {
                 const dtBaseStr = item.dt_finalizacao || item.data_fim || '';
                 if (!dtBaseStr) return false;
                 const itemDateStr = String(dtBaseStr).substring(0, 10);
+                let matchesDate = false;
 
                 if (currentView === 'month') {
-                    return itemDateStr.substring(0, 7) === monthKey;
+                    matchesDate = itemDateStr.substring(0, 7) === monthKey;
                 } else if (currentView === 'day') {
-                    return itemDateStr === dayKey;
+                    matchesDate = itemDateStr === dayKey;
                 } else if (currentView === 'week') {
                     const parts = itemDateStr.split('-');
                     if (parts.length === 3) {
                         const itemDate = new Date(parts[0], parts[1] - 1, parts[2]);
-                        return itemDate >= wStart && itemDate <= wEnd;
+                        matchesDate = itemDate >= wStart && itemDate <= wEnd;
                     }
                 }
-                return false;
+                if (!matchesDate) return false;
+                if (search && !matchesWildcardSearch(Object.values(item).join(' '), search)) return false;
+                return true;
             });
 
             const totalHorasAMaisPeriodo = filteredConferencia.reduce((acc, i) => acc + (parseFloat(i.horas_a_mais) || 0), 0);
@@ -1302,7 +1363,7 @@
 
             const isMesPassado = (selectedYear < currYear) || (selectedYear === currYear && selectedMonth < currMonth);
 
-            const search = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+            const search = (document.getElementById('searchInput')?.value || '').trim();
             const segmentoFiltro = document.getElementById('segmentoFilter')?.value || '';
             const clienteFiltro = document.getElementById('clientFilter')?.value || '';
 
@@ -1314,14 +1375,9 @@
                 if (itemDateStr.substring(0, 7) !== monthKey) return false;
                 if (segmentoFiltro && String(item.empresa || '') !== segmentoFiltro) return false;
                 if (clienteFiltro && String(item.cliente || '') !== clienteFiltro) return false;
-
                 if (search) {
-                    const mCliente = String(item.cliente || '').toLowerCase().includes(search);
-                    const mOrcamento = String(item.n_orcamento || '').toLowerCase().includes(search);
-                    const mOS = String(item.n_os || '').toLowerCase().includes(search);
-                    const mCod = String(item.cod_interno || '').toLowerCase().includes(search);
-                    const mDesc = String(item.descricao || '').toLowerCase().includes(search);
-                    if (!mCliente && !mOrcamento && !mOS && !mCod && !mDesc) return false;
+                    const fullItemStr = Object.values(item).join(' ');
+                    if (!matchesWildcardSearch(fullItemStr, search)) return false;
                 }
 
                 return true;

@@ -6,6 +6,43 @@
 <link rel="icon" type="image/png" href="LOGO MINIMALISTA.png">
 <link rel="apple-touch-icon" href="LOGO MINIMALISTA.png">
 <title>Capital de Giro - PSTEC V1.0</title>
+
+    <!-- MODAL DE AJUDA / GUIA DA PESQUISA CORINGA -->
+    <div id="searchHelpModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[70]">
+        <div class="bg-white text-slate-800 rounded-3xl shadow-2xl max-w-lg w-full p-6 space-y-4 border border-slate-200 relative">
+            <div class="flex justify-between items-center border-b pb-3">
+                <div class="flex items-center gap-2 text-pstec-700 font-extrabold text-sm">
+                    <i data-lucide="help-circle" class="w-5 h-5 text-pstecgreen-600"></i>
+                    <span>Guia de Pesquisa Rápida & Operadores</span>
+                </div>
+                <button onclick="closeSearchHelpModal()" class="text-slate-400 hover:text-slate-700 p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="space-y-3 text-xs leading-relaxed">
+                <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-1">
+                    <span class="font-extrabold text-pstec-700 uppercase block text-[11px]">1. Buscar vários termos ao mesmo tempo (OU)</span>
+                    <p class="text-slate-600">Use <strong>vírgula (,)</strong>, <strong>ponto e vírgula (;)</strong> ou barra vertical <strong>(|)</strong>.</p>
+                    <p class="font-mono text-xs bg-white p-2 rounded-xl border border-slate-200 font-bold text-slate-800">GRID, MAURI</p>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-1">
+                    <span class="font-extrabold text-pstec-700 uppercase block text-[11px]">2. Combinar termos obrigatórios (E)</span>
+                    <p class="text-slate-600">Use <strong>espaço</strong> ou <strong>%</strong> para exigir todos os termos no mesmo registro.</p>
+                    <p class="font-mono text-xs bg-white p-2 rounded-xl border border-slate-200 font-bold text-slate-800">%PCP%EXPEDIÇÃO%</p>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-1">
+                    <span class="font-extrabold text-pstec-700 uppercase block text-[11px]">3. Excluir termos (NÃO CONTÉM)</span>
+                    <p class="text-slate-600">Use <strong>-</strong> ou <strong>!</strong> antes da palavra que deve ser excluída.</p>
+                    <p class="font-mono text-xs bg-white p-2 rounded-xl border border-slate-200 font-bold text-slate-800">GRID -CANCELADO</p>
+                </div>
+                <div class="bg-pstec-50 p-3 rounded-2xl border border-pstec-100 text-pstec-900 font-medium text-[11px]">
+                    💡 A pesquisa ignora acentos e maiúsculas/minúsculas.
+                </div>
+            </div>
+            <div class="flex justify-end pt-2">
+                <button onclick="closeSearchHelpModal()" class="px-5 py-2 bg-pstec-700 text-white font-bold text-xs rounded-xl hover:bg-pstec-800 shadow-sm transition">Entendi</button>
+            </div>
+        </div>
+    </div>
+
 <script>if(!localStorage.getItem('pstec_token')) window.location.href='login-pstec.html';</script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
@@ -29,9 +66,7 @@ th{position:sticky;top:0;z-index:10}
     <div class="flex items-center gap-2">
       <div class="hidden md:flex items-center gap-1.5 px-3 py-2 bg-pstec-800 border border-pstec-600 rounded-xl text-xs font-bold text-slate-200"><i data-lucide="user-check" class="w-4 h-4 text-pstecgreen-500"></i><span id="userDisplayName">Usuário</span></div>
       <a href="index.html" class="flex items-center gap-1.5 px-3 py-2 bg-pstec-800 hover:bg-pstec-900 rounded-xl text-xs font-bold"><i data-lucide="layout-grid" class="w-4 h-4"></i><span class="hidden sm:inline">Menu</span></a>
-      <a href="producao.html" class="hidden lg:flex items-center gap-1.5 px-3 py-2 bg-pstec-800 hover:bg-pstec-900 rounded-xl text-xs font-bold"><i data-lucide="factory" class="w-4 h-4"></i>Produção</a>
-      <a href="carteira.html" class="hidden lg:flex items-center gap-1.5 px-3 py-2 bg-pstec-800 hover:bg-pstec-900 rounded-xl text-xs font-bold"><i data-lucide="briefcase-business" class="w-4 h-4"></i>Carteira</a>
-      <button id="btnRefresh" onclick="fetchCapital(false)" class="flex items-center gap-1.5 px-3 py-2 bg-pstecgreen-500 hover:bg-pstecgreen-600 text-slate-950 rounded-xl text-xs font-black"><i id="refreshIcon" data-lucide="refresh-cw" class="w-4 h-4"></i><span class="hidden sm:inline">Atualizar</span></button>
+<button id="btnRefresh" onclick="fetchCapital(false)" class="flex items-center gap-1.5 px-3 py-2 bg-pstecgreen-500 hover:bg-pstecgreen-600 text-slate-950 rounded-xl text-xs font-black"><i id="refreshIcon" data-lucide="refresh-cw" class="w-4 h-4"></i><span class="hidden sm:inline">Atualizar</span></button>
       <button onclick="logout()" class="flex items-center gap-1.5 px-3 py-2 bg-red-600 hover:bg-red-700 rounded-xl text-xs font-bold"><i data-lucide="log-out" class="w-4 h-4"></i><span class="hidden sm:inline">Sair</span></button>
     </div>
   </div>
@@ -61,7 +96,7 @@ th{position:sticky;top:0;z-index:10}
       </div>
     </div>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-8 gap-2">
-      <div class="lg:col-span-2 flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2"><i data-lucide="search" class="w-4 h-4 text-slate-400"></i><input id="searchInput" oninput="render()" placeholder="Pesquisar OS, cliente, item, NF..." class="w-full bg-transparent outline-none text-xs font-semibold"></div>
+      <div class="sm:col-span-2 lg:col-span-8 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 flex items-center gap-2 text-xs"><i data-lucide="search" class="w-4 h-4 text-pstec-600 shrink-0"></i><input id="searchInput" oninput="debounceGlobalSearch()" placeholder="Pesquisa Coringa (ex: GRID, MAURI ou %PCP%EXPEDIÇÃO% ou use '-' para Excluir)..." class="w-full bg-transparent text-slate-800 focus:outline-none font-bold placeholder-slate-400 py-1"><button onclick="openSearchHelpModal()" class="p-1.5 bg-pstec-100 hover:bg-pstec-200 text-pstec-700 rounded-lg font-black transition flex items-center justify-center shrink-0 border border-pstec-200" title="Como funciona a pesquisa?"><i data-lucide="help-circle" class="w-4 h-4 text-pstec-700"></i></button></div>
       <select id="empresaFilter" onchange="render()" class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs font-bold"><option value="">Empresa (Todas)</option></select>
       <select id="clienteFilter" onchange="render()" class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs font-bold"><option value="">Cliente (Todos)</option></select>
       <select id="statusFilter" onchange="render()" class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs font-bold"><option value="">Status (Todos)</option></select>
@@ -117,6 +152,13 @@ const columns={
  ]
 };
 
+
+function normalizeSearchStr(str){if(!str)return '';return String(str).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()}
+function matchesWildcardSearch(itemStr,searchInput){if(!searchInput)return true;const normItem=normalizeSearchStr(itemStr),normInput=normalizeSearchStr(searchInput);const orGroups=normInput.replace(/;/g,',').replace(/\|/g,',').split(',').map(g=>g.trim()).filter(Boolean);for(const group of orGroups){const tokens=group.replace(/%/g,' ').split(/\s+/).map(t=>t.trim()).filter(Boolean);if(!tokens.length)continue;let ok=true;for(const token of tokens){if(token.startsWith('-')||token.startsWith('!')){const ex=token.substring(1).trim();if(ex&&normItem.includes(ex)){ok=false;break}}else if(!normItem.includes(token)){ok=false;break}}if(ok)return true}return false}
+function debounceGlobalSearch(){clearTimeout(window._pstecSearchDebounce);window._pstecSearchDebounce=setTimeout(()=>render(),80)}
+function openSearchHelpModal(){const m=document.getElementById('searchHelpModal');if(m){m.classList.remove('hidden');m.classList.add('flex')}lucide.createIcons()}
+function closeSearchHelpModal(){const m=document.getElementById('searchHelpModal');if(m){m.classList.add('hidden');m.classList.remove('flex')}}
+
 function logout(){['pstec_token','pstec_usuario_nome','pstec_perm_faturamento','pstec_perm_finalizacao'].forEach(k=>localStorage.removeItem(k));window.location.href='login-pstec.html'}
 function setTab(tab){activeTab=tab;document.querySelectorAll('.tab-btn').forEach(b=>b.className='tab-btn px-4 py-2 rounded-xl text-xs font-black bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center gap-2');document.getElementById(tab==='carteira'?'tabCarteira':tab==='faturamento'?'tabFaturamento':'tabFinanceiro').className='tab-btn px-4 py-2 rounded-xl text-xs font-black bg-pstec-700 text-white shadow-sm flex items-center gap-2';populateFilters();render();lucide.createIcons()}
 function baseRows(){
@@ -132,11 +174,11 @@ function uniqueVals(rows,key){return [...new Set(rows.map(r=>String(r[key]??'').
 function setOpts(id,vals,label){const el=document.getElementById(id),cur=el.value;el.innerHTML=`<option value="">${label}</option>`+vals.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');if(vals.includes(cur))el.value=cur}
 function populateFilters(){const rows=baseRows();setOpts('empresaFilter',uniqueVals(rows,'Empresa'),'Empresa (Todas)');setOpts('clienteFilter',uniqueVals(rows,'Cliente'),'Cliente (Todos)');setOpts('prataFilter',uniqueVals(rows,'Prata'),'Prata (Todos)');const statusKey=activeTab==='carteira'?'Status OS':'status_nf';setOpts('statusFilter',uniqueVals(rows,statusKey),'Status (Todos)')}
 function filteredRows(){
- const search=(document.getElementById('searchInput').value||'').trim().toLowerCase(), emp=document.getElementById('empresaFilter').value, cli=document.getElementById('clienteFilter').value, st=document.getElementById('statusFilter').value, pr=document.getElementById('prataFilter').value, d1=document.getElementById('dateFrom').value, d2=document.getElementById('dateTo').value;
+ const search=(document.getElementById('searchInput').value||'').trim(), emp=document.getElementById('empresaFilter').value, cli=document.getElementById('clienteFilter').value, st=document.getElementById('statusFilter').value, pr=document.getElementById('prataFilter').value, d1=document.getElementById('dateFrom').value, d2=document.getElementById('dateTo').value;
  const statusKey=activeTab==='carteira'?'Status OS':'status_nf';
  return baseRows().filter(r=>{
   if(emp && String(r.Empresa||'')!==emp)return false;if(cli && String(r.Cliente||'')!==cli)return false;if(st && String(r[statusKey]||'')!==st)return false;if(pr && String(r.Prata||'')!==pr)return false;
-  if(search){const hay=Object.values(r).join(' ').toLowerCase();if(!hay.includes(search))return false;}
+  if(search){const hay=Object.values(r).join(' ');if(!matchesWildcardSearch(hay,search))return false;}
   if(d1||d2){let dv='';if(activeTab==='carteira')dv=isoDate(r.previsao_ent_pesq||r['Dt. Negociada']||r['Prev. entrega(original)']);else if(activeTab==='faturamento')dv=firstDateFromList(r['Dts. emissão'])||isoDate(r.Emissão);else dv=isoDate(r.Emissão);if(!dv)return false;if(d1&&dv<d1)return false;if(d2&&dv>d2)return false;}
   return true;
  }).sort((a,b)=>{const da=activeTab==='carteira'?isoDate(a.previsao_ent_pesq):activeTab==='faturamento'?(firstDateFromList(a['Dts. emissão'])||''):isoDate(a.Emissão);const db=activeTab==='carteira'?isoDate(b.previsao_ent_pesq):activeTab==='faturamento'?(firstDateFromList(b['Dts. emissão'])||''):isoDate(b.Emissão);return (db||'').localeCompare(da||'')});
