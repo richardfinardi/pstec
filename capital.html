@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" href="LOGO MINIMALISTA.png">
+<link rel="apple-touch-icon" href="LOGO MINIMALISTA.png">
+<title>Capital de Giro - PSTEC V1.0</title>
+<script>if(!localStorage.getItem('pstec_token')) window.location.href='login-pstec.html';</script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config={theme:{extend:{colors:{pstec:{50:'#f0f5ff',100:'#e0ebff',500:'#1a5ce6',600:'#0047cc',700:'#003B96',800:'#002b70',900:'#001b4a'},pstecgreen:{500:'#7CBD20',600:'#68a318'}}}}};
+</script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f8fafc;color:#0f172a}
+.custom-scroll::-webkit-scrollbar{width:6px;height:6px}.custom-scroll::-webkit-scrollbar-track{background:#f1f5f9}.custom-scroll::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px}
+th{position:sticky;top:0;z-index:10}
+</style>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-100 text-slate-800">
+<header class="bg-pstec-700 text-white sticky top-0 z-50 shadow-md">
+  <div class="max-w-[98%] mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3">
+    <div class="flex items-center gap-4">
+      <a href="index.html" class="flex items-center justify-center p-1.5 bg-white rounded-xl shadow-sm" title="Menu PSTEC"><img src="./logo.png" alt="PSTEC" class="h-9 max-h-10 w-auto object-contain"></a>
+      <div><h1 class="text-xl font-extrabold tracking-wide">GRUPO PSTEC</h1><p class="text-xs text-pstec-100">Capital de Giro V1.0</p></div>
+    </div>
+    <div class="flex items-center gap-2">
+      <div class="hidden md:flex items-center gap-1.5 px-3 py-2 bg-pstec-800 border border-pstec-600 rounded-xl text-xs font-bold text-slate-200"><i data-lucide="user-check" class="w-4 h-4 text-pstecgreen-500"></i><span id="userDisplayName">Usuário</span></div>
+      <a href="index.html" class="flex items-center gap-1.5 px-3 py-2 bg-pstec-800 hover:bg-pstec-900 rounded-xl text-xs font-bold"><i data-lucide="layout-grid" class="w-4 h-4"></i><span class="hidden sm:inline">Menu</span></a>
+      <a href="producao.html" class="hidden lg:flex items-center gap-1.5 px-3 py-2 bg-pstec-800 hover:bg-pstec-900 rounded-xl text-xs font-bold"><i data-lucide="factory" class="w-4 h-4"></i>Produção</a>
+      <a href="carteira.html" class="hidden lg:flex items-center gap-1.5 px-3 py-2 bg-pstec-800 hover:bg-pstec-900 rounded-xl text-xs font-bold"><i data-lucide="briefcase-business" class="w-4 h-4"></i>Carteira</a>
+      <button id="btnRefresh" onclick="fetchCapital(false)" class="flex items-center gap-1.5 px-3 py-2 bg-pstecgreen-500 hover:bg-pstecgreen-600 text-slate-950 rounded-xl text-xs font-black"><i id="refreshIcon" data-lucide="refresh-cw" class="w-4 h-4"></i><span class="hidden sm:inline">Atualizar</span></button>
+      <button onclick="logout()" class="flex items-center gap-1.5 px-3 py-2 bg-red-600 hover:bg-red-700 rounded-xl text-xs font-bold"><i data-lucide="log-out" class="w-4 h-4"></i><span class="hidden sm:inline">Sair</span></button>
+    </div>
+  </div>
+</header>
+
+<!-- SEM ABA RESUMO: abre direto em CARTEIRA -->
+<div class="bg-white border-b border-slate-200 shadow-sm">
+  <div class="max-w-[98%] mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-2">
+      <button id="tabCarteira" onclick="setTab('carteira')" class="tab-btn px-4 py-2 rounded-xl text-xs font-black bg-pstec-700 text-white shadow-sm flex items-center gap-2"><i data-lucide="briefcase-business" class="w-4 h-4"></i>CARTEIRA</button>
+      <button id="tabFaturamento" onclick="setTab('faturamento')" class="tab-btn px-4 py-2 rounded-xl text-xs font-black bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center gap-2"><i data-lucide="receipt-text" class="w-4 h-4"></i>FATURAMENTO</button>
+      <button id="tabFinanceiro" onclick="setTab('financeiro')" class="tab-btn px-4 py-2 rounded-xl text-xs font-black bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center gap-2"><i data-lucide="circle-dollar-sign" class="w-4 h-4"></i>FINANCEIRO</button>
+    </div>
+    <div class="text-[11px] text-slate-500 font-semibold"><span id="lastUpdate">Atualizado: -</span></div>
+  </div>
+</div>
+
+<main class="max-w-[98%] w-full mx-auto p-4 flex flex-col gap-4 flex-1">
+  <section id="kpiGrid" class="grid grid-cols-2 md:grid-cols-4 gap-3"></section>
+
+  <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-3">
+    <div class="flex items-center justify-between gap-3 border-b border-slate-100 pb-2">
+      <div class="flex items-center gap-2 text-xs font-black text-pstec-700"><i data-lucide="filter" class="w-4 h-4"></i><span>Filtros</span></div>
+      <div class="flex items-center gap-2">
+        <button onclick="clearFilters()" class="text-[11px] font-bold text-red-600 hover:underline flex items-center gap-1"><i data-lucide="filter-x" class="w-3.5 h-3.5"></i>Limpar</button>
+        <button onclick="exportExcel()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-bold flex items-center gap-1.5"><i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>Excel</button>
+      </div>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-8 gap-2">
+      <div class="lg:col-span-2 flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2"><i data-lucide="search" class="w-4 h-4 text-slate-400"></i><input id="searchInput" oninput="render()" placeholder="Pesquisar OS, cliente, item, NF..." class="w-full bg-transparent outline-none text-xs font-semibold"></div>
+      <select id="empresaFilter" onchange="render()" class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs font-bold"><option value="">Empresa (Todas)</option></select>
+      <select id="clienteFilter" onchange="render()" class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs font-bold"><option value="">Cliente (Todos)</option></select>
+      <select id="statusFilter" onchange="render()" class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs font-bold"><option value="">Status (Todos)</option></select>
+      <select id="prataFilter" onchange="render()" class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs font-bold"><option value="">Prata (Todos)</option></select>
+      <input id="dateFrom" type="date" onchange="render()" class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs font-bold" title="Data de / previsão ou emissão">
+      <input id="dateTo" type="date" onchange="render()" class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs font-bold" title="Data até / previsão ou emissão">
+    </div>
+  </section>
+
+  <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+    <div class="overflow-auto custom-scroll max-h-[66vh]">
+      <table class="w-full text-left text-[11px] whitespace-nowrap border-collapse">
+        <thead id="tableHead" class="bg-pstec-700 text-white uppercase text-[10px] tracking-wide"></thead>
+        <tbody id="tableBody" class="divide-y divide-slate-100"></tbody>
+      </table>
+    </div>
+    <div class="px-4 py-3 bg-slate-50 border-t border-slate-200 flex justify-between items-center gap-3 text-xs font-bold text-slate-600">
+      <span>Exibindo <span id="shownCount" class="text-pstec-700">0</span> de <span id="totalCount" class="text-slate-900">0</span></span>
+      <div class="flex items-center gap-2"><select id="pageSize" onchange="render()" class="bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs"><option>50</option><option>100</option><option>250</option><option>500</option><option value="999999">Todos</option></select></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const API_CAPITAL='https://pstec.consultoriarf.net/capital';
+let rawCapital=[]; let activeTab='carteira'; let currentRows=[];
+const n=v=>{if(v===null||v===undefined||v==='')return 0;if(typeof v==='number')return v;let s=String(v).replace(/R\$/g,'').replace(/%/g,'').replace(/\s/g,'');if(s.includes(',')&&s.includes('.'))s=s.replace(/\./g,'').replace(',','.');else if(s.includes(','))s=s.replace(',','.');const x=parseFloat(s);return Number.isFinite(x)?x:0};
+const brl=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(n(v));
+const num=v=>n(v).toLocaleString('pt-BR',{maximumFractionDigits:3});
+const pct=v=>`${n(v).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})}%`;
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+function isoDate(v){if(!v)return '';let s=String(v).trim();if(/^\d{2}\/\d{2}\/\d{4}$/.test(s)){const[a,b,c]=s.split('/');return `${c}-${b}-${a}`;}return s.substring(0,10)}
+function fmtDate(v){const s=isoDate(v);if(!s)return '-';const p=s.split('-');return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:esc(v)}
+function firstDateFromList(v){if(!v)return '';const s=String(v).split(',')[0].trim();return isoDate(s)}
+function deriv(r){
+  const cot=n(r['Cotação Prata Atual']); const qtdPrata=n(r['Qtde. AG por pedido']); const prataPedido=qtdPrata*cot;
+  const mpComum=n(r['Vl. MP comum']); const totalMP=prataPedido+mpComum; const impPagar=n(r['Impostos a pagar']);
+  const vlAFat=n(r['Vl. a faturar']); const totalPagar=totalMP+impPagar; const saldoFin=vlAFat-totalPagar;
+  const qtdFat=n(r['Qtde. Entregue']); const fatValor=qtdFat*n(r['Vl. Unitário']); const fatPrata=n(r.qtdpratapc)*qtdFat*cot;
+  const fatMPComum=n(r.vl_mp_comum_pc)*qtdFat; const fatTotalMP=fatPrata+fatMPComum; const fatImp=n(r.imposto)*qtdFat; const fatSaldo=fatValor-fatTotalMP-fatImp; const fatPct=fatValor?fatTotalMP/fatValor*100:0;
+  return {...r,_prataPedido:prataPedido,_totalMP:totalMP,_totalPagar:totalPagar,_saldoFin:saldoFin,_fatValor:fatValor,_fatPrata:fatPrata,_fatMPComum:fatMPComum,_fatTotalMP:fatTotalMP,_fatImp:fatImp,_fatSaldo:fatSaldo,_fatPct:fatPct};
+}
+
+const columns={
+ carteira:[
+  ['Empresa','Empresa','txt'],['Nº Orçamento','Orçamento','txt'],['Dt. aprovação','Aprovação','date'],['previsao_ent_pesq','Previsão','date'],['Cliente','Cliente','txt'],['Código','Código / Item','item'],['Nº Pedido','Pedido','txt'],['Nº OS','OS','txt'],['Status OS','Status OS','badge'],['Disponibilidade Material','Disponib. MP','badge'],['Qtde. Total','Qtde Total','num'],['Qtde. Entregue','Entregue','num'],['Saldo a entregar','Saldo','num'],['Vl. Total','Vl Total','brl'],['Vl. a faturar','Vl a faturar','brl'],['Prata','Prata','badge'],['Qtde. AG por pedido','Qtde Prata','num'],['_prataPedido','Vl Prata','brl'],['Vl. MP comum','MP Comum','brl'],['_totalMP','Total MP','brl'],['Impostos a pagar','Impostos','brl'],['_totalPagar','Capital necessário','brl'],['_saldoFin','Saldo Financeiro','brl']
+ ],
+ faturamento:[
+  ['Empresa','Empresa','txt'],['Cliente','Cliente','txt'],['Nº Orçamento','Orçamento','txt'],['Notas Fiscais','NF(s)','txt'],['Dts. emissão','Emissão','txt'],['Código','Código / Item','item'],['Qtde. Entregue','Qtde Fat.','num'],['_fatValor','Valor Faturado','brl'],['Prata','Prata','badge'],['qtdpratapc','Prata/pc','num'],['_fatPrata','Vl Prata','brl'],['_fatMPComum','MP Comum','brl'],['_fatTotalMP','Total MP','brl'],['_fatImp','Impostos','brl'],['_fatSaldo','Saldo','brl'],['_fatPct','% MP','pct'],['status_nf','Status Financeiro','badge']
+ ],
+ financeiro:[
+  ['Empresa','Empresa','txt'],['Cliente','Cliente','txt'],['Nº OS','OS','txt'],['NF','Última NF','txt'],['Emissão','Emissão','date'],['status_nf','Status','badge'],['A RECEBER','A Receber','brl'],['RECEBIDO','Recebido','brl'],['_finTotal','Total Financeiro','brl']
+ ]
+};
+
+function logout(){['pstec_token','pstec_usuario_nome','pstec_perm_faturamento','pstec_perm_finalizacao'].forEach(k=>localStorage.removeItem(k));window.location.href='login-pstec.html'}
+function setTab(tab){activeTab=tab;document.querySelectorAll('.tab-btn').forEach(b=>b.className='tab-btn px-4 py-2 rounded-xl text-xs font-black bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center gap-2');document.getElementById(tab==='carteira'?'tabCarteira':tab==='faturamento'?'tabFaturamento':'tabFinanceiro').className='tab-btn px-4 py-2 rounded-xl text-xs font-black bg-pstec-700 text-white shadow-sm flex items-center gap-2';populateFilters();render();lucide.createIcons()}
+function baseRows(){
+ let rows=rawCapital.map(deriv);
+ if(activeTab==='carteira') rows=rows.filter(r=>String(r['Status orçamento']||'').toUpperCase()==='APROVADO' && n(r['Saldo a entregar'])>0 && String(r['Nº Orçamento']||'').trim()!=='');
+ if(activeTab==='faturamento') rows=rows.filter(r=>n(r['Qtde. Entregue'])>0 || String(r['Notas Fiscais']||'').trim()!=='');
+ if(activeTab==='financeiro'){
+   const map=new Map(); rows.filter(r=>String(r.NF||'').trim()!=='' || n(r['A RECEBER'])!==0 || n(r.RECEBIDO)!==0).forEach(r=>{const k=String(r.id_os||`${r.Empresa}|${r['Nº OS']}|${r.NF}`);if(!map.has(k))map.set(k,{...r,_finTotal:n(r['A RECEBER'])+n(r.RECEBIDO)});}); rows=[...map.values()];
+ }
+ return rows;
+}
+function uniqueVals(rows,key){return [...new Set(rows.map(r=>String(r[key]??'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR',{numeric:true}))}
+function setOpts(id,vals,label){const el=document.getElementById(id),cur=el.value;el.innerHTML=`<option value="">${label}</option>`+vals.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');if(vals.includes(cur))el.value=cur}
+function populateFilters(){const rows=baseRows();setOpts('empresaFilter',uniqueVals(rows,'Empresa'),'Empresa (Todas)');setOpts('clienteFilter',uniqueVals(rows,'Cliente'),'Cliente (Todos)');setOpts('prataFilter',uniqueVals(rows,'Prata'),'Prata (Todos)');const statusKey=activeTab==='carteira'?'Status OS':'status_nf';setOpts('statusFilter',uniqueVals(rows,statusKey),'Status (Todos)')}
+function filteredRows(){
+ const search=(document.getElementById('searchInput').value||'').trim().toLowerCase(), emp=document.getElementById('empresaFilter').value, cli=document.getElementById('clienteFilter').value, st=document.getElementById('statusFilter').value, pr=document.getElementById('prataFilter').value, d1=document.getElementById('dateFrom').value, d2=document.getElementById('dateTo').value;
+ const statusKey=activeTab==='carteira'?'Status OS':'status_nf';
+ return baseRows().filter(r=>{
+  if(emp && String(r.Empresa||'')!==emp)return false;if(cli && String(r.Cliente||'')!==cli)return false;if(st && String(r[statusKey]||'')!==st)return false;if(pr && String(r.Prata||'')!==pr)return false;
+  if(search){const hay=Object.values(r).join(' ').toLowerCase();if(!hay.includes(search))return false;}
+  if(d1||d2){let dv='';if(activeTab==='carteira')dv=isoDate(r.previsao_ent_pesq||r['Dt. Negociada']||r['Prev. entrega(original)']);else if(activeTab==='faturamento')dv=firstDateFromList(r['Dts. emissão'])||isoDate(r.Emissão);else dv=isoDate(r.Emissão);if(!dv)return false;if(d1&&dv<d1)return false;if(d2&&dv>d2)return false;}
+  return true;
+ }).sort((a,b)=>{const da=activeTab==='carteira'?isoDate(a.previsao_ent_pesq):activeTab==='faturamento'?(firstDateFromList(a['Dts. emissão'])||''):isoDate(a.Emissão);const db=activeTab==='carteira'?isoDate(b.previsao_ent_pesq):activeTab==='faturamento'?(firstDateFromList(b['Dts. emissão'])||''):isoDate(b.Emissão);return (db||'').localeCompare(da||'')});
+}
+function cell(r,key,type){const v=r[key];if(type==='date')return fmtDate(v);if(type==='brl')return brl(v);if(type==='num')return num(v);if(type==='pct')return pct(v);if(type==='item')return `<span class="font-bold font-mono text-pstec-700 block">${esc(r['Código']||'-')}</span><span class="text-slate-500 max-w-[260px] block truncate" title="${esc(r.Item||'')}">${esc(r.Item||'-')}</span>`;if(type==='badge'){const s=String(v||'-');let c='bg-slate-100 text-slate-700';if(/RECEBIDO|TOTAL DISPONÍVEL|APROVADO|SIM/i.test(s))c='bg-emerald-100 text-emerald-800';else if(/ABERTO|PARCIAL|SEM OC|NADA|NAO|NÃO/i.test(s))c='bg-amber-100 text-amber-800';return `<span class="px-2 py-0.5 rounded-md text-[10px] font-black ${c}">${esc(s)}</span>`;}return esc(v||'-')}
+function render(){
+ currentRows=filteredRows();const limit=parseInt(document.getElementById('pageSize').value||'50');const shown=currentRows.slice(0,limit);const cols=columns[activeTab];document.getElementById('tableHead').innerHTML='<tr>'+cols.map(c=>`<th class="px-3 py-2.5 font-black border-r border-pstec-600/40">${esc(c[1])}</th>`).join('')+'</tr>';document.getElementById('tableBody').innerHTML=shown.length?shown.map((r,i)=>'<tr class="'+(i%2?'bg-slate-50/60':'bg-white')+' hover:bg-pstec-50/60">'+cols.map(c=>`<td class="px-3 py-2.5 font-medium text-slate-700">${cell(r,c[0],c[2])}</td>`).join('')+'</tr>').join(''):'<tr><td colspan="99" class="p-12 text-center text-slate-400 font-semibold">Nenhum registro encontrado.</td></tr>';document.getElementById('shownCount').textContent=shown.length;document.getElementById('totalCount').textContent=currentRows.length;renderKPIs(currentRows);lucide.createIcons();
+}
+function kpi(title,val,cls='text-pstec-700'){return `<div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm"><span class="text-[9px] font-black uppercase text-slate-400 block">${title}</span><span class="text-lg font-black ${cls}">${val}</span></div>`}
+function renderKPIs(rows){let html='';if(activeTab==='carteira'){html=kpi('Itens em carteira',rows.length)+kpi('Saldo a entregar',num(rows.reduce((a,r)=>a+n(r['Saldo a entregar']),0)),'text-slate-800')+kpi('Valor a faturar',brl(rows.reduce((a,r)=>a+n(r['Vl. a faturar']),0)),'text-blue-700')+kpi('Capital necessário',brl(rows.reduce((a,r)=>a+n(r._totalPagar),0)),'text-amber-700')}else if(activeTab==='faturamento'){html=kpi('Itens faturados',rows.length)+kpi('Valor faturado',brl(rows.reduce((a,r)=>a+n(r._fatValor),0)),'text-pstec-700')+kpi('Total MP',brl(rows.reduce((a,r)=>a+n(r._fatTotalMP),0)),'text-amber-700')+kpi('Saldo após MP + impostos',brl(rows.reduce((a,r)=>a+n(r._fatSaldo),0)),'text-emerald-700')}else{html=kpi('Registros financeiros',rows.length)+kpi('A receber',brl(rows.reduce((a,r)=>a+n(r['A RECEBER']),0)),'text-red-600')+kpi('Recebido',brl(rows.reduce((a,r)=>a+n(r.RECEBIDO),0)),'text-emerald-700')+kpi('Total financeiro',brl(rows.reduce((a,r)=>a+n(r._finTotal),0)),'text-pstec-700')}document.getElementById('kpiGrid').innerHTML=html}
+function clearFilters(){['searchInput','empresaFilter','clienteFilter','statusFilter','prataFilter','dateFrom','dateTo'].forEach(id=>document.getElementById(id).value='');render()}
+async function fetchCapital(silent=false){const icon=document.getElementById('refreshIcon'),btn=document.getElementById('btnRefresh');if(!silent){icon.classList.add('animate-spin');btn.disabled=true}try{const res=await fetch(`${API_CAPITAL}?_t=${Date.now()}`,{cache:'no-store'});if(!res.ok)throw new Error(`API ${res.status}`);rawCapital=await res.json();populateFilters();render();document.getElementById('lastUpdate').textContent=`Atualizado: ${new Date().toLocaleTimeString('pt-BR')}`}catch(e){console.error(e);if(!silent)alert('Não foi possível carregar o Capital de Giro. Verifique a API /capital.')}finally{icon.classList.remove('animate-spin');btn.disabled=false;lucide.createIcons()}}
+function exportExcel(){if(!currentRows.length){alert('Não há dados filtrados para exportar.');return}const cols=columns[activeTab];const rows=currentRows.map(r=>Object.fromEntries(cols.map(c=>[c[1],c[2]==='brl'||c[2]==='num'||c[2]==='pct'?n(r[c[0]]):r[c[0]]??''])));const ws=XLSX.utils.json_to_sheet(rows),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,activeTab.toUpperCase());XLSX.writeFile(wb,`PSTEC_CAPITAL_${activeTab.toUpperCase()}_${new Date().toISOString().slice(0,10)}.xlsx`)}
+document.addEventListener('DOMContentLoaded',()=>{document.getElementById('userDisplayName').textContent=localStorage.getItem('pstec_usuario_nome')||'Usuário';lucide.createIcons();fetchCapital(false);setInterval(()=>fetchCapital(true),60000)});
+</script>
+</body>
+</html>

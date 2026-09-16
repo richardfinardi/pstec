@@ -1,0 +1,19 @@
+ARQUIVOS PARA /pstec
+
+1. index.html = novo menu principal
+2. producao.html = antigo index.html de produção
+3. carteira.html = carteira atual com links ajustados
+4. capital.html = novo Capital de Giro (SEM RESUMO; abre em CARTEIRA)
+5. login-pstec.html = login com redirecionamento para o novo menu
+
+Mantenha no mesmo diretório:
+- logo.png
+- LOGO MINIMALISTA.png
+
+Fluxo:
+login-pstec.html -> index.html -> Produção / Carteira / Capital
+
+CAPITAL:
+API: https://pstec.consultoriarf.net/capital
+Abas: CARTEIRA | FATURAMENTO | FINANCEIRO
+Não existe aba RESUMO.
