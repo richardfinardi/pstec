@@ -77,7 +77,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-extrabold tracking-wide text-white">GRUPO PSTEC</h1>
-                    <p class="text-xs text-pstec-100">Carteira de Produção V2.7 Pro</p>
+                    <p class="text-xs text-pstec-100">Carteira de Produção V2.8 Pro</p>
                 </div>
             </div>
 
@@ -333,7 +333,7 @@
     <!-- FOOTER -->
     <footer class="bg-white border-t border-slate-200 py-3 mt-auto">
         <div class="max-w-[96%] mx-auto px-4 flex justify-between items-center text-xs text-slate-500">
-            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V2.7 Pro</span>
+            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V2.8 Pro</span>
             <span id="lastUpdateLabel">Atualizado: -</span>
         </div>
     </footer>
@@ -433,6 +433,37 @@
 
             <div class="flex justify-end pt-2">
                 <button onclick="closeSearchHelpModal()" class="px-5 py-2 bg-pstec-700 text-white font-bold text-xs rounded-xl hover:bg-pstec-800 shadow-sm transition">Entendi</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- MODAL DE ANEXOS DO ORÇAMENTO -->
+    <div id="attachmentsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[70]">
+        <div class="bg-white text-slate-800 rounded-3xl shadow-2xl max-w-2xl w-full flex flex-col max-h-[82vh] overflow-hidden border border-slate-200">
+            <div class="bg-pstec-700 px-5 py-4 flex justify-between items-center gap-4 text-white shrink-0">
+                <div class="min-w-0">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="paperclip" class="w-5 h-5 text-amber-300"></i>
+                        <h3 class="font-extrabold text-sm">Anexos do Orçamento</h3>
+                    </div>
+                    <p id="attachmentsSubtitle" class="text-[11px] text-pstec-100 mt-1 truncate">Carregando...</p>
+                </div>
+                <button onclick="closeAttachmentsModal()" class="text-pstec-100 hover:text-white p-1.5 rounded-lg transition hover:bg-pstec-800" title="Fechar">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div id="attachmentsBody" class="p-4 sm:p-5 overflow-y-auto custom-scroll flex-1 bg-slate-50">
+                <div class="py-10 text-center text-slate-400">
+                    <i data-lucide="loader-circle" class="w-7 h-7 mx-auto mb-3 animate-spin text-pstec-600"></i>
+                    <p class="font-bold text-xs">Buscando anexos...</p>
+                </div>
+            </div>
+
+            <div class="px-5 py-3 border-t border-slate-200 bg-white flex justify-between items-center gap-3 shrink-0">
+                <span class="text-[10px] text-slate-400">Os arquivos são carregados somente quando você abre um anexo.</span>
+                <button onclick="closeAttachmentsModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 transition">Fechar</button>
             </div>
         </div>
     </div>
@@ -541,9 +572,11 @@
         </div>
     </div>
 
-    <!-- LOGICA JS DA V2.7 PRO -->
+    <!-- LOGICA JS DA V2.8 PRO -->
     <script>
         const API_CARTEIRA = 'https://pstec.consultoriarf.net/CARTEIRA';
+        const API_CARTEIRA_ANEXOS = 'https://pstec.consultoriarf.net/carteira';
+        const anexosOrcamentoCache = new Map();
         const CARTEIRA_CACHE_KEY = 'pstec_carteira_data_v1';
         let rawCarteira = [];
         let carteiraDataReady = false;
@@ -1509,9 +1542,14 @@
 
                 let cellsHTML = `
                     <td class="p-3">
-                        <button onclick="openModal(${idx})" class="p-1.5 bg-pstec-700 hover:bg-pstec-800 text-white rounded-lg font-bold text-[10px] transition shadow-xs" title="Ver Detalhes">
-                            <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-                        </button>
+                        <div class="flex items-center gap-1.5">
+                            <button onclick="openModal(${idx})" class="p-1.5 bg-pstec-700 hover:bg-pstec-800 text-white rounded-lg font-bold text-[10px] transition shadow-xs" title="Ver Detalhes">
+                                <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button onclick="openAttachmentsModal(${idx})" class="p-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-lg font-bold text-[10px] transition shadow-xs" title="Anexos do Orçamento">
+                                <i data-lucide="paperclip" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
                     </td>
                 `;
 
@@ -1708,6 +1746,223 @@
             XLSX.writeFile(workbook, fileName);
 
             closeExportModal();
+        }
+
+
+        function getPstecAuthHeaders(extraHeaders = {}) {
+            const token = localStorage.getItem('pstec_token');
+            return {
+                ...extraHeaders,
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            };
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function formatFileSize(bytes) {
+            const value = Number(bytes || 0);
+            if (!value) return '0 B';
+            const units = ['B', 'KB', 'MB', 'GB'];
+            const idx = Math.min(Math.floor(Math.log(value) / Math.log(1024)), units.length - 1);
+            const size = value / Math.pow(1024, idx);
+            return `${size >= 10 || idx === 0 ? size.toFixed(0) : size.toFixed(1)} ${units[idx]}`;
+        }
+
+        function getAttachmentIcon(fileName) {
+            const ext = String(fileName || '').toLowerCase().split('.').pop();
+            if (ext === 'pdf') return 'file-text';
+            if (['xls', 'xlsx', 'csv'].includes(ext)) return 'file-spreadsheet';
+            if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'].includes(ext)) return 'image';
+            if (['doc', 'docx', 'odt', 'txt'].includes(ext)) return 'file-text';
+            if (['zip', 'rar', '7z'].includes(ext)) return 'archive';
+            return 'file';
+        }
+
+        function closeAttachmentsModal() {
+            const modal = document.getElementById('attachmentsModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        function renderAttachmentsList(anexos, codEmpresa, codOrcamento) {
+            const body = document.getElementById('attachmentsBody');
+            if (!body) return;
+
+            if (!Array.isArray(anexos) || !anexos.length) {
+                body.innerHTML = `
+                    <div class="py-12 text-center text-slate-400">
+                        <div class="w-12 h-12 mx-auto mb-3 rounded-2xl bg-slate-100 flex items-center justify-center">
+                            <i data-lucide="paperclip-off" class="w-6 h-6"></i>
+                        </div>
+                        <p class="font-extrabold text-sm text-slate-600">Nenhum anexo encontrado</p>
+                        <p class="text-[11px] mt-1">Este orçamento não possui arquivos em torcamento_anexo.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            body.innerHTML = `
+                <div class="space-y-2">
+                    ${anexos.map(anexo => {
+                        const nome = String(anexo.nome_arquivo || `anexo_${anexo.codigo}`);
+                        return `
+                            <div class="bg-white border border-slate-200 rounded-2xl px-3.5 py-3 flex items-center justify-between gap-3 hover:border-pstec-300 hover:shadow-sm transition">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <div class="w-9 h-9 shrink-0 rounded-xl bg-pstec-50 text-pstec-700 flex items-center justify-center border border-pstec-100">
+                                        <i data-lucide="${getAttachmentIcon(nome)}" class="w-4.5 h-4.5"></i>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="font-extrabold text-xs text-slate-800 truncate" title="${escapeHtml(nome)}">${escapeHtml(nome)}</p>
+                                        <p class="text-[10px] text-slate-400 mt-0.5">Código ${anexo.codigo} • ${formatFileSize(anexo.tamanho_bytes)}</p>
+                                    </div>
+                                </div>
+                                <button onclick="openAttachmentFile(${Number(codEmpresa)}, ${Number(codOrcamento)}, ${Number(anexo.codigo)}, decodeURIComponent('${encodeURIComponent(nome)}'))"
+                                    class="shrink-0 px-3 py-2 bg-pstec-700 hover:bg-pstec-800 text-white rounded-xl text-[10px] font-extrabold flex items-center gap-1.5 transition"
+                                    title="Abrir arquivo">
+                                    <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                                    Abrir
+                                </button>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        async function openAttachmentsModal(filteredIdx) {
+            const item = currentFilteredData[filteredIdx];
+            if (!item) return;
+
+            const codEmpresa = Number(item['_cod_empresa']);
+            const codOrcamento = Number(item['_cod_orcamento']);
+            const numeroOrcamento = item['Nº Orçamento'] || '-';
+
+            const modal = document.getElementById('attachmentsModal');
+            const subtitle = document.getElementById('attachmentsSubtitle');
+            const body = document.getElementById('attachmentsBody');
+
+            if (!codEmpresa || !codOrcamento) {
+                alert('Os identificadores técnicos do orçamento ainda não estão no cache local. Clique em Atualizar para carregar a nova versão da Carteira.');
+                return;
+            }
+
+            if (subtitle) subtitle.textContent = `Orçamento Nº ${numeroOrcamento} • Cliente: ${item.Cliente || '-'}`;
+            if (body) {
+                body.innerHTML = `
+                    <div class="py-10 text-center text-slate-400">
+                        <i data-lucide="loader-circle" class="w-7 h-7 mx-auto mb-3 animate-spin text-pstec-600"></i>
+                        <p class="font-bold text-xs">Buscando anexos...</p>
+                    </div>
+                `;
+            }
+
+            modal?.classList.remove('hidden');
+            modal?.classList.add('flex');
+            lucide.createIcons();
+
+            const cacheKey = `${codEmpresa}:${codOrcamento}`;
+            if (anexosOrcamentoCache.has(cacheKey)) {
+                renderAttachmentsList(anexosOrcamentoCache.get(cacheKey), codEmpresa, codOrcamento);
+                return;
+            }
+
+            try {
+                const url = `${API_CARTEIRA_ANEXOS}/anexos?cod_empresa=${encodeURIComponent(codEmpresa)}&cod_orcamento=${encodeURIComponent(codOrcamento)}`;
+                const response = await fetch(url, {
+                    method: 'GET',
+                    cache: 'no-store',
+                    headers: getPstecAuthHeaders({ 'Cache-Control': 'no-cache' })
+                });
+
+                if (response.status === 401) {
+                    throw new Error('Sua sessão expirou. Faça login novamente.');
+                }
+                if (!response.ok) {
+                    throw new Error(`Erro ao consultar anexos (HTTP ${response.status}).`);
+                }
+
+                const anexos = await response.json();
+                anexosOrcamentoCache.set(cacheKey, Array.isArray(anexos) ? anexos : []);
+                renderAttachmentsList(anexos, codEmpresa, codOrcamento);
+            } catch (error) {
+                console.error('Erro ao listar anexos:', error);
+                if (body) {
+                    body.innerHTML = `
+                        <div class="py-10 text-center">
+                            <div class="w-12 h-12 mx-auto mb-3 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center border border-red-100">
+                                <i data-lucide="circle-alert" class="w-6 h-6"></i>
+                            </div>
+                            <p class="font-extrabold text-sm text-red-700">Não foi possível carregar os anexos</p>
+                            <p class="text-[11px] text-slate-500 mt-1">${escapeHtml(error.message || 'Erro desconhecido')}</p>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                }
+            }
+        }
+
+        async function openAttachmentFile(codEmpresa, codOrcamento, codigo, nomeArquivo) {
+            // Abre a aba imediatamente para não cair no bloqueador de pop-up
+            const novaAba = window.open('', '_blank');
+            if (novaAba) {
+                novaAba.document.write(`
+                    <!doctype html><html><head><title>Carregando...</title></head>
+                    <body style="font-family:Segoe UI,Arial,sans-serif;padding:32px;color:#334155">
+                        <strong>Carregando ${String(nomeArquivo || 'anexo').replace(/[<>&]/g, '')}...</strong>
+                    </body></html>
+                `);
+            }
+
+            try {
+                const url = `${API_CARTEIRA_ANEXOS}/anexo/${encodeURIComponent(codEmpresa)}/${encodeURIComponent(codOrcamento)}/${encodeURIComponent(codigo)}`;
+                const response = await fetch(url, {
+                    method: 'GET',
+                    cache: 'no-store',
+                    headers: getPstecAuthHeaders()
+                });
+
+                if (response.status === 401) {
+                    throw new Error('Sua sessão expirou. Faça login novamente.');
+                }
+                if (!response.ok) {
+                    let detalhe = '';
+                    try {
+                        const erroJson = await response.json();
+                        detalhe = erroJson?.detail ? ` ${erroJson.detail}` : '';
+                    } catch (_) {}
+                    throw new Error(`Erro ao abrir o anexo (HTTP ${response.status}).${detalhe}`);
+                }
+
+                const blob = await response.blob();
+                const objectUrl = URL.createObjectURL(blob);
+
+                if (novaAba) {
+                    novaAba.location.href = objectUrl;
+                } else {
+                    const link = document.createElement('a');
+                    link.href = objectUrl;
+                    link.target = '_blank';
+                    link.rel = 'noopener';
+                    link.click();
+                }
+
+                setTimeout(() => URL.revokeObjectURL(objectUrl), 5 * 60 * 1000);
+            } catch (error) {
+                console.error('Erro ao abrir anexo:', error);
+                if (novaAba) novaAba.close();
+                alert(error.message || 'Não foi possível abrir o anexo.');
+            }
         }
 
         function openModal(filteredIdx) {
