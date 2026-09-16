@@ -14,6 +14,7 @@ tailwind.config={theme:{extend:{colors:{pstec:{50:'#f0f5ff',100:'#e0ebff',500:'#
 <script src="https://unpkg.com/lucide@latest"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <script src="./pstec-cache.js"></script>
 <style>
 :root{--screen-bg:#df6d79;--screen-bg-soft:#f8dde1;--theme-accent:#c84d5d}
@@ -187,8 +188,11 @@ th{user-select:none}.col-filter-popover{display:none}.col-filter-popover.active{
 
   <section id="capitalDashboardView" class="hidden flex flex-col gap-3">
     <div class="capital-dashboard-mini px-4 py-3 flex flex-wrap items-center justify-between gap-2">
-      <div><h2 class="text-sm font-black text-slate-800">Dashboard — <span id="capitalDashboardTitle">Carteira</span></h2><p class="text-[11px] text-slate-500">Os gráficos respeitam todos os filtros atuais. Clique nas barras/fatias para filtrar a tela.</p></div>
-      <span id="capitalDashboardCount" class="px-2.5 py-1 rounded-full text-[10px] font-black bg-pstec-100 text-pstec-700">0 registros</span>
+      <div><h2 class="text-sm font-black text-slate-800">Dashboard — <span id="capitalDashboardTitle">Carteira</span></h2><p class="text-[11px] text-slate-500">Os gráficos respeitam os filtros atuais. Clique uma vez para filtrar e novamente no mesmo item para desfazer.</p></div>
+      <div class="flex items-center gap-2">
+        <button onclick="openCapitalDashboardHelp()" class="w-8 h-8 rounded-full bg-white/80 hover:bg-white border border-slate-200 text-pstec-700 flex items-center justify-center transition" title="Entenda este dashboard"><i data-lucide="circle-help" class="w-4 h-4"></i></button>
+        <span id="capitalDashboardCount" class="px-2.5 py-1 rounded-full text-[10px] font-black bg-pstec-100 text-pstec-700">0 registros</span>
+      </div>
     </div>
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-3">
       <div class="capital-dashboard-card"><h3 id="capChartTitle1" class="text-[11px] font-black uppercase text-slate-600 mb-2">Gráfico 1</h3><div class="flex-1 relative"><canvas id="capChart1"></canvas></div></div>
@@ -228,6 +232,7 @@ const EXPORT_COLS_KEY='pstec_capital_export_cols_v2';
 let rawCapital=[], currentRows=[], activeTab='carteira';
 let capitalViewMode=localStorage.getItem('pstec_capital_view_mode')||'table';
 let capitalCharts={};
+let capitalDashboardClickState={carteira:{},faturamento:{},financeiro:{}};
 let capitalDataReady=false,capitalRefreshing=false,capitalCacheSavedAt=null,capitalLastApiSyncAt=0,capitalAutoRefreshTimer=null;
 let hiddenCols={carteira:new Set(),faturamento:new Set(),financeiro:new Set()};
 let colSelections={carteira:{},faturamento:{},financeiro:{}};
@@ -445,6 +450,39 @@ function setCapitalView(mode){
  if(capitalViewMode==='dashboard')renderCapitalDashboard(currentRows);
  lucide.createIcons();
 }
+if(window.Chart&&window.ChartDataLabels){Chart.register(ChartDataLabels)}
+function capitalDashboardValueLabel(value,currency=true){const v=n(value);return currency?new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',notation:'compact',maximumFractionDigits:1}).format(v):new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1}).format(v)}
+function openCapitalDashboardHelp(){
+ const title=document.getElementById('capitalDashboardHelpTitle'),body=document.getElementById('capitalDashboardHelpBody');
+ const common=`<div class="bg-pstec-50 border border-pstec-100 rounded-xl p-3 md:col-span-2"><b class="text-pstec-700">Interação</b><p class="mt-1">Os valores ficam visíveis diretamente nos gráficos. Clique uma vez em uma barra/fatia para aplicar o filtro. <b>Clique novamente no mesmo item</b> para restaurar o filtro anterior.</p></div>`;
+ const info={
+  carteira:{title:'Como ler o Dashboard — Carteira',items:[
+   ['Capital necessário por cliente — Top 10','Soma o Total a pagar por cliente e mostra os dez maiores compromissos de capital.'],
+   ['Composição do capital necessário','Divide o capital entre Prata, AGCN, MP Comum e Impostos.'],
+   ['Capital necessário por mês de entrega','Agrupa o Total a pagar pelo mês da previsão de entrega usada na Carteira.'],
+   ['Venda x capital x saldo financeiro','Compara Vl. a faturar, Total a pagar e Saldo Financeiro nos filtros atuais.'],
+   ['Capital por disponibilidade de material','Mostra quanto do capital está associado a cada situação de disponibilidade do material.'],
+   ['Valor a faturar por cliente — Top 10','Mostra os dez clientes com maior valor ainda a faturar.']]},
+  faturamento:{title:'Como ler o Dashboard — Faturamento',items:[
+   ['Faturamento por mês','Agrupa o valor faturado pelo mês de emissão.'],
+   ['Faturamento por cliente — Top 10','Mostra os dez clientes com maior faturamento dentro dos filtros atuais.'],
+   ['Composição dos custos faturados','Divide os custos faturados entre Prata, AGCN, MP Comum e Impostos.'],
+   ['Faturamento por controle de recebimento','Distribui o faturamento conforme o status financeiro/controle de recebimento.'],
+   ['Material faturado por cliente — Top 10','Mostra os clientes com maior valor de material associado ao faturamento.'],
+   ['Faturamento x material x impostos x saldo','Compara o faturamento com material, impostos e saldo resultante.']]},
+  financeiro:{title:'Como ler o Dashboard — Financeiro',items:[
+   ['Recebido x A receber','Compara o total já recebido contra o valor ainda a receber.'],
+   ['A receber por cliente — Top 10','Mostra os dez clientes com maior saldo a receber.'],
+   ['A receber por controle de recebimento','Distribui o saldo a receber conforme o status financeiro.'],
+   ['A receber por mês de emissão','Agrupa o valor a receber pelo mês da emissão da NF.'],
+   ['Recebido x A receber por mês','Compara, mês a mês, os valores recebidos e em aberto.'],
+   ['Resumo financeiro','Compara Total financeiro, Recebido e A receber.']]}
+ };
+ const cfg=info[activeTab]||info.carteira;title.textContent=cfg.title;body.innerHTML=cfg.items.map(([t,d])=>`<div class="bg-slate-50 border rounded-xl p-3"><b>${t}</b><p class="mt-1 text-slate-500">${d}</p></div>`).join('')+common;
+ const m=document.getElementById('capitalDashboardHelpModal');m.classList.remove('hidden');m.classList.add('flex');lucide.createIcons();
+}
+function closeCapitalDashboardHelp(){const m=document.getElementById('capitalDashboardHelpModal');m.classList.add('hidden');m.classList.remove('flex')}
+
 function destroyCapitalCharts(){Object.values(capitalCharts).forEach(ch=>{try{ch.destroy()}catch{}});capitalCharts={}}
 function chartThemeColors(){
  const tab=activeTab;
@@ -459,27 +497,36 @@ function monthEntries(rows,dateGetter,valueGetter){const m=new Map();rows.forEac
 function monthLabel(k){const [y,m]=k.split('-');return `${m}/${y}`}
 function capitalChart(canvasId,type,labels,values,opts={}){
  const el=document.getElementById(canvasId);if(!el||!window.Chart)return null;
- const colors=opts.colors||chartThemeColors();
+ const colors=opts.colors||chartThemeColors(),isDoughnut=type==='doughnut',isHorizontal=opts.indexAxis==='y';
  const bg=type==='line'?colors[0]:labels.map((_,i)=>colors[i%colors.length]);
- const ch=new Chart(el,{type,data:{labels,datasets:[{label:opts.datasetLabel||'',data:values,backgroundColor:bg,borderColor:type==='line'?colors[0]:labels.map((_,i)=>colors[i%colors.length]),borderWidth:type==='line'?2:1,tension:.28,fill:type==='line'?false:undefined}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:opts.indexAxis||'x',plugins:{legend:{display:opts.legend??(type==='doughnut')},tooltip:{callbacks:{label:(ctx)=>opts.currency===false?num(ctx.raw):brl(ctx.raw)}}},scales:type==='doughnut'?{}:{y:{beginAtZero:true,ticks:{callback:v=>opts.currency===false?num(v):new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1}).format(v)}},x:{ticks:{autoSkip:true,maxRotation:0,minRotation:0}}},onClick:(evt,elements)=>{if(!elements.length||!opts.onClick)return;const idx=elements[0].index;opts.onClick(labels[idx],idx)}}});
+ const datasetLabel=opts.datasetLabel||(opts.currency===false?'Quantidade':'Valor');
+ const ch=new Chart(el,{type,data:{labels,datasets:[{label:datasetLabel,data:values,backgroundColor:bg,borderColor:type==='line'?colors[0]:labels.map((_,i)=>colors[i%colors.length]),borderWidth:type==='line'?2:1,tension:.28,fill:type==='line'?false:undefined}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:opts.indexAxis||'x',layout:{padding:isDoughnut?8:{top:24,right:isHorizontal?58:16,left:8,bottom:4}},plugins:{legend:{display:true,position:'top',labels:{usePointStyle:true,pointStyle:'circle',boxWidth:8,boxHeight:8,font:{size:10,weight:'600'},color:'#475569'}},tooltip:{callbacks:{label:(ctx)=>`${ctx.dataset.label?ctx.dataset.label+': ':''}${opts.currency===false?num(ctx.raw):brl(ctx.raw)}`}},datalabels:window.ChartDataLabels?{display:ctx=>n(ctx.dataset.data[ctx.dataIndex])!==0,formatter:v=>capitalDashboardValueLabel(v,opts.currency!==false),color:isDoughnut?'#0f172a':'#334155',backgroundColor:isDoughnut?'rgba(255,255,255,.82)':null,borderRadius:isDoughnut?4:0,padding:isDoughnut?3:0,anchor:isDoughnut?'center':'end',align:isDoughnut?'center':(isHorizontal?'right':'top'),offset:isDoughnut?0:3,clamp:true,clip:false,font:{size:9,weight:'700'}}:false},scales:isDoughnut?{}:{y:{beginAtZero:true,ticks:{callback:v=>opts.currency===false?num(v):new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1}).format(v)}},x:{ticks:{autoSkip:true,maxRotation:0,minRotation:0}}},onClick:(evt,elements)=>{if(!elements.length||!opts.onClick)return;const idx=elements[0].index;opts.onClick(labels[idx],idx)}}});
  capitalCharts[canvasId]=ch;return ch;
 }
 function capitalMultiChart(canvasId,labels,datasets,opts={}){
  const el=document.getElementById(canvasId);if(!el||!window.Chart)return null;const colors=chartThemeColors();
  const ds=datasets.map((d,i)=>({...d,backgroundColor:d.backgroundColor||colors[i%colors.length],borderColor:d.borderColor||colors[i%colors.length],borderWidth:1}));
- const ch=new Chart(el,{type:'bar',data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${brl(ctx.raw)}`}}},scales:{y:{beginAtZero:true,ticks:{callback:v=>new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1}).format(v)}},x:{ticks:{autoSkip:true,maxRotation:0}}},onClick:(evt,elements)=>{if(!elements.length||!opts.onClick)return;opts.onClick(labels[elements[0].index],elements[0].index)}}});capitalCharts[canvasId]=ch;return ch;
+ const ch=new Chart(el,{type:'bar',data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:24,right:18,left:8,bottom:4}},plugins:{legend:{display:true,position:'top',labels:{usePointStyle:true,pointStyle:'circle',boxWidth:8,boxHeight:8,font:{size:10,weight:'600'},color:'#475569'}},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${brl(ctx.raw)}`}},datalabels:window.ChartDataLabels?{display:ctx=>n(ctx.dataset.data[ctx.dataIndex])!==0,formatter:v=>capitalDashboardValueLabel(v,true),color:'#334155',anchor:'end',align:'top',offset:2,clamp:true,clip:false,font:{size:8,weight:'700'}}:false},scales:{y:{beginAtZero:true,ticks:{callback:v=>new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1}).format(v)}},x:{ticks:{autoSkip:true,maxRotation:0}}},onClick:(evt,elements)=>{if(!elements.length||!opts.onClick)return;opts.onClick(labels[elements[0].index],elements[0].index)}}});capitalCharts[canvasId]=ch;return ch;
 }
 function setCapitalDashboardTitle(i,text){const el=document.getElementById(`capChartTitle${i}`);if(el)el.textContent=text}
 function applyCapitalDashboardFilter(kind,value,rawKey=''){
- if(kind==='cliente'){const el=document.getElementById('clienteFilter');if(el){el.value=value;render()}}
- else if(kind==='status'){const id=activeTab==='carteira'?'carteiraStatusOsFilter':activeTab==='faturamento'?'faturamentoStatusFilter':'financeiroStatusFilter';const el=document.getElementById(id);if(el){el.value=value;render()}}
- else if(kind==='material'){const el=document.getElementById('carteiraDisponibilidadeFilter');if(el){el.value=value;render()}}
- else if(kind==='prata'){const id=activeTab==='carteira'?'carteiraPrataFilter':'faturamentoPrataFilter';const el=document.getElementById(id);if(el){el.value=value;render()}}
- else if(kind==='month'){
-   const [y,m]=rawKey.split('-').map(Number);const last=new Date(y,m,0).getDate();
-   const pre=activeTab==='carteira'?'carteira':activeTab==='faturamento'?'faturamento':'financeiro';
-   const d1=document.getElementById(`${pre}DateFrom`),d2=document.getElementById(`${pre}DateTo`);if(d1&&d2){d1.value=`${y}-${String(m).padStart(2,'0')}-01`;d2.value=`${y}-${String(m).padStart(2,'0')}-${String(last).padStart(2,'0')}`;render()}
+ const states=capitalDashboardClickState[activeTab]||(capitalDashboardClickState[activeTab]={});
+ if(kind==='month'){
+   if(!rawKey)return;
+   const [y,m]=rawKey.split('-').map(Number),last=new Date(y,m,0).getDate(),pre=activeTab==='carteira'?'carteira':activeTab==='faturamento'?'faturamento':'financeiro';
+   const d1=document.getElementById(`${pre}DateFrom`),d2=document.getElementById(`${pre}DateTo`);if(!d1||!d2)return;
+   const from=`${y}-${String(m).padStart(2,'0')}-01`,to=`${y}-${String(m).padStart(2,'0')}-${String(last).padStart(2,'0')}`,state=states.month,currentMatches=d1.value===from&&d2.value===to;
+   if(state&&state.value===rawKey&&currentMatches){d1.value=state.previousFrom||'';d2.value=state.previousTo||'';delete states.month}else{states.month={value:rawKey,previousFrom:d1.value,previousTo:d2.value};d1.value=from;d2.value=to}render();return;
  }
+ let id='';
+ if(kind==='cliente')id='clienteFilter';
+ else if(kind==='status')id=activeTab==='carteira'?'carteiraStatusOsFilter':activeTab==='faturamento'?'faturamentoStatusFilter':'financeiroStatusFilter';
+ else if(kind==='material')id='carteiraDisponibilidadeFilter';
+ else if(kind==='prata')id=activeTab==='carteira'?'carteiraPrataFilter':'faturamentoPrataFilter';
+ if(!id)return;const el=document.getElementById(id);if(!el)return;
+ const normalized=value&&value!=='(Vazio)'?String(value):'';if(!normalized)return;
+ const stateKey=`${kind}:${id}`,state=states[stateKey],currentMatches=el.value===normalized;
+ if(state&&state.value===normalized&&currentMatches){el.value=state.previous||'';delete states[stateKey]}else{states[stateKey]={value:normalized,previous:el.value};el.value=normalized}render();
 }
 function renderCapitalDashboard(rows){
  if(capitalViewMode!=='dashboard')return;destroyCapitalCharts();
@@ -487,30 +534,31 @@ function renderCapitalDashboard(rows){
  document.getElementById('capitalDashboardTitle').textContent=title;document.getElementById('capitalDashboardCount').textContent=`${rows.length.toLocaleString('pt-BR')} registros`;
  const colors=chartThemeColors();
  if(activeTab==='carteira'){
-   const clients=topEntries(aggregateBy(rows,r=>r.Cliente,r=>r._totalPagar),10);setCapitalDashboardTitle(1,'Capital necessário por cliente — Top 10');capitalChart('capChart1','bar',clients.map(x=>x[0]),clients.map(x=>x[1]),{indexAxis:'y',onClick:v=>applyCapitalDashboardFilter('cliente',v)});
-   const comp=[['Prata',rows.reduce((a,r)=>a+n(r._prataPedido),0)],['AGCN',rows.reduce((a,r)=>a+n(r._agcn),0)],['MP Comum',rows.reduce((a,r)=>a+n(r['Vl. MP comum']),0)],['Impostos',rows.reduce((a,r)=>a+n(r['Impostos a pagar']),0)]];setCapitalDashboardTitle(2,'Composição do capital necessário');capitalChart('capChart2','doughnut',comp.map(x=>x[0]),comp.map(x=>Math.max(0,x[1])),{legend:true});
-   const months=monthEntries(rows,r=>r.previsao_ent_pesq||r['Dt. Negociada']||r['Prev. entrega(original)'],r=>r._totalPagar);setCapitalDashboardTitle(3,'Capital necessário por mês de entrega');capitalChart('capChart3','bar',months.map(x=>monthLabel(x[0])),months.map(x=>x[1]),{onClick:(v,i)=>applyCapitalDashboardFilter('month',v,months[i][0])});
+   const clients=topEntries(aggregateBy(rows,r=>r.Cliente,r=>r._totalPagar),10);setCapitalDashboardTitle(1,'Capital necessário por cliente — Top 10');capitalChart('capChart1','bar',clients.map(x=>x[0]),clients.map(x=>x[1]),{datasetLabel:'Valor',indexAxis:'y',onClick:v=>applyCapitalDashboardFilter('cliente',v)});
+   const comp=[['Prata',rows.reduce((a,r)=>a+n(r._prataPedido),0)],['AGCN',rows.reduce((a,r)=>a+n(r._agcn),0)],['MP Comum',rows.reduce((a,r)=>a+n(r['Vl. MP comum']),0)],['Impostos',rows.reduce((a,r)=>a+n(r['Impostos a pagar']),0)]];setCapitalDashboardTitle(2,'Composição do capital necessário');capitalChart('capChart2','doughnut',comp.map(x=>x[0]),comp.map(x=>Math.max(0,x[1])),{datasetLabel:'Valor',legend:true});
+   const months=monthEntries(rows,r=>r.previsao_ent_pesq||r['Dt. Negociada']||r['Prev. entrega(original)'],r=>r._totalPagar);setCapitalDashboardTitle(3,'Capital necessário por mês de entrega');capitalChart('capChart3','bar',months.map(x=>monthLabel(x[0])),months.map(x=>x[1]),{datasetLabel:'Valor',onClick:(v,i)=>applyCapitalDashboardFilter('month',v,months[i][0])});
    const comparison=[['Vl. a faturar',rows.reduce((a,r)=>a+n(r['Vl. a faturar']),0)],['Total a pagar',rows.reduce((a,r)=>a+n(r._totalPagar),0)],['Saldo financeiro',rows.reduce((a,r)=>a+n(r._saldoFin),0)]];setCapitalDashboardTitle(4,'Venda x capital x saldo financeiro');capitalChart('capChart4','bar',comparison.map(x=>x[0]),comparison.map(x=>x[1]));
-   const mat=topEntries(aggregateBy(rows,r=>r['Disponibilidade Material']||'(Vazio)',r=>r._totalPagar),10);setCapitalDashboardTitle(5,'Capital por disponibilidade de material');capitalChart('capChart5','bar',mat.map(x=>x[0]),mat.map(x=>x[1]),{indexAxis:'y',onClick:v=>applyCapitalDashboardFilter('material',v)});
-   const clientsFat=topEntries(aggregateBy(rows,r=>r.Cliente,r=>r['Vl. a faturar']),10);setCapitalDashboardTitle(6,'Valor a faturar por cliente — Top 10');capitalChart('capChart6','bar',clientsFat.map(x=>x[0]),clientsFat.map(x=>x[1]),{indexAxis:'y',onClick:v=>applyCapitalDashboardFilter('cliente',v)});
+   const mat=topEntries(aggregateBy(rows,r=>r['Disponibilidade Material']||'(Vazio)',r=>r._totalPagar),10);setCapitalDashboardTitle(5,'Capital por disponibilidade de material');capitalChart('capChart5','bar',mat.map(x=>x[0]),mat.map(x=>x[1]),{datasetLabel:'Valor',indexAxis:'y',onClick:v=>applyCapitalDashboardFilter('material',v)});
+   const clientsFat=topEntries(aggregateBy(rows,r=>r.Cliente,r=>r['Vl. a faturar']),10);setCapitalDashboardTitle(6,'Valor a faturar por cliente — Top 10');capitalChart('capChart6','bar',clientsFat.map(x=>x[0]),clientsFat.map(x=>x[1]),{datasetLabel:'Valor',indexAxis:'y',onClick:v=>applyCapitalDashboardFilter('cliente',v)});
  }else if(activeTab==='faturamento'){
-   const months=monthEntries(rows,r=>r.Emissão||firstDateFromList(r['Dts. emissão']),r=>r._fatValor);setCapitalDashboardTitle(1,'Faturamento por mês');capitalChart('capChart1','bar',months.map(x=>monthLabel(x[0])),months.map(x=>x[1]),{onClick:(v,i)=>applyCapitalDashboardFilter('month',v,months[i][0])});
-   const clients=topEntries(aggregateBy(rows,r=>r.Cliente,r=>r._fatValor),10);setCapitalDashboardTitle(2,'Faturamento por cliente — Top 10');capitalChart('capChart2','bar',clients.map(x=>x[0]),clients.map(x=>x[1]),{indexAxis:'y',onClick:v=>applyCapitalDashboardFilter('cliente',v)});
-   const comp=[['Prata',rows.reduce((a,r)=>a+n(r._fatPrata),0)],['AGCN',rows.reduce((a,r)=>a+n(r._fatAgcn),0)],['MP Comum',rows.reduce((a,r)=>a+n(r._fatMPComum),0)],['Impostos',rows.reduce((a,r)=>a+n(r._fatImp),0)]];setCapitalDashboardTitle(3,'Composição dos custos faturados');capitalChart('capChart3','doughnut',comp.map(x=>x[0]),comp.map(x=>Math.max(0,x[1])),{legend:true});
-   const stat=topEntries(aggregateBy(rows,r=>r.status_nf||'(Vazio)',r=>r._fatValor),10);setCapitalDashboardTitle(4,'Faturamento por controle de recebimento');capitalChart('capChart4','bar',stat.map(x=>x[0]),stat.map(x=>x[1]),{onClick:v=>applyCapitalDashboardFilter('status',v)});
-   const clientsMP=topEntries(aggregateBy(rows,r=>r.Cliente,r=>r._fatTotalMP),10);setCapitalDashboardTitle(5,'Material faturado por cliente — Top 10');capitalChart('capChart5','bar',clientsMP.map(x=>x[0]),clientsMP.map(x=>x[1]),{indexAxis:'y',onClick:v=>applyCapitalDashboardFilter('cliente',v)});
+   const months=monthEntries(rows,r=>r.Emissão||firstDateFromList(r['Dts. emissão']),r=>r._fatValor);setCapitalDashboardTitle(1,'Faturamento por mês');capitalChart('capChart1','bar',months.map(x=>monthLabel(x[0])),months.map(x=>x[1]),{datasetLabel:'Valor',onClick:(v,i)=>applyCapitalDashboardFilter('month',v,months[i][0])});
+   const clients=topEntries(aggregateBy(rows,r=>r.Cliente,r=>r._fatValor),10);setCapitalDashboardTitle(2,'Faturamento por cliente — Top 10');capitalChart('capChart2','bar',clients.map(x=>x[0]),clients.map(x=>x[1]),{datasetLabel:'Valor',indexAxis:'y',onClick:v=>applyCapitalDashboardFilter('cliente',v)});
+   const comp=[['Prata',rows.reduce((a,r)=>a+n(r._fatPrata),0)],['AGCN',rows.reduce((a,r)=>a+n(r._fatAgcn),0)],['MP Comum',rows.reduce((a,r)=>a+n(r._fatMPComum),0)],['Impostos',rows.reduce((a,r)=>a+n(r._fatImp),0)]];setCapitalDashboardTitle(3,'Composição dos custos faturados');capitalChart('capChart3','doughnut',comp.map(x=>x[0]),comp.map(x=>Math.max(0,x[1])),{datasetLabel:'Valor',legend:true});
+   const stat=topEntries(aggregateBy(rows,r=>r.status_nf||'(Vazio)',r=>r._fatValor),10);setCapitalDashboardTitle(4,'Faturamento por controle de recebimento');capitalChart('capChart4','bar',stat.map(x=>x[0]),stat.map(x=>x[1]),{datasetLabel:'Valor',onClick:v=>applyCapitalDashboardFilter('status',v)});
+   const clientsMP=topEntries(aggregateBy(rows,r=>r.Cliente,r=>r._fatTotalMP),10);setCapitalDashboardTitle(5,'Material faturado por cliente — Top 10');capitalChart('capChart5','bar',clientsMP.map(x=>x[0]),clientsMP.map(x=>x[1]),{datasetLabel:'Valor',indexAxis:'y',onClick:v=>applyCapitalDashboardFilter('cliente',v)});
    const cmp=[['Faturamento',rows.reduce((a,r)=>a+n(r._fatValor),0)],['Material',rows.reduce((a,r)=>a+n(r._fatTotalMP),0)],['Impostos',rows.reduce((a,r)=>a+n(r._fatImp),0)],['Saldo',rows.reduce((a,r)=>a+n(r._fatSaldo),0)]];setCapitalDashboardTitle(6,'Faturamento x material x impostos x saldo');capitalChart('capChart6','bar',cmp.map(x=>x[0]),cmp.map(x=>x[1]));
  }else{
-   const rec=rows.reduce((a,r)=>a+n(r.RECEBIDO),0), ar=rows.reduce((a,r)=>a+n(r['A RECEBER']),0);setCapitalDashboardTitle(1,'Recebido x A receber');capitalChart('capChart1','doughnut',['Recebido','A receber'],[Math.max(0,rec),Math.max(0,ar)],{legend:true,colors:['#10b981','#ef4444']});
-   const clients=topEntries(aggregateBy(rows,r=>r.Cliente,r=>r['A RECEBER']),10);setCapitalDashboardTitle(2,'A receber por cliente — Top 10');capitalChart('capChart2','bar',clients.map(x=>x[0]),clients.map(x=>x[1]),{indexAxis:'y',onClick:v=>applyCapitalDashboardFilter('cliente',v)});
-   const stat=topEntries(aggregateBy(rows,r=>r.status_nf||'(Vazio)',r=>r['A RECEBER']),10);setCapitalDashboardTitle(3,'A receber por controle de recebimento');capitalChart('capChart3','bar',stat.map(x=>x[0]),stat.map(x=>x[1]),{onClick:v=>applyCapitalDashboardFilter('status',v)});
-   const months=monthEntries(rows,r=>r.Emissão,r=>r['A RECEBER']);setCapitalDashboardTitle(4,'A receber por mês de emissão');capitalChart('capChart4','bar',months.map(x=>monthLabel(x[0])),months.map(x=>x[1]),{onClick:(v,i)=>applyCapitalDashboardFilter('month',v,months[i][0])});
+   const rec=rows.reduce((a,r)=>a+n(r.RECEBIDO),0), ar=rows.reduce((a,r)=>a+n(r['A RECEBER']),0);setCapitalDashboardTitle(1,'Recebido x A receber');capitalChart('capChart1','doughnut',['Recebido','A receber'],[Math.max(0,rec),Math.max(0,ar)],{datasetLabel:'Valor',legend:true,colors:['#10b981','#ef4444']});
+   const clients=topEntries(aggregateBy(rows,r=>r.Cliente,r=>r['A RECEBER']),10);setCapitalDashboardTitle(2,'A receber por cliente — Top 10');capitalChart('capChart2','bar',clients.map(x=>x[0]),clients.map(x=>x[1]),{datasetLabel:'Valor',indexAxis:'y',onClick:v=>applyCapitalDashboardFilter('cliente',v)});
+   const stat=topEntries(aggregateBy(rows,r=>r.status_nf||'(Vazio)',r=>r['A RECEBER']),10);setCapitalDashboardTitle(3,'A receber por controle de recebimento');capitalChart('capChart3','bar',stat.map(x=>x[0]),stat.map(x=>x[1]),{datasetLabel:'Valor',onClick:v=>applyCapitalDashboardFilter('status',v)});
+   const months=monthEntries(rows,r=>r.Emissão,r=>r['A RECEBER']);setCapitalDashboardTitle(4,'A receber por mês de emissão');capitalChart('capChart4','bar',months.map(x=>monthLabel(x[0])),months.map(x=>x[1]),{datasetLabel:'Valor',onClick:(v,i)=>applyCapitalDashboardFilter('month',v,months[i][0])});
    const months2=[...new Set(rows.map(r=>isoDate(r.Emissão)?.slice(0,7)).filter(Boolean))].sort();const recvMap=new Map(),arMap=new Map();rows.forEach(r=>{const k=isoDate(r.Emissão)?.slice(0,7);if(!k)return;recvMap.set(k,(recvMap.get(k)||0)+n(r.RECEBIDO));arMap.set(k,(arMap.get(k)||0)+n(r['A RECEBER']))});setCapitalDashboardTitle(5,'Recebido x A receber por mês');capitalMultiChart('capChart5',months2.map(monthLabel),[{label:'Recebido',data:months2.map(k=>recvMap.get(k)||0),backgroundColor:'#10b981'},{label:'A receber',data:months2.map(k=>arMap.get(k)||0),backgroundColor:'#ef4444'}],{onClick:(v,i)=>applyCapitalDashboardFilter('month',v,months2[i])});
    const total=rows.reduce((a,r)=>a+n(r._finTotal),0);const cmp=[['Total financeiro',total],['Recebido',rec],['A receber',ar]];setCapitalDashboardTitle(6,'Resumo financeiro');capitalChart('capChart6','bar',cmp.map(x=>x[0]),cmp.map(x=>x[1]));
  }
 }
 
 function clearFilters(){
+ capitalDashboardClickState[activeTab]={};
  ['searchInput','empresaFilter','clienteFilter','codigoItemFilter'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
  const ids=activeTab==='carteira'?['carteiraDateFrom','carteiraDateTo','carteiraStatusOsFilter','carteiraOsFilter','carteiraOrcFilter','carteiraPedidoFilter','carteiraDisponibilidadeFilter','carteiraPrataFilter','carteiraTipoFilter','carteiraEtapaFilter']:activeTab==='faturamento'?['faturamentoDateFrom','faturamentoDateTo','faturamentoNfFilter','faturamentoOrcFilter','faturamentoPlanoFilter','faturamentoPrataFilter','faturamentoStatusFilter']:['financeiroDateFrom','financeiroDateTo','financeiroNfFilter','financeiroStatusFilter'];
  ids.forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});colSelections[activeTab]={};populateFilters();render();
@@ -533,5 +581,17 @@ function startCapitalAutoRefresh(){const interval=PstecCache.AUTO_REFRESH_INTERV
 document.addEventListener('click',e=>{if(!e.target.closest('#columnsMenu')&&!e.target.closest('button[onclick="toggleColumnsMenu()"]'))document.getElementById('columnsMenu')?.classList.add('hidden');if(!e.target.closest('.col-filter-popover')&&!e.target.closest('[id^="filterBtn_"]'))document.querySelectorAll('.col-filter-popover').forEach(p=>p.classList.remove('active'))});
 document.addEventListener('DOMContentLoaded',()=>{loadHiddenCols();applySavedFiltersState();applyTabTheme(activeTab);document.getElementById('userDisplayName').textContent=localStorage.getItem('pstec_usuario_nome')||'Usuário';setCapitalView(capitalViewMode);lucide.createIcons();loadCapital();startCapitalAutoRefresh()});
 </script>
+
+<div id="capitalDashboardHelpModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[120]">
+  <div class="bg-white w-full max-w-3xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+    <div class="bg-pstec-700 text-white px-5 py-4 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-2"><i data-lucide="chart-no-axes-combined" class="w-5 h-5 text-pstecgreen-500"></i><div><h3 id="capitalDashboardHelpTitle" class="font-black text-sm">Dashboard</h3><p class="text-[10px] text-pstec-100 mt-0.5">O conteúdo abaixo muda conforme a aba ativa do Capital.</p></div></div>
+      <button onclick="closeCapitalDashboardHelp()" class="p-1.5 rounded-lg hover:bg-white/10"><i data-lucide="x" class="w-5 h-5"></i></button>
+    </div>
+    <div id="capitalDashboardHelpBody" class="p-5 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-slate-700 max-h-[70vh] overflow-y-auto custom-scroll"></div>
+    <div class="px-5 py-3 border-t bg-slate-50 flex justify-end"><button onclick="closeCapitalDashboardHelp()" class="px-5 py-2 rounded-xl bg-pstec-700 hover:bg-pstec-800 text-white text-xs font-bold">Entendi</button></div>
+  </div>
+</div>
+
 </body>
 </html>

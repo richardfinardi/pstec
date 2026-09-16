@@ -51,6 +51,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <script src="./pstec-cache.js"></script>
 
     <style>
@@ -261,9 +262,14 @@
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm px-4 py-3 flex flex-wrap items-center justify-between gap-2">
                 <div>
                     <h2 class="text-sm font-black text-slate-800">Dashboard Operacional da Carteira</h2>
-                    <p class="text-[11px] text-slate-500">Os gráficos respeitam os filtros da tela. Clique em uma barra ou fatia para aplicar o filtro correspondente.</p>
+                    <p class="text-[11px] text-slate-500">Os gráficos respeitam os filtros atuais. Clique uma vez para filtrar e clique novamente no mesmo item para desfazer.</p>
                 </div>
-                <span id="carteiraDashboardCount" class="px-2.5 py-1 rounded-full text-[10px] font-black bg-pstec-100 text-pstec-700">0 registros</span>
+                <div class="flex items-center gap-2">
+                    <button onclick="openCarteiraDashboardHelp()" class="w-8 h-8 rounded-full bg-pstec-50 hover:bg-pstec-100 border border-pstec-200 text-pstec-700 flex items-center justify-center transition" title="Entenda este dashboard">
+                        <i data-lucide="circle-help" class="w-4 h-4"></i>
+                    </button>
+                    <span id="carteiraDashboardCount" class="px-2.5 py-1 rounded-full text-[10px] font-black bg-pstec-100 text-pstec-700">0 registros</span>
+                </div>
             </div>
             <div class="grid grid-cols-1 xl:grid-cols-2 gap-3">
                 <div class="carteira-dashboard-card"><h3 class="text-[11px] font-black uppercase text-slate-600 mb-2">Valor a faturar por mês de entrega</h3><div class="flex-1 relative"><canvas id="carteiraChartPrazo"></canvas></div></div>
@@ -587,6 +593,7 @@
         let currentFilteredData = [];
         let carteiraViewMode = localStorage.getItem('pstec_carteira_view_mode') || 'table';
         let carteiraCharts = {};
+        let carteiraDashboardClickState = {};
         
         let sortColumn = 'Dt. aprovação';
         let sortAsc = false;
@@ -1920,7 +1927,32 @@
                     <!doctype html><html><head><title>Carregando...</title></head>
                     <body style="font-family:Segoe UI,Arial,sans-serif;padding:32px;color:#334155">
                         <strong>Carregando ${String(nomeArquivo || 'anexo').replace(/[<>&]/g, '')}...</strong>
-                    </body></html>
+                    
+    <!-- MODAL: AJUDA DO DASHBOARD DA CARTEIRA -->
+    <div id="carteiraDashboardHelpModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[120]">
+        <div class="bg-white w-full max-w-3xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+            <div class="bg-pstec-700 text-white px-5 py-4 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="chart-no-axes-combined" class="w-5 h-5 text-pstecgreen-500"></i>
+                    <div><h3 class="font-black text-sm">Como ler o Dashboard da Carteira</h3><p class="text-[10px] text-pstec-100 mt-0.5">Todos os gráficos usam somente os registros que passaram pelos filtros atuais.</p></div>
+                </div>
+                <button onclick="closeCarteiraDashboardHelp()" class="p-1.5 rounded-lg hover:bg-white/10"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-slate-700 max-h-[70vh] overflow-y-auto custom-scroll">
+                <div class="bg-slate-50 border rounded-xl p-3"><b>Valor a faturar por mês de entrega</b><p class="mt-1 text-slate-500">Soma o campo <b>Vl. a faturar</b> por mês da <b>Dt. Pesquisa</b>, mostrando quando o saldo da carteira está previsto para entrega.</p></div>
+                <div class="bg-slate-50 border rounded-xl p-3"><b>Valor a faturar por cliente — Top 10</b><p class="mt-1 text-slate-500">Mostra os dez clientes com maior valor ainda a faturar dentro dos filtros atuais.</p></div>
+                <div class="bg-slate-50 border rounded-xl p-3"><b>Valor a faturar por Status OS</b><p class="mt-1 text-slate-500">Distribui o valor pendente conforme o status atual da Ordem de Serviço.</p></div>
+                <div class="bg-slate-50 border rounded-xl p-3"><b>Disponibilidade Material</b><p class="mt-1 text-slate-500">Mostra quanto do valor a faturar está em cada situação de disponibilidade de material.</p></div>
+                <div class="bg-slate-50 border rounded-xl p-3"><b>Etapa</b><p class="mt-1 text-slate-500">Agrupa o valor a faturar pela etapa atual da carteira, ajudando a localizar onde está concentrado o saldo.</p></div>
+                <div class="bg-slate-50 border rounded-xl p-3"><b>Carteira com Prata x sem Prata</b><p class="mt-1 text-slate-500">Compara o valor a faturar dos itens identificados com Prata contra os demais itens.</p></div>
+                <div class="bg-red-50 border border-red-100 rounded-xl p-3 md:col-span-2"><b class="text-red-700">Entregas vencidas com saldo</b><p class="mt-1 text-red-600">Lista até 10 itens cuja previsão já venceu e ainda possuem saldo a entregar, priorizados pelo maior valor a faturar.</p></div>
+                <div class="bg-pstec-50 border border-pstec-100 rounded-xl p-3 md:col-span-2"><b class="text-pstec-700">Interação</b><p class="mt-1">Os valores ficam visíveis diretamente nos gráficos. Clique em uma barra ou fatia para aplicar aquele filtro. <b>Clique novamente no mesmo item</b> para restaurar o filtro que existia antes do clique.</p></div>
+            </div>
+            <div class="px-5 py-3 border-t bg-slate-50 flex justify-end"><button onclick="closeCarteiraDashboardHelp()" class="px-5 py-2 rounded-xl bg-pstec-700 hover:bg-pstec-800 text-white text-xs font-bold">Entendi</button></div>
+        </div>
+    </div>
+
+</body></html>
                 `);
             }
 
@@ -2055,6 +2087,34 @@
             lucide.createIcons();
         }
 
+        if (window.Chart && window.ChartDataLabels) {
+            Chart.register(ChartDataLabels);
+        }
+
+        function openCarteiraDashboardHelp() {
+            const m = document.getElementById('carteiraDashboardHelpModal');
+            if (!m) return;
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function closeCarteiraDashboardHelp() {
+            const m = document.getElementById('carteiraDashboardHelpModal');
+            if (!m) return;
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        function carteiraDashboardValueLabel(value, currency = true) {
+            const v = Number(value || 0);
+            if (!Number.isFinite(v)) return '';
+            if (currency) {
+                return new Intl.NumberFormat('pt-BR', { style:'currency', currency:'BRL', notation:'compact', maximumFractionDigits:1 }).format(v);
+            }
+            return new Intl.NumberFormat('pt-BR', { notation:'compact', maximumFractionDigits:1 }).format(v);
+        }
+
         function destroyCarteiraCharts() {
             Object.values(carteiraCharts).forEach(ch => { try { ch.destroy(); } catch(e){} });
             carteiraCharts = {};
@@ -2096,18 +2156,40 @@
             if (!el || !window.Chart) return;
             const palette = opts.colors || ['#003B96','#1a5ce6','#7CBD20','#10b981','#8b5cf6','#f59e0b','#ef4444','#06b6d4','#64748b','#d946ef'];
             const background = type === 'line' ? palette[0] : labels.map((_,i) => palette[i % palette.length]);
+            const isDoughnut = type === 'doughnut';
+            const isHorizontal = opts.indexAxis === 'y';
+            const datasetLabel = opts.label || (opts.currency === false ? 'Quantidade' : 'Valor');
             const chart = new Chart(el, {
                 type,
-                data: { labels, datasets: [{ label: opts.label || '', data: values, backgroundColor: background, borderColor: type === 'line' ? palette[0] : background, borderWidth: 1, tension: .28 }] },
+                data: { labels, datasets: [{ label: datasetLabel, data: values, backgroundColor: background, borderColor: type === 'line' ? palette[0] : background, borderWidth: 1, tension: .28 }] },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     indexAxis: opts.indexAxis || 'x',
+                    layout: { padding: isDoughnut ? 8 : { top: 24, right: isHorizontal ? 58 : 16, left: 8, bottom: 4 } },
                     plugins: {
-                        legend: { display: opts.legend ?? (type === 'doughnut') },
-                        tooltip: { callbacks: { label: ctx => opts.currency === false ? Number(ctx.raw || 0).toLocaleString('pt-BR') : fmtBRL(ctx.raw || 0) } }
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: { usePointStyle:true, pointStyle:'circle', boxWidth:8, boxHeight:8, font:{size:10, weight:'600'}, color:'#475569' }
+                        },
+                        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label ? ctx.dataset.label + ': ' : ''}${opts.currency === false ? Number(ctx.raw || 0).toLocaleString('pt-BR') : fmtBRL(ctx.raw || 0)}` } },
+                        datalabels: window.ChartDataLabels ? {
+                            display: ctx => Number(ctx.dataset.data[ctx.dataIndex] || 0) !== 0,
+                            formatter: value => carteiraDashboardValueLabel(value, opts.currency !== false),
+                            color: isDoughnut ? '#0f172a' : '#334155',
+                            backgroundColor: isDoughnut ? 'rgba(255,255,255,.82)' : null,
+                            borderRadius: isDoughnut ? 4 : 0,
+                            padding: isDoughnut ? 3 : 0,
+                            anchor: isDoughnut ? 'center' : 'end',
+                            align: isDoughnut ? 'center' : (isHorizontal ? 'right' : 'top'),
+                            offset: isDoughnut ? 0 : 3,
+                            clamp: true,
+                            clip: false,
+                            font: { size: 9, weight: '700' }
+                        } : false
                     },
-                    scales: type === 'doughnut' ? {} : {
+                    scales: isDoughnut ? {} : {
                         y: { beginAtZero: true, ticks: { callback: v => new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1}).format(v) } },
                         x: { ticks: { autoSkip: true, maxRotation: 0, minRotation: 0 } }
                     },
@@ -2123,8 +2205,21 @@
 
         function applyCarteiraDashboardFilter(key, value) {
             if (!filterState[key]) return;
-            filterState[key].clear();
-            if (value && value !== '(Vazio)') filterState[key].add(String(value));
+            const normalized = value && value !== '(Vazio)' ? String(value) : '';
+            if (!normalized) return;
+            const stateKey = `filter:${key}`;
+            const state = carteiraDashboardClickState[stateKey];
+            const currentMatches = filterState[key].size === 1 && filterState[key].has(normalized);
+
+            if (state && state.value === normalized && currentMatches) {
+                filterState[key].clear();
+                (state.previous || []).forEach(v => filterState[key].add(v));
+                delete carteiraDashboardClickState[stateKey];
+            } else {
+                carteiraDashboardClickState[stateKey] = { value: normalized, previous: [...filterState[key]] };
+                filterState[key].clear();
+                filterState[key].add(normalized);
+            }
             renderDropdownsHTML();
             renderCarteiraView();
         }
@@ -2132,8 +2227,22 @@
         function applyCarteiraDashboardMonth(key) {
             const [y,m] = key.split('-').map(Number);
             const last = new Date(y,m,0).getDate();
-            document.getElementById('dateFrom').value = `${y}-${String(m).padStart(2,'0')}-01`;
-            document.getElementById('dateTo').value = `${y}-${String(m).padStart(2,'0')}-${String(last).padStart(2,'0')}`;
+            const from = `${y}-${String(m).padStart(2,'0')}-01`;
+            const to = `${y}-${String(m).padStart(2,'0')}-${String(last).padStart(2,'0')}`;
+            const d1 = document.getElementById('dateFrom');
+            const d2 = document.getElementById('dateTo');
+            const state = carteiraDashboardClickState.month;
+            const currentMatches = d1.value === from && d2.value === to;
+
+            if (state && state.value === key && currentMatches) {
+                d1.value = state.previousFrom || '';
+                d2.value = state.previousTo || '';
+                delete carteiraDashboardClickState.month;
+            } else {
+                carteiraDashboardClickState.month = { value:key, previousFrom:d1.value, previousTo:d2.value };
+                d1.value = from;
+                d2.value = to;
+            }
             renderCarteiraView();
         }
 
@@ -2144,22 +2253,22 @@
             document.getElementById('carteiraDashboardCount').textContent = `${rows.length.toLocaleString('pt-BR')} registros`;
 
             const months = carteiraMonthData(rows);
-            createCarteiraChart('carteiraChartPrazo','bar',months.map(x=>carteiraMonthLabel(x[0])),months.map(x=>x[1]),{onClick:(label,idx)=>applyCarteiraDashboardMonth(months[idx][0])});
+            createCarteiraChart('carteiraChartPrazo','bar',months.map(x=>carteiraMonthLabel(x[0])),months.map(x=>x[1]),{label:'Valor a faturar',onClick:(label,idx)=>applyCarteiraDashboardMonth(months[idx][0])});
 
             const clients = carteiraTop(carteiraAggregate(rows,r=>r.Cliente,r=>r['Vl. a faturar']),10);
-            createCarteiraChart('carteiraChartClientes','bar',clients.map(x=>x[0]),clients.map(x=>x[1]),{indexAxis:'y',onClick:v=>applyCarteiraDashboardFilter('Cliente',v)});
+            createCarteiraChart('carteiraChartClientes','bar',clients.map(x=>x[0]),clients.map(x=>x[1]),{label:'Valor a faturar',indexAxis:'y',onClick:v=>applyCarteiraDashboardFilter('Cliente',v)});
 
             const status = carteiraTop(carteiraAggregate(rows,r=>r['Status OS'],r=>r['Vl. a faturar']),12);
-            createCarteiraChart('carteiraChartStatus','bar',status.map(x=>x[0]),status.map(x=>x[1]),{onClick:v=>applyCarteiraDashboardFilter('Status OS',v)});
+            createCarteiraChart('carteiraChartStatus','bar',status.map(x=>x[0]),status.map(x=>x[1]),{label:'Valor a faturar',onClick:v=>applyCarteiraDashboardFilter('Status OS',v)});
 
             const material = carteiraTop(carteiraAggregate(rows,r=>r['Disponibilidade Material'],r=>r['Vl. a faturar']),12);
-            createCarteiraChart('carteiraChartMaterial','bar',material.map(x=>x[0]),material.map(x=>x[1]),{indexAxis:'y',onClick:v=>applyCarteiraDashboardFilter('Disponibilidade Material',v)});
+            createCarteiraChart('carteiraChartMaterial','bar',material.map(x=>x[0]),material.map(x=>x[1]),{label:'Valor a faturar',indexAxis:'y',onClick:v=>applyCarteiraDashboardFilter('Disponibilidade Material',v)});
 
             const etapa = carteiraTop(carteiraAggregate(rows,r=>r.Etapa,r=>r['Vl. a faturar']),12);
-            createCarteiraChart('carteiraChartEtapa','bar',etapa.map(x=>x[0]),etapa.map(x=>x[1]),{indexAxis:'y',onClick:v=>applyCarteiraDashboardFilter('Etapa',v)});
+            createCarteiraChart('carteiraChartEtapa','bar',etapa.map(x=>x[0]),etapa.map(x=>x[1]),{label:'Valor a faturar',indexAxis:'y',onClick:v=>applyCarteiraDashboardFilter('Etapa',v)});
 
             const prata = carteiraAggregate(rows,r=>r.Prata||'(Vazio)',r=>r['Vl. a faturar']);
-            createCarteiraChart('carteiraChartPrata','doughnut',prata.map(x=>x[0]),prata.map(x=>Math.max(0,x[1])),{legend:true,onClick:v=>applyCarteiraDashboardFilter('Prata',v)});
+            createCarteiraChart('carteiraChartPrata','doughnut',prata.map(x=>x[0]),prata.map(x=>Math.max(0,x[1])),{label:'Valor a faturar',legend:true,onClick:v=>applyCarteiraDashboardFilter('Prata',v)});
 
             const today = new Date();
             const todayIso = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
@@ -2180,6 +2289,7 @@
         }
 
         function clearAllFilters() {
+            carteiraDashboardClickState = {};
             document.getElementById('searchInput').value = '';
             document.getElementById('dateFrom').value = '';
             document.getElementById('dateTo').value = '';
