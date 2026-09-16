@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/png" href="LOGO MINIMALISTA.png">
 <link rel="apple-touch-icon" href="LOGO MINIMALISTA.png">
-<title>Capital de Giro - PSTEC V1.3</title>
+<title>Capital de Giro - PSTEC V1.4</title>
 <script>if(!localStorage.getItem('pstec_token')) window.location.href='login-pstec.html';</script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
@@ -87,7 +87,7 @@ th{user-select:none}.col-filter-popover{display:none}.col-filter-popover.active{
   <div class="max-w-[98%] mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3">
     <div class="flex items-center gap-4">
       <a href="index.html" class="flex items-center justify-center p-1.5 bg-white rounded-xl shadow-sm" title="Menu PSTEC"><img src="./logo.png" alt="PSTEC" class="h-9 max-h-10 w-auto object-contain"></a>
-      <div><h1 class="text-xl font-extrabold tracking-wide">GRUPO PSTEC</h1><p class="text-xs text-pstec-100">Capital de Giro V1.3</p></div>
+      <div><h1 class="text-xl font-extrabold tracking-wide">GRUPO PSTEC</h1><p class="text-xs text-pstec-100">Capital de Giro V1.4</p></div>
     </div>
     <div class="flex items-center gap-2">
       <div class="hidden md:flex items-center gap-1.5 px-3 py-2 bg-pstec-800 border border-pstec-600 rounded-xl text-xs font-bold text-slate-200"><i data-lucide="user-check" class="w-4 h-4 text-pstecgreen-500"></i><span id="userDisplayName">Usuário</span></div>
@@ -299,7 +299,7 @@ const columns={
 function getCols(){return columns[activeTab]}
 function getCol(id){return getCols().find(c=>c.id===id)}
 function getValue(r,c){try{return c.get(r)}catch{return ''}}
-function formatForFilter(r,c){const v=getValue(r,c);if(c.type==='date')return fmtDate(v);if(c.type==='brl')return brl(v);if(c.type==='num')return num(v);if(c.type==='pct')return pct(v);return String(v??'').trim()||'(Vazio)'}
+function formatForFilter(r,c){const v=getValue(r,c);if(c.type==='date'){const iso=isoDate(v);return iso?fmtDate(v):'(Vazio)'}if(c.type==='brl')return brl(v);if(c.type==='num')return num(v);if(c.type==='pct')return pct(v);return String(v??'').trim()||'(Vazio)'}
 function cellHtml(r,c){const v=getValue(r,c);if(c.type==='date')return fmtDate(v);if(c.type==='brl')return `<span class="font-mono font-bold">${brl(v)}</span>`;if(c.type==='num')return `<span class="font-mono">${num(v)}</span>`;if(c.type==='pct')return `<span class="font-mono">${pct(v)}</span>`;if(c.type==='badge'){const s=String(v||'-');let cl='bg-slate-100 text-slate-700';if(/RECEBIDO|TOTAL DISPONÍVEL|APROVADO|SIM|CONCLUÍDO/i.test(s))cl='bg-emerald-100 text-emerald-800';else if(/ABERTO|PARCIAL|SEM OC|NADA|NAO|NÃO/i.test(s))cl='bg-amber-100 text-amber-800';return `<span class="px-2 py-0.5 rounded-md text-[10px] font-black ${cl}">${esc(s)}</span>`}return `<span title="${esc(v||'')}">${esc(v||'-')}</span>`}
 function visibleCols(){return getCols().filter(c=>!hiddenCols[activeTab].has(c.id))}
 
@@ -345,7 +345,7 @@ function baseRows(){
  }
  return rows;
 }
-function uniqueVals(rows,key,getter=null){return [...new Set(rows.map(r=>String(getter?getter(r):(r[key]??'')).trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR',{numeric:true}))}
+function uniqueVals(rows,key,getter=null){return [...new Set(rows.map(r=>{const s=String(getter?getter(r):(r[key]??'')).trim();return s||'(Vazio)'}))].sort((a,b)=>a.localeCompare(b,'pt-BR',{numeric:true,sensitivity:'base'}))}
 function setOpts(id,vals,label='Todos'){const el=document.getElementById(id);if(!el)return;const cur=el.value;const all=[...vals];if(cur&&!all.includes(cur))all.unshift(cur);el.innerHTML=`<option value="">${label}</option>`+all.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');el.value=cur}
 function populateFilters(){
  const allRows=rawCapital.map(deriv), rows=baseRows();
@@ -393,12 +393,12 @@ function activeExclusiveFilters(){
    pairs:[['NF',document.getElementById('financeiroNfFilter').value],['status_nf',document.getElementById('financeiroStatusFilter').value]]
  };
 }
-function exclusiveValue(r,key){if(key==='NF'&&activeTab==='faturamento')return String(r.NF||r['Notas Fiscais']||'');return String(r[key]??'')}
+function exclusiveValue(r,key){let v;if(key==='NF'&&activeTab==='faturamento')v=String(r.NF||r['Notas Fiscais']||'');else v=String(r[key]??'');v=v.trim();return v||'(Vazio)'}
 function rowMatchesFilters(r,ignoreColId=null){
  const search=document.getElementById('searchInput').value||'',emp=document.getElementById('empresaFilter').value,cli=document.getElementById('clienteFilter').value,codeItem=normalizeText(document.getElementById('codigoItemFilter').value||'');
  const commonYear=document.getElementById('capitalYearFilter')?.value||'', commonMonth=document.getElementById('capitalMonthFilter')?.value||'';
- if(emp&&String(r.Empresa||'')!==emp)return false;
- if(cli&&String(r.Cliente||'')!==cli)return false;
+ if(emp&&((String(r.Empresa||'').trim()||'(Vazio)')!==emp))return false;
+ if(cli&&((String(r.Cliente||'').trim()||'(Vazio)')!==cli))return false;
  if(codeItem&&!normalizeText(`${r['Código']||''} ${r.Item||''}`).includes(codeItem))return false;
  if(search&&!matchesWildcardSearch(Object.values(r).join(' '),search))return false;
  if(commonYear||commonMonth){const cd=rowDate(r);if(!cd)return false;if(commonYear&&cd.slice(0,4)!==commonYear)return false;if(commonMonth&&cd.slice(5,7)!==commonMonth)return false;}
@@ -408,7 +408,7 @@ function rowMatchesFilters(r,ignoreColId=null){
  for(const [colId,set] of Object.entries(colSelections[activeTab])){if(colId===ignoreColId||!set)continue;const c=getCol(colId);if(!c)continue;if(!set.has(formatForFilter(r,c)))return false}
  return true;
 }
-function compareRows(a,b,c,asc){let av=getValue(a,c),bv=getValue(b,c);if(['brl','num','pct'].includes(c.type)){av=n(av);bv=n(bv)}else if(c.type==='date'){av=isoDate(av);bv=isoDate(bv)}else{av=normalizeText(av);bv=normalizeText(bv)}if(av<bv)return asc?-1:1;if(av>bv)return asc?1:-1;return 0}
+function compareRows(a,b,c,asc){let av=getValue(a,c),bv=getValue(b,c);if(['brl','num','pct'].includes(c.type)){av=n(av);bv=n(bv);if(av===bv)return 0;return av<bv?(asc?-1:1):(asc?1:-1)}if(c.type==='date'){av=isoDate(av)||'';bv=isoDate(bv)||'';if(av===bv)return 0;return av<bv?(asc?-1:1):(asc?1:-1)}const cmp=String(av??'').localeCompare(String(bv??''),'pt-BR',{numeric:true,sensitivity:'base'});return asc?cmp:-cmp}
 function filteredRows(ignoreColId=null,skipSort=false){let rows=baseRows().filter(r=>rowMatchesFilters(r,ignoreColId));if(!skipSort){const s=sortState[activeTab],c=s.key?getCol(s.key):null;if(c)rows.sort((a,b)=>compareRows(a,b,c,s.asc));else rows.sort((a,b)=>(rowDate(b)||'').localeCompare(rowDate(a)||''))}return rows}
 
 function sortByColumn(id){const s=sortState[activeTab];if(s.key===id)s.asc=!s.asc;else{s.key=id;s.asc=true}render()}
@@ -423,13 +423,15 @@ function toggleColFilter(id){const pop=document.getElementById(`filterPop_${safe
 function capitalMonthName(m){return ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'][Number(m)]||m}
 function buildDateTreeFilter(id,c,pop){
  const rows=filteredRows(id,true), active=colSelections[activeTab][id];
- const groups=new Map();
- rows.forEach(r=>{const raw=getValue(r,c), iso=isoDate(raw);if(!iso)return;const [y,m,d]=iso.split('-'), display=fmtDate(raw);if(!groups.has(y))groups.set(y,new Map());const months=groups.get(y);if(!months.has(m))months.set(m,new Map());months.get(m).set(display,{display,iso});});
- const leaves=[...groups.values()].flatMap(months=>[...months.values()].flatMap(ds=>[...ds.values()]));
+ const groups=new Map(); let hasBlank=false;
+ rows.forEach(r=>{const raw=getValue(r,c), iso=isoDate(raw);if(!iso){hasBlank=true;return}const [y,m,d]=iso.split('-'), display=fmtDate(raw);if(!groups.has(y))groups.set(y,new Map());const months=groups.get(y);if(!months.has(m))months.set(m,new Map());months.get(m).set(display,{display,iso});});
  const allSelected=v=>!active||active.has(v);
- pop.innerHTML=`<div class="space-y-2"><input id="colSearch_${safeId(id)}" oninput="filterPopover('${esc(id)}')" placeholder="Pesquisar data, mês ou ano..." class="w-full border rounded-lg px-2 py-1 text-xs"><label class="flex items-center gap-2 p-1 font-bold text-pstec-700"><input id="all_${safeId(id)}" type="checkbox" ${!active?'checked':''} onchange="toggleAllPopover('${esc(id)}',this.checked)">(Selecionar tudo)</label><div id="list_${safeId(id)}" class="max-h-64 overflow-y-auto custom-scroll border-y py-1">${[...groups.entries()].sort((a,b)=>b[0].localeCompare(a[0])).map(([y,months])=>{
+ const tree=[...groups.entries()].sort((a,b)=>b[0].localeCompare(a[0])).map(([y,months])=>{
    const yDates=[...months.values()].flatMap(ds=>[...ds.values()]); const yChecked=yDates.every(x=>allSelected(x.display));
-   return `<details open class="date-tree-year"><summary class="flex items-center gap-2 px-1 py-1 font-black text-slate-700 cursor-pointer list-none"><input type="checkbox" ${yChecked?'checked':''} onclick="event.stopPropagation()" onchange="toggleCapitalDateGroup('${esc(id)}','year-${y}',this.checked)"><span>${y}</span><span class="text-[9px] text-slate-400">(${yDates.length})</span></summary><div data-date-group="year-${y}" class="pl-3">${[...months.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([m,datesMap])=>{const dates=[...datesMap.values()].sort((a,b)=>a.iso.localeCompare(b.iso));const mChecked=dates.every(x=>allSelected(x.display));return `<details class="date-tree-month"><summary class="flex items-center gap-2 px-1 py-1 font-bold text-slate-600 cursor-pointer list-none"><input type="checkbox" ${mChecked?'checked':''} onclick="event.stopPropagation()" onchange="toggleCapitalDateGroup('${esc(id)}','month-${y}-${m}',this.checked)"><span>${capitalMonthName(m)}</span><span class="text-[9px] text-slate-400">(${dates.length})</span></summary><div data-date-group="month-${y}-${m}" class="pl-4">${dates.map(x=>`<label class="poprow date-leaf flex items-center gap-2 p-1 hover:bg-slate-50 cursor-pointer" data-search="${x.display} ${capitalMonthName(m)} ${y}"><input class="chk_${safeId(id)} date-leaf-check" type="checkbox" value="${esc(x.display)}" ${allSelected(x.display)?'checked':''}><span>${esc(x.display)}</span></label>`).join('')}</div></details>`}).join('')}</div></details>`}).join('')}</div><div class="flex justify-end gap-1"><button onclick="clearColFilter('${esc(id)}')" class="px-2 py-1 bg-slate-100 rounded text-[10px] font-bold">Limpar</button><button onclick="applyColFilter('${esc(id)}')" class="px-2 py-1 bg-pstec-700 text-white rounded text-[10px] font-bold">Aplicar</button></div></div>`;
+   return `<details open class="date-tree-year"><summary class="flex items-center gap-2 px-1 py-1 font-black text-slate-700 cursor-pointer list-none"><input type="checkbox" ${yChecked?'checked':''} onclick="event.stopPropagation()" onchange="toggleCapitalDateGroup('${esc(id)}','year-${y}',this.checked)"><span>${y}</span><span class="text-[9px] text-slate-400">(${yDates.length})</span></summary><div data-date-group="year-${y}" class="pl-3">${[...months.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([m,datesMap])=>{const dates=[...datesMap.values()].sort((a,b)=>a.iso.localeCompare(b.iso));const mChecked=dates.every(x=>allSelected(x.display));return `<details class="date-tree-month"><summary class="flex items-center gap-2 px-1 py-1 font-bold text-slate-600 cursor-pointer list-none"><input type="checkbox" ${mChecked?'checked':''} onclick="event.stopPropagation()" onchange="toggleCapitalDateGroup('${esc(id)}','month-${y}-${m}',this.checked)"><span>${capitalMonthName(m)}</span><span class="text-[9px] text-slate-400">(${dates.length})</span></summary><div data-date-group="month-${y}-${m}" class="pl-4">${dates.map(x=>`<label class="poprow date-leaf flex items-center gap-2 p-1 hover:bg-slate-50 cursor-pointer" data-search="${x.display} ${capitalMonthName(m)} ${y}"><input class="chk_${safeId(id)} date-leaf-check" type="checkbox" value="${esc(x.display)}" ${allSelected(x.display)?'checked':''}><span>${esc(x.display)}</span></label>`).join('')}</div></details>`}).join('')}</div></details>`;
+ }).join('');
+ const blank=hasBlank?`<label class="poprow date-leaf flex items-center gap-2 p-1 hover:bg-slate-50 cursor-pointer" data-search="vazio em branco blank"><input class="chk_${safeId(id)} date-leaf-check" type="checkbox" value="(Vazio)" ${allSelected('(Vazio)')?'checked':''}><span>(Vazio)</span></label>`:'';
+ pop.innerHTML=`<div class="space-y-2"><input id="colSearch_${safeId(id)}" oninput="filterPopover('${esc(id)}')" placeholder="Pesquisar data, mês ou ano..." class="w-full border rounded-lg px-2 py-1 text-xs"><label class="flex items-center gap-2 p-1 font-bold text-pstec-700"><input id="all_${safeId(id)}" type="checkbox" ${!active?'checked':''} onchange="toggleAllPopover('${esc(id)}',this.checked)">(Selecionar tudo)</label><div id="list_${safeId(id)}" class="max-h-64 overflow-y-auto custom-scroll border-y py-1">${tree}${blank}</div><div class="flex justify-end gap-1"><button onclick="clearColFilter('${esc(id)}')" class="px-2 py-1 bg-slate-100 rounded text-[10px] font-bold">Limpar</button><button onclick="applyColFilter('${esc(id)}')" class="px-2 py-1 bg-pstec-700 text-white rounded text-[10px] font-bold">Aplicar</button></div></div>`;
 }
 function toggleCapitalDateGroup(id,group,checked){const pop=document.getElementById(`filterPop_${safeId(id)}`),container=pop?.querySelector(`[data-date-group="${group}"]`);if(!container)return;container.querySelectorAll(`.chk_${safeId(id)}`).forEach(cb=>cb.checked=checked)}
 function buildColFilter(id){const c=getCol(id),pop=document.getElementById(`filterPop_${safeId(id)}`);if(!c||!pop)return;if(c.type==='date'){buildDateTreeFilter(id,c,pop);return;}const vals=[...new Set(filteredRows(id,true).map(r=>formatForFilter(r,c)))].sort((a,b)=>a.localeCompare(b,'pt-BR',{numeric:true,sensitivity:'base'}));const active=colSelections[activeTab][id];pop.innerHTML=`<div class="space-y-2"><input id="colSearch_${safeId(id)}" oninput="filterPopover('${esc(id)}')" placeholder="Pesquisar..." class="w-full border rounded-lg px-2 py-1 text-xs"><label class="flex items-center gap-2 p-1 font-bold text-pstec-700"><input id="all_${safeId(id)}" type="checkbox" ${!active?'checked':''} onchange="toggleAllPopover('${esc(id)}',this.checked)">(Selecionar tudo)</label><div id="list_${safeId(id)}" class="max-h-52 overflow-y-auto custom-scroll border-y py-1">${vals.map(v=>`<label class="poprow flex items-center gap-2 p-1 hover:bg-slate-50 cursor-pointer"><input class="chk_${safeId(id)}" type="checkbox" value="${esc(v)}" ${!active||active.has(v)?'checked':''}><span class="truncate" title="${esc(v)}">${esc(v)}</span></label>`).join('')}</div><div class="flex justify-end gap-1"><button onclick="clearColFilter('${esc(id)}')" class="px-2 py-1 bg-slate-100 rounded text-[10px] font-bold">Limpar</button><button onclick="applyColFilter('${esc(id)}')" class="px-2 py-1 bg-pstec-700 text-white rounded text-[10px] font-bold">Aplicar</button></div></div>`}
@@ -570,7 +572,7 @@ function applyCapitalDashboardFilter(kind,value,rawKey=''){
  else if(kind==='material')id='carteiraDisponibilidadeFilter';
  else if(kind==='prata')id=activeTab==='carteira'?'carteiraPrataFilter':'faturamentoPrataFilter';
  if(!id)return;const el=document.getElementById(id);if(!el)return;
- const normalized=value&&value!=='(Vazio)'?String(value):'';if(!normalized)return;
+ const normalized=value?String(value):'(Vazio)';
  const stateKey=`${kind}:${id}`,state=states[stateKey],currentMatches=el.value===normalized;
  if(state&&state.value===normalized&&currentMatches){el.value=state.previous||'';delete states[stateKey]}else{states[stateKey]={value:normalized,previous:el.value};el.value=normalized}render();
 }

@@ -14,7 +14,7 @@
     <meta property="og:image" content="https://consultoriarf.net/producao_pstec/LOGO MINIMALISTA.png">
     <meta property="og:type" content="website">
 
-    <title>Carteira de Produção - PSTEC V2.7 Pro</title>
+    <title>Carteira de Produção - PSTEC V2.9 Pro</title>
 
     <!-- Autenticação Token -->
     <script>
@@ -78,7 +78,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-extrabold tracking-wide text-white">GRUPO PSTEC</h1>
-                    <p class="text-xs text-pstec-100">Carteira de Produção V2.8 Pro</p>
+                    <p class="text-xs text-pstec-100">Carteira de Produção V2.9 Pro</p>
                 </div>
             </div>
 
@@ -354,7 +354,7 @@
     <!-- FOOTER -->
     <footer class="bg-white border-t border-slate-200 py-3 mt-auto">
         <div class="max-w-[96%] mx-auto px-4 flex justify-between items-center text-xs text-slate-500">
-            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V2.8 Pro</span>
+            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V2.9 Pro</span>
             <span id="lastUpdateLabel">Atualizado: -</span>
         </div>
     </footer>
@@ -593,7 +593,7 @@
         </div>
     </div>
 
-    <!-- LOGICA JS DA V2.8 PRO -->
+    <!-- LOGICA JS DA V2.9 PRO -->
     <script>
         const API_CARTEIRA = 'https://pstec.consultoriarf.net/CARTEIRA';
         const API_CARTEIRA_ANEXOS = 'https://pstec.consultoriarf.net/carteira';
@@ -650,7 +650,7 @@
         const tableColumnsConfig = [
             { key: 'Nº Orçamento', label: 'Orçamento', align: 'left', sortable: true },
             { key: 'Cliente', label: 'Cliente', align: 'left', sortable: true },
-            { key: 'Código', label: 'Código / Item', align: 'left', sortable: false },
+            { key: 'Código', label: 'Código / Item', align: 'left', sortable: true },
             { key: 'Nº Pedido', label: 'Nº Pedido', align: 'left', sortable: true },
             { key: 'Nº OS', label: 'Nº OS / Status', align: 'left', sortable: true },
             { key: 'Dt. aprovação', label: 'Dt. Aprovação', align: 'center', sortable: true },
@@ -658,9 +658,9 @@
             { key: 'Dt. Negociada', label: 'Dt. Negociada', align: 'center', sortable: true },
             { key: 'Dt. Pesquisa', label: 'Dt. Pesquisa', align: 'center', sortable: true },
             { key: 'Qtde. Total', label: 'Qtde Total', align: 'right', sortable: true },
-            { key: 'Qtde. Entregue', label: 'Entregue', align: 'right', sortable: false },
+            { key: 'Qtde. Entregue', label: 'Entregue', align: 'right', sortable: true },
             { key: 'Saldo a entregar', label: 'Saldo Entregar', align: 'right', sortable: true },
-            { key: 'Vl. Unitário', label: 'Vl. Unitário', align: 'right', sortable: false },
+            { key: 'Vl. Unitário', label: 'Vl. Unitário', align: 'right', sortable: true },
             { key: 'Vl. Total', label: 'Vl. Total', align: 'right', sortable: true },
             { key: 'Vl. a faturar', label: 'Vl. a Faturar', align: 'right', sortable: true },
             { key: 'Vl. Liberado', label: 'Vl. Liberado', align: 'right', sortable: true },
@@ -669,15 +669,15 @@
             { key: 'Margem Lucro', label: 'Margem Lucro', align: 'right', sortable: true },
             { key: 'Valor falta comprar', label: 'Vl. Falta Comprar', align: 'right', sortable: true },
             { key: 'Etapa', label: 'Etapa', align: 'left', sortable: true },
-            { key: 'Disponibilidade Material', label: 'Disp. Material', align: 'left', sortable: false },
-            { key: 'Lista de Materiais', label: 'Lista Materiais', align: 'left', sortable: false },
-            { key: 'Processamento LM', label: 'Processamento LM', align: 'left', sortable: false },
-            { key: 'Ordem de compra', label: 'Ordem Compra', align: 'left', sortable: false },
-            { key: 'Prata', label: 'Prata', align: 'left', sortable: false },
+            { key: 'Disponibilidade Material', label: 'Disp. Material', align: 'left', sortable: true },
+            { key: 'Lista de Materiais', label: 'Lista Materiais', align: 'left', sortable: true },
+            { key: 'Processamento LM', label: 'Processamento LM', align: 'left', sortable: true },
+            { key: 'Ordem de compra', label: 'Ordem Compra', align: 'left', sortable: true },
+            { key: 'Prata', label: 'Prata', align: 'left', sortable: true },
             { key: 'Capacidade disponivel', label: 'Capacidade Disp.', align: 'right', sortable: true },
-            { key: 'Tipo', label: 'Tipo', align: 'left', sortable: false },
-            { key: 'Prioridade', label: 'Prioridade', align: 'left', sortable: false },
-            { key: 'Empresa', label: 'Empresa', align: 'left', sortable: false }
+            { key: 'Tipo', label: 'Tipo', align: 'left', sortable: true },
+            { key: 'Prioridade', label: 'Prioridade', align: 'left', sortable: true },
+            { key: 'Empresa', label: 'Empresa', align: 'left', sortable: true }
         ];
 
         const carteiraMonetaryColumns = new Set([
@@ -767,7 +767,9 @@
 
             document.addEventListener('click', (e) => {
                 if (!e.target.closest('.custom-dd-container') && !e.target.closest('.col-filter-popover')) {
+                    const hadOpenColFilter = [...document.querySelectorAll('.col-filter-popover')].some(m => !m.classList.contains('hidden'));
                     document.querySelectorAll('.custom-dd-menu, .col-filter-popover').forEach(m => m.classList.add('hidden'));
+                    if (hadOpenColFilter) renderTableHeader();
                 }
             });
 
@@ -1003,13 +1005,11 @@
 
                 trHTML += `
                     <th class="p-2.5 ${alignClass} relative group">
-                        <div class="inline-flex items-center gap-1.5 ${isFiltered ? 'bg-pstecgreen-600 text-slate-950 px-2 py-1 rounded-lg shadow-xs' : ''}">
-                            ${col.sortable ? `
-                                <span class="cursor-pointer hover:underline" onclick="sortByColumn('${col.key}')">${col.label}</span>
-                                <span id="sort_${col.key}" class="text-[9px]"></span>
-                            ` : `<span>${col.label}</span>`}
+                        <div id="col_wrap_${safeCarteiraDomId(col.key)}" class="inline-flex items-center gap-1.5 ${isFiltered ? 'bg-pstecgreen-600 text-slate-950 px-2 py-1 rounded-lg shadow-xs' : ''}">
+                            <span class="cursor-pointer hover:underline" onclick="sortByColumn('${col.key}')">${col.label}</span>
+                            <span id="sort_${safeCarteiraDomId(col.key)}" class="text-[9px]"></span>
 
-                            <button onclick="toggleColFilterPopover(event, '${col.key}')" class="p-1 hover:bg-black/20 rounded transition" title="Filtrar por ${col.label}">
+                            <button id="col_filter_btn_${safeCarteiraDomId(col.key)}" onclick="toggleColFilterPopover(event, '${col.key}')" class="p-1 hover:bg-black/20 rounded transition" title="Filtrar por ${col.label}">
                                 <i data-lucide="filter" class="w-3 h-3 ${isFiltered ? 'text-slate-950 font-black' : 'text-slate-300'}"></i>
                             </button>
                         </div>
@@ -1061,18 +1061,21 @@
 
         function renderCarteiraDateOptionsHTML(key, availableData, selectedSet) {
             const groups = new Map();
+            let hasBlank = false;
             availableData.forEach(item => {
                 const raw = item[key];
                 const p = carteiraDateParts(raw);
-                if (!p) return;
+                if (!p) { hasBlank = true; return; }
                 if (!groups.has(p.year)) groups.set(p.year,new Map());
                 const months = groups.get(p.year);
                 if (!months.has(p.month)) months.set(p.month,[]);
                 if (!months.get(p.month).some(x=>x.raw===String(raw).trim())) months.get(p.month).push({raw:String(raw).trim(),...p});
             });
-            return [...groups.entries()].sort((a,b)=>b[0].localeCompare(a[0])).map(([year,months])=>{
+            const allMode = selectedSet.size === 0;
+            const noneMode = selectedSet.has(PSTEC_NONE_SENTINEL);
+            let html = [...groups.entries()].sort((a,b)=>b[0].localeCompare(a[0])).map(([year,months])=>{
                 const allYear=[...months.values()].flat();
-                const yearChecked=allYear.length>0 && (selectedSet.size===0 || allYear.every(x=>selectedSet.has(x.raw)));
+                const yearChecked=!noneMode && (allMode || allYear.every(x=>selectedSet.has(x.raw)));
                 return `<details class="date-tree-year" open>
                     <summary class="flex items-center gap-2 px-1 py-1 font-black text-slate-700 cursor-pointer list-none">
                         <input type="checkbox" ${yearChecked?'checked':''} onclick="event.stopPropagation()" onchange="toggleCarteiraDateGroup('${key}','year-${year}',this.checked)">
@@ -1080,7 +1083,7 @@
                     </summary>
                     <div data-date-group="year-${year}" class="pl-3 space-y-1">
                     ${[...months.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([month,dates])=>{
-                        const mChecked=dates.length>0 && (selectedSet.size===0 || dates.every(x=>selectedSet.has(x.raw)));
+                        const mChecked=!noneMode && (allMode || dates.every(x=>selectedSet.has(x.raw)));
                         return `<details class="date-tree-month">
                             <summary class="flex items-center gap-2 px-1 py-1 font-bold text-slate-600 cursor-pointer list-none">
                                 <input type="checkbox" ${mChecked?'checked':''} onclick="event.stopPropagation()" onchange="toggleCarteiraDateGroup('${key}','month-${year}-${month}',this.checked)">
@@ -1088,7 +1091,7 @@
                             </summary>
                             <div data-date-group="month-${year}-${month}" class="pl-4 space-y-0.5">
                                 ${dates.sort((a,b)=>a.iso.localeCompare(b.iso)).map(x=>`<label class="date-leaf flex items-center gap-2 px-2 py-1 hover:bg-slate-100 cursor-pointer rounded-md text-slate-700 font-medium text-[11px]" data-search="${x.display} ${x.monthName} ${x.year}">
-                                    <input type="checkbox" value="${x.raw.replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" ${(selectedSet.size===0||selectedSet.has(x.raw))?'checked':''} onchange="toggleCarteiraDateOption('${key}', this.value, this.checked)" class="date-leaf-check rounded text-pstec-700 focus:ring-pstec-500">
+                                    <input type="checkbox" value="${carteiraHtmlAttr(x.raw)}" ${(!noneMode&&(allMode||selectedSet.has(x.raw)))?'checked':''} onchange="toggleCarteiraDateOption('${key}', this.value, this.checked)" class="date-leaf-check rounded text-pstec-700 focus:ring-pstec-500">
                                     <span>${x.display}</span>
                                 </label>`).join('')}
                             </div>
@@ -1097,6 +1100,14 @@
                     </div>
                 </details>`;
             }).join('');
+            if (hasBlank) {
+                const checked=!noneMode && (allMode || selectedSet.has(PSTEC_EMPTY_VALUE));
+                html += `<label class="date-leaf flex items-center gap-2 px-2 py-1 mt-1 hover:bg-slate-100 cursor-pointer rounded-md text-slate-700 font-medium text-[11px]" data-search="vazio em branco blank">
+                    <input type="checkbox" value="${PSTEC_EMPTY_VALUE}" ${checked?'checked':''} onchange="toggleCarteiraDateOption('${key}', this.value, this.checked)" class="date-leaf-check rounded text-pstec-700 focus:ring-pstec-500">
+                    <span>${PSTEC_EMPTY_VALUE}</span>
+                </label>`;
+            }
+            return html;
         }
 
         function allCarteiraDateValues(key) {
@@ -1104,29 +1115,27 @@
             getFilteredCarteira(key).forEach(item => {
                 const raw = item[key];
                 if (carteiraDateParts(raw)) vals.add(String(raw).trim());
+                else vals.add(PSTEC_EMPTY_VALUE);
             });
             return vals;
-        }
-
-        function ensureCarteiraDateSelectionInitialized(key) {
-            if (!colFilterState[key]) colFilterState[key] = new Set();
-            if (colFilterState[key].size === 0) {
-                allCarteiraDateValues(key).forEach(v => colFilterState[key].add(v));
-            }
-            return colFilterState[key];
         }
 
         function normalizeCarteiraDateSelection(key) {
             const allVals = allCarteiraDateValues(key);
             const sel = colFilterState[key] || new Set();
+            if (sel.has(PSTEC_NONE_SENTINEL)) return;
             if (allVals.size > 0 && sel.size === allVals.size && [...allVals].every(v => sel.has(v))) sel.clear();
+            else if (sel.size === 0) sel.add(PSTEC_NONE_SENTINEL);
         }
 
         function toggleCarteiraDateOption(key, value, checked) {
-            const sel = ensureCarteiraDateSelectionInitialized(key);
+            if (!colFilterState[key]) colFilterState[key] = new Set();
+            const sel = colFilterState[key];
+            const allVals = allCarteiraDateValues(key);
+            if (sel.size === 0) allVals.forEach(v=>sel.add(v));
+            if (sel.has(PSTEC_NONE_SENTINEL)) sel.clear();
             checked ? sel.add(value) : sel.delete(value);
             normalizeCarteiraDateSelection(key);
-            renderTableHeader();
             renderCarteiraView();
         }
 
@@ -1136,36 +1145,37 @@
             const container = pop.querySelector(`[data-date-group="${group}"]`);
             if (!container) return;
             const values=[...container.querySelectorAll('.date-leaf-check')].map(cb=>cb.value);
-            const sel = ensureCarteiraDateSelectionInitialized(key);
+            if (!colFilterState[key]) colFilterState[key] = new Set();
+            const sel = colFilterState[key];
+            const allVals=allCarteiraDateValues(key);
+            if (sel.size===0) allVals.forEach(v=>sel.add(v));
+            if (sel.has(PSTEC_NONE_SENTINEL)) sel.clear();
             values.forEach(v=>checked?sel.add(v):sel.delete(v));
+            container.querySelectorAll('.date-leaf-check').forEach(cb=>cb.checked=checked);
             normalizeCarteiraDateSelection(key);
-            renderTableHeader();
             renderCarteiraView();
+        }
+
+        function getAvailableColFilterValues(key) {
+            const values = new Set();
+            getFilteredCarteira(key).forEach(item => values.add(carteiraFilterValue(item[key])));
+            return [...values].sort((a,b)=>a.localeCompare(b,'pt-BR',{numeric:true,sensitivity:'base'}));
         }
 
         function renderColOptionsListHTML(key) {
             const availableData = getFilteredCarteira(key);
-            
             const selectedSet = colFilterState[key] || new Set();
-            if (isCarteiraDateColumn(key)) {
-                return renderCarteiraDateOptionsHTML(key, availableData, selectedSet);
-            }
+            if (isCarteiraDateColumn(key)) return renderCarteiraDateOptionsHTML(key, availableData, selectedSet);
 
-            const set = new Set();
-            for (let i = 0; i < availableData.length; i++) {
-                const val = availableData[i][key];
-                if (val !== null && val !== undefined && String(val).trim() !== '') {
-                    set.add(String(val).trim());
-                }
-            }
-            const sorted = Array.from(set).sort();
-
+            const sorted = getAvailableColFilterValues(key);
+            const allMode = selectedSet.size === 0;
+            const noneMode = selectedSet.has(PSTEC_NONE_SENTINEL);
             return sorted.map(val => {
-                const isChecked = selectedSet.has(val) ? 'checked' : '';
+                const isChecked = !noneMode && (allMode || selectedSet.has(val));
                 return `
                     <label class="flex items-center gap-2 px-2 py-1 hover:bg-slate-100 cursor-pointer rounded-md text-slate-700 font-medium text-[11px]">
-                        <input type="checkbox" value="${val}" ${isChecked} onchange="toggleColOption('${key}', '${val}')" class="rounded text-pstec-700 focus:ring-pstec-500">
-                        <span class="truncate max-w-[190px]" title="${val}">${val}</span>
+                        <input type="checkbox" value="${carteiraHtmlAttr(val)}" ${isChecked?'checked':''} onchange="toggleColOption('${key}', this.value, this.checked)" class="rounded text-pstec-700 focus:ring-pstec-500">
+                        <span class="truncate max-w-[190px]" title="${carteiraHtmlAttr(val)}">${val}</span>
                     </label>
                 `;
             }).join('');
@@ -1206,36 +1216,32 @@
             });
         }
 
-        function toggleColOption(key, val) {
+        function toggleColOption(key, val, checked) {
             if (!colFilterState[key]) colFilterState[key] = new Set();
-            if (colFilterState[key].has(val)) colFilterState[key].delete(val);
-            else colFilterState[key].add(val);
-
-            renderTableHeader();
+            const set = colFilterState[key];
+            const allVals = new Set(getAvailableColFilterValues(key));
+            if (set.size === 0) allVals.forEach(v=>set.add(v));
+            if (set.has(PSTEC_NONE_SENTINEL)) set.clear();
+            if (checked) set.add(val); else set.delete(val);
+            if (allVals.size && set.size===allVals.size && [...allVals].every(v=>set.has(v))) set.clear();
+            else if (set.size===0) set.add(PSTEC_NONE_SENTINEL);
             renderCarteiraView();
         }
 
         function setAllColFilter(key, enableAll) {
             if (!colFilterState[key]) colFilterState[key] = new Set();
-            colFilterState[key].clear();
-
-            if (enableAll) {
-                const availableData = getFilteredCarteira(key);
-                for (let i = 0; i < availableData.length; i++) {
-                    const val = availableData[i][key];
-                    if (val !== null && val !== undefined && String(val).trim() !== '') {
-                        colFilterState[key].add(String(val).trim());
-                    }
-                }
-            }
-
-            renderTableHeader();
+            const set=colFilterState[key];
+            set.clear();
+            if (!enableAll) set.add(PSTEC_NONE_SENTINEL);
+            const container=document.getElementById(`col_opts_${key}`);
+            container?.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=enableAll);
             renderCarteiraView();
         }
 
         function clearColFilter(key) {
             if (colFilterState[key]) colFilterState[key].clear();
-            renderTableHeader();
+            const container=document.getElementById(`col_opts_${key}`);
+            container?.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=true);
             renderCarteiraView();
         }
 
@@ -1253,42 +1259,94 @@
             if (current && years.includes(current)) el.value = current;
         }
 
+        const PSTEC_EMPTY_VALUE = '(Vazio)';
+        const PSTEC_NONE_SENTINEL = '__PSTEC_NONE__';
+
+        function carteiraFilterValue(value) {
+            if (value === null || value === undefined) return PSTEC_EMPTY_VALUE;
+            const s = String(value).trim();
+            return s === '' ? PSTEC_EMPTY_VALUE : s;
+        }
+
+        function carteiraHtmlAttr(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
+        function safeCarteiraDomId(value) {
+            return String(value).replace(/[^a-zA-Z0-9_-]/g, '_');
+        }
+
+        function getMainDropdownOptions(conf) {
+            if (!conf) return [];
+            if (conf.staticOpts) return conf.staticOpts.map(o => typeof o === 'object' ? {v:String(o.v),l:String(o.l)} : {v:String(o),l:String(o)});
+            const set = new Set();
+            rawCarteira.forEach(item => set.add(carteiraFilterValue(item[conf.key])));
+            return [...set].sort((a,b)=>a.localeCompare(b,'pt-BR',{numeric:true,sensitivity:'base'})).map(v=>({v,l:v}));
+        }
+
+        function refreshMainDropdownUI(key) {
+            const conf = configDropdowns.find(c => c.key === key);
+            if (!conf) return;
+            const container = document.getElementById(conf.id);
+            if (!container) return;
+            const set = filterState[key] || new Set();
+            const label = document.getElementById(`${conf.id}_label`);
+            const count = set.has(PSTEC_NONE_SENTINEL) ? 0 : set.size;
+            if (label) label.textContent = count === 0 && !set.has(PSTEC_NONE_SENTINEL) ? `${conf.label} (Todos)` : `${conf.label} (${count} sel.)`;
+            container.querySelectorAll(`input[data-main-filter="${safeCarteiraDomId(key)}"]`).forEach(cb => {
+                if (set.size === 0) cb.checked = true;
+                else if (set.has(PSTEC_NONE_SENTINEL)) cb.checked = false;
+                else cb.checked = set.has(cb.value);
+            });
+        }
+
+        function mainFilterMatches(key, rawValue) {
+            const set = filterState[key];
+            if (!set || set.size === 0) return true;
+            if (set.has(PSTEC_NONE_SENTINEL)) return false;
+            return set.has(carteiraFilterValue(rawValue));
+        }
+
+        function allMainFilterValues(key) {
+            const conf = configDropdowns.find(c => c.key === key);
+            return new Set(getMainDropdownOptions(conf).map(o => o.v));
+        }
+
+        function normalizeMainFilterSelection(key) {
+            const set = filterState[key];
+            if (!set) return;
+            if (set.has(PSTEC_NONE_SENTINEL)) return;
+            const all = allMainFilterValues(key);
+            if (all.size && set.size === all.size && [...all].every(v => set.has(v))) set.clear();
+            else if (set.size === 0) set.add(PSTEC_NONE_SENTINEL);
+        }
+
         function renderDropdownsHTML() {
             populateCarteiraYearFilter();
             configDropdowns.forEach(conf => {
                 const container = document.getElementById(conf.id);
                 if (!container) return;
 
-                let options = [];
-                if (conf.staticOpts) {
-                    options = conf.staticOpts;
-                } else {
-                    const set = new Set();
-                    for (let i = 0; i < rawCarteira.length; i++) {
-                        const val = rawCarteira[i][conf.key];
-                        if (val !== null && val !== undefined && String(val).trim() !== '') {
-                            set.add(String(val).trim());
-                        }
-                    }
-                    options = Array.from(set).sort();
-                }
-
+                const options = getMainDropdownOptions(conf);
                 const selectedSet = filterState[conf.key] || new Set();
-                const countSelected = selectedSet.size;
-                const labelText = countSelected === 0 
-                    ? `${conf.label} (Todos)` 
+                const countSelected = selectedSet.has(PSTEC_NONE_SENTINEL) ? 0 : selectedSet.size;
+                const labelText = countSelected === 0 && !selectedSet.has(PSTEC_NONE_SENTINEL)
+                    ? `${conf.label} (Todos)`
                     : `${conf.label} (${countSelected} sel.)`;
 
                 let optsHTML = '';
                 options.forEach(opt => {
-                    const val = typeof opt === 'object' ? opt.v : opt;
-                    const txt = typeof opt === 'object' ? opt.l : opt;
-                    const isChecked = selectedSet.has(val) ? 'checked' : '';
-
+                    const val = String(opt.v);
+                    const txt = String(opt.l);
+                    const checked = selectedSet.size === 0 ? true : (!selectedSet.has(PSTEC_NONE_SENTINEL) && selectedSet.has(val));
                     optsHTML += `
                         <label class="flex items-center gap-2 px-2.5 py-1.5 hover:bg-slate-100 cursor-pointer rounded-lg text-slate-700 font-medium">
-                            <input type="checkbox" value="${val}" ${isChecked} onchange="toggleOptionFilter('${conf.key}', '${val}')" class="rounded text-pstec-700 focus:ring-pstec-500">
-                            <span class="truncate max-w-[200px]" title="${txt}">${txt}</span>
+                            <input data-main-filter="${safeCarteiraDomId(conf.key)}" type="checkbox" value="${carteiraHtmlAttr(val)}" ${checked ? 'checked' : ''} onchange="toggleOptionFilter('${conf.key}', this.value, this.checked)" class="rounded text-pstec-700 focus:ring-pstec-500">
+                            <span class="truncate max-w-[200px]" title="${carteiraHtmlAttr(txt)}">${txt}</span>
                         </label>
                     `;
                 });
@@ -1296,14 +1354,14 @@
                 container.innerHTML = `
                     <div class="relative custom-dd-container w-full">
                         <button onclick="toggleDropdownMenu('${conf.id}_menu')" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 flex justify-between items-center transition">
-                            <span class="truncate max-w-[140px]">${labelText}</span>
+                            <span id="${conf.id}_label" class="truncate max-w-[140px]">${labelText}</span>
                             <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
                         </button>
 
                         <div id="${conf.id}_menu" class="hidden absolute left-0 top-full mt-1 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl z-30 p-2 text-xs custom-dd-menu">
                             <div class="flex justify-between items-center pb-2 border-b border-slate-100 mb-1">
-                                <button onclick="selectAllFilter('${conf.key}', true)" class="text-[10px] text-pstec-700 font-extrabold hover:underline">Marcar Todos</button>
-                                <button onclick="selectAllFilter('${conf.key}', false)" class="text-[10px] text-red-600 font-extrabold hover:underline">Desmarcar</button>
+                                <button onclick="event.stopPropagation(); selectAllFilter('${conf.key}', true)" class="text-[10px] text-pstec-700 font-extrabold hover:underline">Marcar Todos</button>
+                                <button onclick="event.stopPropagation(); selectAllFilter('${conf.key}', false)" class="text-[10px] text-red-600 font-extrabold hover:underline">Desmarcar</button>
                             </div>
 
                             ${options.length > 8 ? `
@@ -1340,38 +1398,27 @@
             });
         }
 
-        function toggleOptionFilter(key, val) {
+        function toggleOptionFilter(key, val, checked) {
             if (!filterState[key]) filterState[key] = new Set();
-            if (filterState[key].has(val)) {
-                filterState[key].delete(val);
-            } else {
-                filterState[key].add(val);
-            }
-            renderDropdownsHTML();
+            const set = filterState[key];
+            const all = allMainFilterValues(key);
+
+            // Empty set means "Todos". On first change, materialize all values.
+            if (set.size === 0) all.forEach(v => set.add(v));
+            if (set.has(PSTEC_NONE_SENTINEL)) set.clear();
+
+            if (checked) set.add(val); else set.delete(val);
+            normalizeMainFilterSelection(key);
+            refreshMainDropdownUI(key);
             renderCarteiraView();
         }
 
         function selectAllFilter(key, enableAll) {
             if (!filterState[key]) filterState[key] = new Set();
-            filterState[key].clear();
-
-            if (enableAll) {
-                const conf = configDropdowns.find(c => c.key === key);
-                if (conf) {
-                    if (conf.staticOpts) {
-                        conf.staticOpts.forEach(o => filterState[key].add(typeof o === 'object' ? o.v : o));
-                    } else {
-                        for (let i = 0; i < rawCarteira.length; i++) {
-                            const val = rawCarteira[i][key];
-                            if (val !== null && val !== undefined && String(val).trim() !== '') {
-                                filterState[key].add(String(val).trim());
-                            }
-                        }
-                    }
-                }
-            }
-
-            renderDropdownsHTML();
+            const set = filterState[key];
+            set.clear();
+            if (!enableAll) set.add(PSTEC_NONE_SENTINEL);
+            refreshMainDropdownUI(key);
             renderCarteiraView();
         }
 
@@ -1424,12 +1471,10 @@
         }
 
         function updateSortIndicators() {
-            const cols = ['Nº Orçamento', 'Cliente', 'Nº Pedido', 'Nº OS', 'Dt. aprovação', 'Prev. entrega(original)', 'Qtde. Total', 'Saldo a entregar', 'Vl. Total', 'Vl. a faturar', 'Vl. Liberado', 'Valor fat. disp.', 'Vl. Lucro', 'Margem Lucro', 'Valor falta comprar'];
-            for (let i = 0; i < cols.length; i++) {
-                const col = cols[i];
-                const el = document.getElementById(`sort_${col}`);
-                if (el) el.textContent = sortColumn === col ? (sortAsc ? '▲' : '▼') : '';
-            }
+            tableColumnsConfig.forEach(col => {
+                const el = document.getElementById(`sort_${safeCarteiraDomId(col.key)}`);
+                if (el) el.textContent = sortColumn === col.key ? (sortAsc ? '▲' : '▼') : '';
+            });
         }
 
         function matchesWildcardSearch(itemStr, searchInput) {
@@ -1502,32 +1547,31 @@
 
                     const selSet = colFilterState[colKey];
                     if (selSet && selSet.size > 0) {
-                        const cellVal = String(item[colKey] || '').trim();
-                        if (!selSet.has(cellVal)) {
-                            colFilterMatch = false;
-                            break;
-                        }
+                        if (selSet.has(PSTEC_NONE_SENTINEL)) { colFilterMatch = false; break; }
+                        const cellVal = carteiraFilterValue(item[colKey]);
+                        if (!selSet.has(cellVal)) { colFilterMatch = false; break; }
                     }
                 }
                 if (!colFilterMatch) continue;
 
-                if (filterState.Empresa.size > 0 && !filterState.Empresa.has(String(item.Empresa || '').trim())) continue;
-                if (filterState.Cliente.size > 0 && !filterState.Cliente.has(String(item.Cliente || '').trim())) continue;
-                if (filterState.Código.size > 0 && !filterState.Código.has(String(item.Código || '').trim())) continue;
-                if (filterState['Nº OS'].size > 0 && !filterState['Nº OS'].has(String(item['Nº OS'] || '').trim())) continue;
-                if (filterState['Nº Orçamento'].size > 0 && !filterState['Nº Orçamento'].has(String(item['Nº Orçamento'] || '').trim())) continue;
-                if (filterState['Nº Pedido'].size > 0 && !filterState['Nº Pedido'].has(String(item['Nº Pedido'] || '').trim())) continue;
-                if (filterState['Status OS'].size > 0 && !filterState['Status OS'].has(String(item['Status OS'] || '').trim())) continue;
-                if (filterState.Etapa.size > 0 && !filterState.Etapa.has(String(item.Etapa || '').trim())) continue;
-                if (filterState['Lista de Materiais'].size > 0 && !filterState['Lista de Materiais'].has(String(item['Lista de Materiais'] || '').trim())) continue;
-                if (filterState['Processamento LM'].size > 0 && !filterState['Processamento LM'].has(String(item['Processamento LM'] || '').trim())) continue;
-                if (filterState['Disponibilidade Material'].size > 0 && !filterState['Disponibilidade Material'].has(String(item['Disponibilidade Material'] || '').trim())) continue;
-                if (filterState['Ordem de compra'].size > 0 && !filterState['Ordem de compra'].has(String(item['Ordem de compra'] || '').trim())) continue;
-                if (filterState.Prata.size > 0 && !filterState.Prata.has(String(item.Prata || '').trim())) continue;
-                if (filterState.Tipo.size > 0 && !filterState.Tipo.has(String(item.Tipo || '').trim())) continue;
-                if (filterState.Prioridade.size > 0 && !filterState.Prioridade.has(String(item.Prioridade || '').trim())) continue;
+                if (!mainFilterMatches('Empresa', item.Empresa)) continue;
+                if (!mainFilterMatches('Cliente', item.Cliente)) continue;
+                if (!mainFilterMatches('Código', item.Código)) continue;
+                if (!mainFilterMatches('Nº OS', item['Nº OS'])) continue;
+                if (!mainFilterMatches('Nº Orçamento', item['Nº Orçamento'])) continue;
+                if (!mainFilterMatches('Nº Pedido', item['Nº Pedido'])) continue;
+                if (!mainFilterMatches('Status OS', item['Status OS'])) continue;
+                if (!mainFilterMatches('Etapa', item.Etapa)) continue;
+                if (!mainFilterMatches('Lista de Materiais', item['Lista de Materiais'])) continue;
+                if (!mainFilterMatches('Processamento LM', item['Processamento LM'])) continue;
+                if (!mainFilterMatches('Disponibilidade Material', item['Disponibilidade Material'])) continue;
+                if (!mainFilterMatches('Ordem de compra', item['Ordem de compra'])) continue;
+                if (!mainFilterMatches('Prata', item.Prata)) continue;
+                if (!mainFilterMatches('Tipo', item.Tipo)) continue;
+                if (!mainFilterMatches('Prioridade', item.Prioridade)) continue;
 
                 if (filterState.PCP.size > 0) {
+                    if (filterState.PCP.has(PSTEC_NONE_SENTINEL)) continue;
                     const rawOS = item['Nº OS'] ? String(item['Nº OS']).trim() : '';
                     const isPCP = (!rawOS || rawOS === 'null');
                     const currentPos = isPCP ? 'PCP' : 'PRODUCAO';
@@ -1535,12 +1579,14 @@
                 }
 
                 if (filterState.SaldoEntrega.size > 0) {
+                    if (filterState.SaldoEntrega.has(PSTEC_NONE_SENTINEL)) continue;
                     const sEntrega = parseNum(item['Saldo a entregar']);
                     const statusSaldo = sEntrega > 0 ? 'com_saldo' : 'sem_saldo';
                     if (!filterState.SaldoEntrega.has(statusSaldo)) continue;
                 }
 
                 if (filterState.Capacidade.size > 0) {
+                    if (filterState.Capacidade.has(PSTEC_NONE_SENTINEL)) continue;
                     const cDisp = parseNum(item['Capacidade disponivel']);
                     const statusCap = cDisp > 0 ? 'sim' : 'nao';
                     if (!filterState.Capacidade.has(statusCap)) continue;
@@ -1565,24 +1611,21 @@
                 filtered.push(item);
             }
 
+            const dateSortCols = new Set(['Dt. aprovação','Prev. entrega(original)','Dt. Negociada','Dt. Pesquisa','Dt. entrega','Dt. Recebimento MP']);
+            const numericSortCols = new Set(['Qtde. Total','Qtde. Entregue','Saldo a entregar','Vl. Unitário','Vl. Total','Vl. a faturar','Vl. Liberado','Valor fat. disp.','Vl. Lucro','Margem Lucro','Valor falta comprar','Capacidade disponivel']);
             filtered.sort((a, b) => {
-                let valA = a[sortColumn];
-                let valB = b[sortColumn];
-
-                if (sortColumn.includes('Dt.') || sortColumn.includes('Prev.')) {
-                    valA = valA ? String(valA) : '';
-                    valB = valB ? String(valB) : '';
-                } else if (sortColumn.includes('Qtde') || sortColumn.includes('Saldo') || sortColumn.includes('Vl.') || sortColumn.includes('Nº') || sortColumn.includes('Valor') || sortColumn.includes('Margem')) {
-                    valA = parseNum(valA);
-                    valB = parseNum(valB);
-                } else {
-                    valA = String(valA || '').toLowerCase();
-                    valB = String(valB || '').toLowerCase();
+                let valA = a[sortColumn], valB = b[sortColumn];
+                if (dateSortCols.has(sortColumn)) {
+                    valA = carteiraDateParts(valA)?.iso || '';
+                    valB = carteiraDateParts(valB)?.iso || '';
+                    return valA === valB ? 0 : (valA < valB ? (sortAsc?-1:1) : (sortAsc?1:-1));
                 }
-
-                if (valA < valB) return sortAsc ? -1 : 1;
-                if (valA > valB) return sortAsc ? 1 : -1;
-                return 0;
+                if (numericSortCols.has(sortColumn)) {
+                    valA = parseNum(valA); valB = parseNum(valB);
+                    return valA === valB ? 0 : (valA < valB ? (sortAsc?-1:1) : (sortAsc?1:-1));
+                }
+                const cmp = String(valA ?? '').localeCompare(String(valB ?? ''),'pt-BR',{numeric:true,sensitivity:'base'});
+                return sortAsc ? cmp : -cmp;
             });
 
             return filtered;
@@ -2076,31 +2119,7 @@
                     <body style="font-family:Segoe UI,Arial,sans-serif;padding:32px;color:#334155">
                         <strong>Carregando ${String(nomeArquivo || 'anexo').replace(/[<>&]/g, '')}...</strong>
                     
-    <!-- MODAL: AJUDA DO DASHBOARD DA CARTEIRA -->
-    <div id="carteiraDashboardHelpModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[120]">
-        <div class="bg-white w-full max-w-3xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
-            <div class="bg-pstec-700 text-white px-5 py-4 flex items-center justify-between gap-3">
-                <div class="flex items-center gap-2">
-                    <i data-lucide="chart-no-axes-combined" class="w-5 h-5 text-pstecgreen-500"></i>
-                    <div><h3 class="font-black text-sm">Como ler o Dashboard da Carteira</h3><p class="text-[10px] text-pstec-100 mt-0.5">Todos os gráficos usam somente os registros que passaram pelos filtros atuais.</p></div>
-                </div>
-                <button onclick="closeCarteiraDashboardHelp()" class="p-1.5 rounded-lg hover:bg-white/10"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-            <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-slate-700 max-h-[70vh] overflow-y-auto custom-scroll">
-                <div class="bg-slate-50 border rounded-xl p-3"><b>Valor a faturar por mês de entrega</b><p class="mt-1 text-slate-500">Soma o campo <b>Vl. a faturar</b> por mês da <b>Dt. Pesquisa</b>, mostrando quando o saldo da carteira está previsto para entrega.</p></div>
-                <div class="bg-slate-50 border rounded-xl p-3"><b>Valor a faturar por cliente — Top 10</b><p class="mt-1 text-slate-500">Mostra os dez clientes com maior valor ainda a faturar dentro dos filtros atuais.</p></div>
-                <div class="bg-slate-50 border rounded-xl p-3"><b>Valor a faturar por Status OS</b><p class="mt-1 text-slate-500">Distribui o valor pendente conforme o status atual da Ordem de Serviço.</p></div>
-                <div class="bg-slate-50 border rounded-xl p-3"><b>Disponibilidade Material</b><p class="mt-1 text-slate-500">Mostra quanto do valor a faturar está em cada situação de disponibilidade de material.</p></div>
-                <div class="bg-slate-50 border rounded-xl p-3"><b>Etapa</b><p class="mt-1 text-slate-500">Agrupa o valor a faturar pela etapa atual da carteira, ajudando a localizar onde está concentrado o saldo.</p></div>
-                <div class="bg-slate-50 border rounded-xl p-3"><b>Carteira com Prata x sem Prata</b><p class="mt-1 text-slate-500">Compara o valor a faturar dos itens identificados com Prata contra os demais itens.</p></div>
-                <div class="bg-red-50 border border-red-100 rounded-xl p-3 md:col-span-2"><b class="text-red-700">Entregas vencidas com saldo</b><p class="mt-1 text-red-600">Lista até 10 itens cuja previsão já venceu e ainda possuem saldo a entregar, priorizados pelo maior valor a faturar.</p></div>
-                <div class="bg-pstec-50 border border-pstec-100 rounded-xl p-3 md:col-span-2"><b class="text-pstec-700">Interação</b><p class="mt-1">Os valores ficam visíveis diretamente nos gráficos. Clique em uma barra ou fatia para aplicar aquele filtro. <b>Clique novamente no mesmo item</b> para restaurar o filtro que existia antes do clique.</p></div>
-            </div>
-            <div class="px-5 py-3 border-t bg-slate-50 flex justify-end"><button onclick="closeCarteiraDashboardHelp()" class="px-5 py-2 rounded-xl bg-pstec-700 hover:bg-pstec-800 text-white text-xs font-bold">Entendi</button></div>
-        </div>
-    </div>
-
-</body></html>
+                    </body></html>
                 `);
             }
 
@@ -2375,8 +2394,7 @@
 
         function applyCarteiraDashboardFilter(key, value) {
             if (!filterState[key]) return;
-            const normalized = value && value !== '(Vazio)' ? String(value) : '';
-            if (!normalized) return;
+            const normalized = value ? String(value) : PSTEC_EMPTY_VALUE;
             const stateKey = `filter:${key}`;
             const state = carteiraDashboardClickState[stateKey];
             const currentMatches = filterState[key].size === 1 && filterState[key].has(normalized);
@@ -2490,5 +2508,31 @@
             window.location.href = 'login-pstec.html';
         }
     </script>
+
+
+    <!-- MODAL: AJUDA DO DASHBOARD DA CARTEIRA -->
+    <div id="carteiraDashboardHelpModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[120]">
+        <div class="bg-white w-full max-w-3xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+            <div class="bg-pstec-700 text-white px-5 py-4 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="chart-no-axes-combined" class="w-5 h-5 text-pstecgreen-500"></i>
+                    <div><h3 class="font-black text-sm">Como ler o Dashboard da Carteira</h3><p class="text-[10px] text-pstec-100 mt-0.5">Todos os gráficos usam somente os registros que passaram pelos filtros atuais.</p></div>
+                </div>
+                <button onclick="closeCarteiraDashboardHelp()" class="p-1.5 rounded-lg hover:bg-white/10"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-slate-700 max-h-[70vh] overflow-y-auto custom-scroll">
+                <div class="bg-slate-50 border rounded-xl p-3"><b>Valor a faturar por mês de entrega</b><p class="mt-1 text-slate-500">Soma o campo <b>Vl. a faturar</b> por mês da <b>Dt. Pesquisa</b>, mostrando quando o saldo da carteira está previsto para entrega.</p></div>
+                <div class="bg-slate-50 border rounded-xl p-3"><b>Valor a faturar por cliente — Top 10</b><p class="mt-1 text-slate-500">Mostra os dez clientes com maior valor ainda a faturar dentro dos filtros atuais.</p></div>
+                <div class="bg-slate-50 border rounded-xl p-3"><b>Valor a faturar por Status OS</b><p class="mt-1 text-slate-500">Distribui o valor pendente conforme o status atual da Ordem de Serviço.</p></div>
+                <div class="bg-slate-50 border rounded-xl p-3"><b>Disponibilidade Material</b><p class="mt-1 text-slate-500">Mostra quanto do valor a faturar está em cada situação de disponibilidade de material.</p></div>
+                <div class="bg-slate-50 border rounded-xl p-3"><b>Etapa</b><p class="mt-1 text-slate-500">Agrupa o valor a faturar pela etapa atual da carteira, ajudando a localizar onde está concentrado o saldo.</p></div>
+                <div class="bg-slate-50 border rounded-xl p-3"><b>Carteira com Prata x sem Prata</b><p class="mt-1 text-slate-500">Compara o valor a faturar dos itens identificados com Prata contra os demais itens.</p></div>
+                <div class="bg-red-50 border border-red-100 rounded-xl p-3 md:col-span-2"><b class="text-red-700">Entregas vencidas com saldo</b><p class="mt-1 text-red-600">Lista até 10 itens cuja previsão já venceu e ainda possuem saldo a entregar, priorizados pelo maior valor a faturar.</p></div>
+                <div class="bg-pstec-50 border border-pstec-100 rounded-xl p-3 md:col-span-2"><b class="text-pstec-700">Interação</b><p class="mt-1">Os valores ficam visíveis diretamente nos gráficos. Clique em uma barra ou fatia para aplicar aquele filtro. <b>Clique novamente no mesmo item</b> para restaurar o filtro que existia antes do clique.</p></div>
+            </div>
+            <div class="px-5 py-3 border-t bg-slate-50 flex justify-end"><button onclick="closeCarteiraDashboardHelp()" class="px-5 py-2 rounded-xl bg-pstec-700 hover:bg-pstec-800 text-white text-xs font-bold">Entendi</button></div>
+        </div>
+    </div>
+
 </body>
 </html>
