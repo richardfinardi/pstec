@@ -50,6 +50,7 @@
     </script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="./pstec-cache.js"></script>
 
     <style>
         body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background-color: #f8fafc; color: #0f172a; }
@@ -81,6 +82,12 @@
                 <div class="hidden md:flex items-center gap-1.5 px-3 py-2 bg-pstec-800 border border-pstec-600 rounded-xl text-xs font-bold text-slate-200">
                     <i data-lucide="user-check" class="w-4 h-4 text-pstecgreen-500"></i>
                     <span id="userDisplayName">Usuário</span>
+                </div>
+
+
+                <div id="dataStatusBadge" class="hidden md:flex items-center gap-1.5 px-2.5 py-2 rounded-xl border text-[10px] font-black whitespace-nowrap bg-pstec-800 border-pstec-600 text-slate-200" title="Status dos dados">
+                    <span id="dataStatusDot" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                    <span id="dataStatusText">CARREGANDO...</span>
                 </div>
 
                 <!-- BOTÃO OCULTAR / EXIBIR VALORES -->
@@ -493,7 +500,13 @@
     <!-- LOGICA JS DA V2.7 PRO -->
     <script>
         const API_CARTEIRA = 'https://pstec.consultoriarf.net/CARTEIRA';
+        const CARTEIRA_CACHE_KEY = 'pstec_carteira_data_v1';
         let rawCarteira = [];
+        let carteiraDataReady = false;
+        let carteiraRefreshing = false;
+        let carteiraCacheSavedAt = null;
+        let carteiraLastApiSyncAt = 0;
+        let carteiraAutoRefreshTimer = null;
         let currentFilteredData = [];
         
         let sortColumn = 'Dt. aprovação';
@@ -652,7 +665,8 @@
             });
 
             lucide.createIcons();
-            fetchCarteiraData();
+            loadCarteiraData();
+            startCarteiraAutoRefresh();
         });
 
         // TERNÁRIO DE OCULTAR / EXIBIR VALORES COM PERSISTÊNCIA
@@ -727,33 +741,110 @@
             lucide.createIcons();
         }
 
-        async function fetchCarteiraData(isSilent = false) {
+        function applyCarteiraDataset(data, source = 'api', savedAt = null) {
+            rawCarteira = Array.isArray(data) ? data : [];
+            carteiraDataReady = true;
+            carteiraCacheSavedAt = savedAt || carteiraCacheSavedAt;
+
+            renderTableColsVisibilityDropdown();
+            renderTableHeader();
+            renderDropdownsHTML();
+            renderCarteiraView();
+
+            const label = document.getElementById('lastUpdateLabel');
+            const dt = PstecCache.formatDateTime(savedAt);
+            if (label) label.textContent = source === 'cache'
+                ? `Cache local: ${dt || '-'}`
+                : `Atualizado: ${dt || new Date().toLocaleTimeString('pt-BR')}`;
+            PstecCache.updateStatus(source === 'cache' ? 'cache' : 'api', savedAt);
+        }
+
+        async function refreshCarteiraFromApi(manual = false, quiet = false) {
+            if (carteiraRefreshing) return;
+            carteiraRefreshing = true;
+
             const refreshIcon = document.getElementById('refreshIcon');
             const btnRefresh = document.getElementById('btnRefresh');
-            
-            if (!isSilent && refreshIcon) refreshIcon.classList.add('animate-spin');
-            if (!isSilent && btnRefresh) btnRefresh.disabled = true;
+            if (manual && refreshIcon) refreshIcon.classList.add('animate-spin');
+            if (manual && btnRefresh) btnRefresh.disabled = true;
+            if (carteiraDataReady && !manual) PstecCache.updateStatus('updating', carteiraCacheSavedAt);
 
             try {
-                const response = await fetch(`${API_CARTEIRA}?_t=${Date.now()}`, { cache: 'no-store' });
+                const response = await fetch(`${API_CARTEIRA}?_t=${Date.now()}`, {
+                    cache: 'no-store',
+                    headers: { 'Cache-Control': 'no-cache' }
+                });
                 if (!response.ok) throw new Error(`Erro na API: ${response.status}`);
-                
-                rawCarteira = await response.json();
 
-                renderTableColsVisibilityDropdown();
-                renderTableHeader();
-                renderDropdownsHTML();
-                renderCarteiraView();
+                const data = await response.json();
+                if (!Array.isArray(data)) throw new Error('Formato inválido retornado pela API da Carteira');
 
-                document.getElementById('lastUpdateLabel').textContent = `Atualizado: ${new Date().toLocaleTimeString('pt-BR')}`;
+                const savedAt = new Date().toISOString();
+                carteiraLastApiSyncAt = Date.now();
+                applyCarteiraDataset(data, 'api', savedAt);
+
+                try {
+                    await PstecCache.write(CARTEIRA_CACHE_KEY, data, savedAt);
+                    carteiraCacheSavedAt = savedAt;
+                } catch (cacheError) {
+                    console.warn('Não foi possível atualizar o cache da Carteira:', cacheError);
+                }
             } catch (error) {
                 console.error('Erro ao buscar dados da Carteira:', error);
-                if (!isSilent) alert('Não foi possível atualizar a Carteira de Produção.');
+                if (carteiraDataReady) {
+                    PstecCache.updateStatus('cache', carteiraCacheSavedAt, 'API indisponível. Mantendo os últimos dados salvos neste computador.');
+                    if (!quiet && manual) alert('A API não respondeu. Os dados que estão na tela foram mantidos pelo cache local.');
+                } else {
+                    PstecCache.updateStatus('error', null, error.message);
+                    if (!quiet) alert('Não foi possível carregar a Carteira de Produção e ainda não existe cache local neste computador.');
+                }
             } finally {
+                carteiraRefreshing = false;
                 if (refreshIcon) refreshIcon.classList.remove('animate-spin');
                 if (btnRefresh) btnRefresh.disabled = false;
                 lucide.createIcons();
             }
+        }
+
+        async function loadCarteiraData() {
+            PstecCache.updateStatus('loading');
+            let cached = null;
+            try {
+                cached = await PstecCache.read(CARTEIRA_CACHE_KEY);
+            } catch (cacheError) {
+                console.warn('Cache local da Carteira indisponível:', cacheError);
+            }
+
+            if (cached && Array.isArray(cached.data) && cached.data.length) {
+                carteiraCacheSavedAt = cached.savedAt || null;
+                carteiraLastApiSyncAt = carteiraCacheSavedAt ? (new Date(carteiraCacheSavedAt).getTime() || 0) : 0;
+                applyCarteiraDataset(cached.data, 'cache', carteiraCacheSavedAt);
+                // Cache-first: tela abre imediatamente; API atualiza silenciosamente.
+                refreshCarteiraFromApi(false, true);
+            } else {
+                await refreshCarteiraFromApi(false, false);
+            }
+        }
+
+        async function fetchCarteiraData(isSilent = false) {
+            return refreshCarteiraFromApi(!isSilent, isSilent);
+        }
+
+        function startCarteiraAutoRefresh() {
+            const interval = PstecCache.AUTO_REFRESH_INTERVAL_MS;
+            if (carteiraAutoRefreshTimer) clearInterval(carteiraAutoRefreshTimer);
+            carteiraAutoRefreshTimer = setInterval(() => {
+                if (document.visibilityState === 'visible' && !carteiraRefreshing) {
+                    const elapsed = Date.now() - (carteiraLastApiSyncAt || 0);
+                    if (elapsed >= interval) refreshCarteiraFromApi(false, true);
+                }
+            }, 30000);
+
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState !== 'visible' || carteiraRefreshing) return;
+                const elapsed = Date.now() - (carteiraLastApiSyncAt || 0);
+                if (elapsed >= interval) refreshCarteiraFromApi(false, true);
+            });
         }
 
         function renderTableColsVisibilityDropdown() {

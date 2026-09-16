@@ -17,3 +17,5 @@ CAPITAL:
 API: https://pstec.consultoriarf.net/capital
 Abas: CARTEIRA | FATURAMENTO | FINANCEIRO
 Não existe aba RESUMO.
+
+- pstec-cache.js -> cache local IndexedDB compartilhado por Produção, Carteira e Capital.

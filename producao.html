@@ -54,6 +54,7 @@
     </script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="./pstec-cache.js"></script>
     <style>
         body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background-color: #f8fafc; color: #0f172a; }
         .custom-scroll::-webkit-scrollbar { width: 5px; }
@@ -88,6 +89,11 @@
                     <i data-lucide="user-check" class="w-4 h-4 text-pstecgreen-500"></i>
                     <span id="userDisplayName">Usuário</span>
                 </div>
+                <div id="dataStatusBadge" class="hidden md:flex items-center gap-1.5 px-2.5 py-2 rounded-xl border text-[10px] font-black whitespace-nowrap bg-pstec-800 border-pstec-600 text-slate-200" title="Status dos dados">
+                    <span id="dataStatusDot" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                    <span id="dataStatusText">CARREGANDO...</span>
+                </div>
+
 
                 <!-- ABAS DE NAVEGAÇÃO INTERNA NO HEADER -->
                 <button id="btnAbaDashboard" onclick="setAbaAtiva('dashboard')" class="flex items-center gap-1.5 px-3 py-2 bg-pstec-900 text-white font-extrabold rounded-xl text-xs transition shadow-md border border-pstecgreen-500">
@@ -118,7 +124,7 @@
                     <span class="hidden lg:inline">Menu</span>
                 </a>
 <!-- Botão Atualizar Manual -->
-                <button id="btnRefresh" onclick="fetchData(false)" class="flex items-center gap-2 px-3.5 py-2 bg-pstecgreen-500 hover:bg-pstecgreen-600 text-slate-950 font-bold text-xs transition-all shadow" title="Atualizar Dados">
+                <button id="btnRefresh" onclick="refreshCurrentProductionModule(false)" class="flex items-center gap-2 px-3.5 py-2 bg-pstecgreen-500 hover:bg-pstecgreen-600 text-slate-950 font-bold text-xs transition-all shadow" title="Atualizar Dados">
                     <i data-lucide="refresh-cw" class="w-4 h-4" id="refreshIcon"></i>
                 </button>
 
@@ -542,10 +548,19 @@
         const API_URL = 'https://pstec.consultoriarf.net/producao';
         const API_HR_A_MAIS = 'https://pstec.consultoriarf.net/hr-a-mais';
         const API_FATURAMENTO = 'https://pstec.consultoriarf.net/faturamento_prod';
+        const PROD_CACHE_KEY = 'pstec_producao_data_v1';
+        const CONF_CACHE_KEY = 'pstec_producao_conferencia_v1';
+        const FAT_CACHE_KEY = 'pstec_producao_faturamento_v1';
 
         let rawData = [];
         let rawConferenciaData = [];
         let rawFaturamentoData = [];
+        let prodDataReady = false, confDataReady = false, fatDataReady = false;
+        let prodSourceMode = 'loading', confSourceMode = 'loading', fatSourceMode = 'loading';
+        let prodRefreshing = false, confRefreshing = false, fatRefreshing = false;
+        let prodCacheSavedAt = null, confCacheSavedAt = null, fatCacheSavedAt = null;
+        let prodLastApiSyncAt = 0, confLastApiSyncAt = 0, fatLastApiSyncAt = 0;
+        let productionAutoRefreshTimer = null;
         let currentDate = new Date();
         let selectedItemModal = null; 
 
@@ -592,22 +607,8 @@
 
             lucide.createIcons();
             setViewMode(currentView, false);
-            fetchData();
-
-            setInterval(() => {
-                const isModalOpen = !document.getElementById('osModal').classList.contains('hidden') ||
-                                    !document.getElementById('altRenegociationFormModal').classList.contains('hidden') ||
-                                    !document.getElementById('clientAccessModal').classList.contains('hidden');
-                
-                if (!isModalOpen) {
-                    fetchData(true);
-                    if (abaAtiva === 'conferencia') {
-                        fetchConferenciaData(true);
-                    } else if (abaAtiva === 'faturamento') {
-                        fetchFaturamentoData(true);
-                    }
-                }
-            }, 30000);
+            loadProductionData();
+            startProductionAutoRefresh();
         });
 
         function configurarVisibilidadeAbas() {
@@ -634,6 +635,16 @@
                 } else {
                     btnAbaConferencia.classList.add('hidden');
                 }
+            }
+        }
+
+        function updateActiveProductionStatus() {
+            if (abaAtiva === 'conferencia') {
+                PstecCache.updateStatus(confDataReady ? confSourceMode : 'loading', confCacheSavedAt);
+            } else if (abaAtiva === 'faturamento') {
+                PstecCache.updateStatus(fatDataReady ? fatSourceMode : 'loading', fatCacheSavedAt);
+            } else {
+                PstecCache.updateStatus(prodDataReady ? prodSourceMode : 'loading', prodCacheSavedAt);
             }
         }
 
@@ -699,7 +710,7 @@
                 if (viewModeContainer) viewModeContainer.classList.add('hidden');
 
                 currentView = 'month';
-                fetchFaturamentoData();
+                loadFaturamentoData();
 
             } else if (abaAtiva === 'conferencia') {
                 if (btnConferencia) btnConferencia.className = "flex items-center gap-1.5 px-3 py-2 bg-indigo-900 border border-indigo-400 text-white font-black rounded-xl text-xs transition shadow-md";
@@ -707,7 +718,7 @@
                 if (filtersBar) filtersBar.classList.add('hidden');
                 if (navigationBar) navigationBar.classList.remove('hidden'); 
                 if (viewModeContainer) viewModeContainer.classList.remove('hidden');
-                fetchConferenciaData();
+                loadConferenciaData();
             } else {
                 if (metricsBar) metricsBar.classList.add('hidden');
                 if (filtersBar) filtersBar.classList.add('hidden');
@@ -718,6 +729,7 @@
                 }
             }
 
+            updateActiveProductionStatus();
             renderView();
         }
 
@@ -793,18 +805,8 @@
             return `${fmtDay(wStart)}/${fmtMonth(wStart)} - ${fmtDay(wEnd)}/${fmtMonth(wEnd)}`;
         }
 
-        async function fetchData(isSilent = false) {
-            const refreshIcon = document.getElementById('refreshIcon');
-            const btnRefresh = document.getElementById('btnRefresh');
-            
-            if (!isSilent && refreshIcon) {
-                refreshIcon.classList.add('animate-spin');
-            }
-            if (!isSilent && btnRefresh) {
-                btnRefresh.disabled = true;
-            }
-
-            const savedFilters = {
+        function getSavedProductionFilters() {
+            return {
                 search: document.getElementById('searchInput')?.value || '',
                 atrasada: document.getElementById('atrasadaFilter')?.value || '',
                 apontamento: document.getElementById('apontamentoAbertoFilter')?.value || '',
@@ -816,64 +818,210 @@
                 compras: document.getElementById('comprasFilter')?.value || '',
                 terceiros: document.getElementById('terceirosFilter')?.value || ''
             };
+        }
+
+        function applyProductionDataset(data, source = 'api', savedAt = null) {
+            const savedFilters = getSavedProductionFilters();
+            rawData = Array.isArray(data) ? data : [];
+            prodDataReady = true;
+            prodSourceMode = source === 'cache' ? 'cache' : 'api';
+            prodCacheSavedAt = savedAt || prodCacheSavedAt;
+            initializeCurrentDate();
+            populateSelectOptions(savedFilters);
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) searchInput.value = savedFilters.search;
+            renderView();
+            if (abaAtiva !== 'conferencia' && abaAtiva !== 'faturamento') {
+                PstecCache.updateStatus(source === 'cache' ? 'cache' : 'api', savedAt);
+            }
+        }
+
+        function applyConferenciaDataset(data, source = 'api', savedAt = null) {
+            rawConferenciaData = Array.isArray(data) ? data : [];
+            confDataReady = true;
+            confSourceMode = source === 'cache' ? 'cache' : 'api';
+            confCacheSavedAt = savedAt || confCacheSavedAt;
+            if (abaAtiva === 'conferencia') {
+                renderPaginaConferenciaView();
+                PstecCache.updateStatus(source === 'cache' ? 'cache' : 'api', savedAt);
+            }
+        }
+
+        function applyFaturamentoDataset(data, source = 'api', savedAt = null) {
+            rawFaturamentoData = Array.isArray(data) ? data : [];
+            fatDataReady = true;
+            fatSourceMode = source === 'cache' ? 'cache' : 'api';
+            fatCacheSavedAt = savedAt || fatCacheSavedAt;
+            if (abaAtiva === 'faturamento') {
+                renderPaginaFaturamentoView();
+                PstecCache.updateStatus(source === 'cache' ? 'cache' : 'api', savedAt);
+            }
+        }
+
+        async function refreshProductionFromApi(manual = false, quiet = false) {
+            if (prodRefreshing) return;
+            prodRefreshing = true;
+            const refreshIcon = document.getElementById('refreshIcon');
+            const btnRefresh = document.getElementById('btnRefresh');
+            if (manual && refreshIcon) refreshIcon.classList.add('animate-spin');
+            if (manual && btnRefresh) btnRefresh.disabled = true;
+            if (prodDataReady && !manual && abaAtiva !== 'conferencia' && abaAtiva !== 'faturamento') PstecCache.updateStatus('updating', prodCacheSavedAt);
 
             try {
-                const cacheBusterUrl = `${API_URL}?_t=${Date.now()}`;
-                const response = await fetch(cacheBusterUrl, { cache: 'no-store' });
-
-                if (!response.ok) {
-                    throw new Error(`Erro na requisição: ${response.status} ${response.statusText}`);
-                }
-
-                rawData = await response.json();
-
-                initializeCurrentDate();
-
-                populateSelectOptions(savedFilters);
-
-                const searchInput = document.getElementById('searchInput');
-                if (searchInput) searchInput.value = savedFilters.search;
-
-                renderView();
-
+                const response = await fetch(`${API_URL}?_t=${Date.now()}`, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } });
+                if (!response.ok) throw new Error(`Erro na requisição: ${response.status} ${response.statusText}`);
+                const data = await response.json();
+                if (!Array.isArray(data)) throw new Error('Formato inválido da API de produção');
+                const savedAt = new Date().toISOString();
+                prodLastApiSyncAt = Date.now();
+                applyProductionDataset(data, 'api', savedAt);
+                try { await PstecCache.write(PROD_CACHE_KEY, data, savedAt); prodCacheSavedAt = savedAt; }
+                catch (cacheError) { console.warn('Não foi possível atualizar cache da Produção:', cacheError); }
             } catch (error) {
                 console.error('Erro ao buscar dados da API:', error);
-                if (!isSilent) {
-                    alert('Não foi possível atualizar os dados de produção. Verifique a conexão com o servidor.');
+                if (prodDataReady) {
+                    if (abaAtiva !== 'conferencia' && abaAtiva !== 'faturamento') PstecCache.updateStatus('cache', prodCacheSavedAt, 'API indisponível. Mantendo os dados locais.');
+                    if (manual && !quiet) alert('A API não respondeu. Mantendo os dados da Produção que já estavam em cache.');
+                } else {
+                    PstecCache.updateStatus('error', null, error.message);
+                    if (!quiet) alert('Não foi possível carregar os dados de produção e ainda não existe cache local neste computador.');
                 }
             } finally {
-                if (refreshIcon) {
-                    refreshIcon.classList.remove('animate-spin');
-                }
-                if (btnRefresh) {
-                    btnRefresh.disabled = false;
-                }
+                prodRefreshing = false;
+                if (refreshIcon) refreshIcon.classList.remove('animate-spin');
+                if (btnRefresh) btnRefresh.disabled = false;
                 lucide.createIcons();
             }
         }
 
-        async function fetchConferenciaData(isSilent = false) {
+        async function refreshConferenciaFromApi(manual = false, quiet = false) {
+            if (confRefreshing) return;
+            confRefreshing = true;
+            const refreshIcon = document.getElementById('refreshIcon');
+            const btnRefresh = document.getElementById('btnRefresh');
+            if (manual && refreshIcon) refreshIcon.classList.add('animate-spin');
+            if (manual && btnRefresh) btnRefresh.disabled = true;
+            if (confDataReady && !manual && abaAtiva === 'conferencia') PstecCache.updateStatus('updating', confCacheSavedAt);
             try {
-                const cacheBusterUrl = `${API_HR_A_MAIS}?_t=${Date.now()}`;
-                const response = await fetch(cacheBusterUrl, { cache: 'no-store' });
+                const response = await fetch(`${API_HR_A_MAIS}?_t=${Date.now()}`, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } });
                 if (!response.ok) throw new Error('Erro na requisição da API de horas a mais');
-                rawConferenciaData = await response.json();
-                if (abaAtiva === 'conferencia') renderPaginaConferenciaView();
+                const data = await response.json();
+                if (!Array.isArray(data)) throw new Error('Formato inválido da API de conferência');
+                const savedAt = new Date().toISOString();
+                confLastApiSyncAt = Date.now();
+                applyConferenciaDataset(data, 'api', savedAt);
+                try { await PstecCache.write(CONF_CACHE_KEY, data, savedAt); confCacheSavedAt = savedAt; } catch (e) { console.warn('Falha ao atualizar cache da Conferência:', e); }
             } catch (err) {
                 console.error('Erro ao buscar dados de conferência:', err);
+                if (confDataReady && abaAtiva === 'conferencia') PstecCache.updateStatus('cache', confCacheSavedAt, 'API indisponível. Mantendo cache local.');
+                else if (abaAtiva === 'conferencia') PstecCache.updateStatus('error', null, err.message);
+            } finally {
+                confRefreshing = false;
+                if (refreshIcon) refreshIcon.classList.remove('animate-spin');
+                if (btnRefresh) btnRefresh.disabled = false;
             }
         }
 
-        async function fetchFaturamentoData(isSilent = false) {
+        async function refreshFaturamentoFromApi(manual = false, quiet = false) {
+            if (fatRefreshing) return;
+            fatRefreshing = true;
+            const refreshIcon = document.getElementById('refreshIcon');
+            const btnRefresh = document.getElementById('btnRefresh');
+            if (manual && refreshIcon) refreshIcon.classList.add('animate-spin');
+            if (manual && btnRefresh) btnRefresh.disabled = true;
+            if (fatDataReady && !manual && abaAtiva === 'faturamento') PstecCache.updateStatus('updating', fatCacheSavedAt);
             try {
-                const cacheBusterUrl = `${API_FATURAMENTO}?_t=${Date.now()}`;
-                const response = await fetch(cacheBusterUrl, { cache: 'no-store' });
+                const response = await fetch(`${API_FATURAMENTO}?_t=${Date.now()}`, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } });
                 if (!response.ok) throw new Error('Erro na requisição da API de faturamento');
-                rawFaturamentoData = await response.json();
-                if (abaAtiva === 'faturamento') renderPaginaFaturamentoView();
+                const data = await response.json();
+                if (!Array.isArray(data)) throw new Error('Formato inválido da API de faturamento');
+                const savedAt = new Date().toISOString();
+                fatLastApiSyncAt = Date.now();
+                applyFaturamentoDataset(data, 'api', savedAt);
+                try { await PstecCache.write(FAT_CACHE_KEY, data, savedAt); fatCacheSavedAt = savedAt; } catch (e) { console.warn('Falha ao atualizar cache do Faturamento:', e); }
             } catch (err) {
                 console.error('Erro ao buscar dados de faturamento:', err);
+                if (fatDataReady && abaAtiva === 'faturamento') PstecCache.updateStatus('cache', fatCacheSavedAt, 'API indisponível. Mantendo cache local.');
+                else if (abaAtiva === 'faturamento') PstecCache.updateStatus('error', null, err.message);
+            } finally {
+                fatRefreshing = false;
+                if (refreshIcon) refreshIcon.classList.remove('animate-spin');
+                if (btnRefresh) btnRefresh.disabled = false;
             }
+        }
+
+        async function loadProductionData() {
+            PstecCache.updateStatus('loading');
+            let cached = null;
+            try { cached = await PstecCache.read(PROD_CACHE_KEY); } catch (e) { console.warn('Cache da Produção indisponível:', e); }
+            if (cached && Array.isArray(cached.data) && cached.data.length) {
+                prodCacheSavedAt = cached.savedAt || null;
+                prodLastApiSyncAt = prodCacheSavedAt ? (new Date(prodCacheSavedAt).getTime() || 0) : 0;
+                applyProductionDataset(cached.data, 'cache', prodCacheSavedAt);
+                refreshProductionFromApi(false, true);
+            } else {
+                await refreshProductionFromApi(false, false);
+            }
+        }
+
+        async function loadConferenciaData() {
+            if (confDataReady) { renderPaginaConferenciaView(); PstecCache.updateStatus(confSourceMode, confCacheSavedAt); if (Date.now() - (confLastApiSyncAt || 0) >= PstecCache.AUTO_REFRESH_INTERVAL_MS) refreshConferenciaFromApi(false, true); return; }
+            PstecCache.updateStatus('loading');
+            let cached = null;
+            try { cached = await PstecCache.read(CONF_CACHE_KEY); } catch (e) { console.warn('Cache da Conferência indisponível:', e); }
+            if (cached && Array.isArray(cached.data) && cached.data.length) {
+                confCacheSavedAt = cached.savedAt || null;
+                confLastApiSyncAt = confCacheSavedAt ? (new Date(confCacheSavedAt).getTime() || 0) : 0;
+                applyConferenciaDataset(cached.data, 'cache', confCacheSavedAt);
+                refreshConferenciaFromApi(false, true);
+            } else await refreshConferenciaFromApi(false, false);
+        }
+
+        async function loadFaturamentoData() {
+            if (fatDataReady) { renderPaginaFaturamentoView(); PstecCache.updateStatus(fatSourceMode, fatCacheSavedAt); if (Date.now() - (fatLastApiSyncAt || 0) >= PstecCache.AUTO_REFRESH_INTERVAL_MS) refreshFaturamentoFromApi(false, true); return; }
+            PstecCache.updateStatus('loading');
+            let cached = null;
+            try { cached = await PstecCache.read(FAT_CACHE_KEY); } catch (e) { console.warn('Cache do Faturamento indisponível:', e); }
+            if (cached && Array.isArray(cached.data) && cached.data.length) {
+                fatCacheSavedAt = cached.savedAt || null;
+                fatLastApiSyncAt = fatCacheSavedAt ? (new Date(fatCacheSavedAt).getTime() || 0) : 0;
+                applyFaturamentoDataset(cached.data, 'cache', fatCacheSavedAt);
+                refreshFaturamentoFromApi(false, true);
+            } else await refreshFaturamentoFromApi(false, false);
+        }
+
+        async function fetchData(isSilent = false) { return refreshProductionFromApi(!isSilent, isSilent); }
+        async function fetchConferenciaData(isSilent = false) { return refreshConferenciaFromApi(!isSilent, isSilent); }
+        async function fetchFaturamentoData(isSilent = false) { return refreshFaturamentoFromApi(!isSilent, isSilent); }
+
+        function refreshCurrentProductionModule(isSilent = false) {
+            if (abaAtiva === 'conferencia') return fetchConferenciaData(isSilent);
+            if (abaAtiva === 'faturamento') return fetchFaturamentoData(isSilent);
+            return fetchData(isSilent);
+        }
+
+        function startProductionAutoRefresh() {
+            const interval = PstecCache.AUTO_REFRESH_INTERVAL_MS;
+            if (productionAutoRefreshTimer) clearInterval(productionAutoRefreshTimer);
+            productionAutoRefreshTimer = setInterval(() => {
+                if (document.visibilityState !== 'visible') return;
+                const modalOpen = !document.getElementById('osModal').classList.contains('hidden') || !document.getElementById('altRenegociationFormModal').classList.contains('hidden') || !document.getElementById('clientAccessModal').classList.contains('hidden');
+                if (modalOpen) return;
+                if (abaAtiva === 'conferencia') {
+                    if (Date.now() - (confLastApiSyncAt || 0) >= interval) refreshConferenciaFromApi(false, true);
+                } else if (abaAtiva === 'faturamento') {
+                    if (Date.now() - (fatLastApiSyncAt || 0) >= interval) refreshFaturamentoFromApi(false, true);
+                } else if (Date.now() - (prodLastApiSyncAt || 0) >= interval) {
+                    refreshProductionFromApi(false, true);
+                }
+            }, 30000);
+
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState !== 'visible') return;
+                if (abaAtiva === 'conferencia' && Date.now() - (confLastApiSyncAt || 0) >= interval) refreshConferenciaFromApi(false, true);
+                else if (abaAtiva === 'faturamento' && Date.now() - (fatLastApiSyncAt || 0) >= interval) refreshFaturamentoFromApi(false, true);
+                else if (abaAtiva !== 'conferencia' && abaAtiva !== 'faturamento' && Date.now() - (prodLastApiSyncAt || 0) >= interval) refreshProductionFromApi(false, true);
+            });
         }
 
         function populateSelectOptions(savedFilters = {}) {
