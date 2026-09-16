@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/png" href="LOGO MINIMALISTA.png">
 <link rel="apple-touch-icon" href="LOGO MINIMALISTA.png">
-<title>Capital de Giro - PSTEC V1.4</title>
+<title>Capital de Giro - PSTEC V1.5</title>
 <script>if(!localStorage.getItem('pstec_token')) window.location.href='login-pstec.html';</script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
@@ -87,7 +87,7 @@ th{user-select:none}.col-filter-popover{display:none}.col-filter-popover.active{
   <div class="max-w-[98%] mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3">
     <div class="flex items-center gap-4">
       <a href="index.html" class="flex items-center justify-center p-1.5 bg-white rounded-xl shadow-sm" title="Menu PSTEC"><img src="./logo.png" alt="PSTEC" class="h-9 max-h-10 w-auto object-contain"></a>
-      <div><h1 class="text-xl font-extrabold tracking-wide">GRUPO PSTEC</h1><p class="text-xs text-pstec-100">Capital de Giro V1.4</p></div>
+      <div><h1 class="text-xl font-extrabold tracking-wide">GRUPO PSTEC</h1><p class="text-xs text-pstec-100">Capital de Giro V1.5</p></div>
     </div>
     <div class="flex items-center gap-2">
       <div class="hidden md:flex items-center gap-1.5 px-3 py-2 bg-pstec-800 border border-pstec-600 rounded-xl text-xs font-bold text-slate-200"><i data-lucide="user-check" class="w-4 h-4 text-pstecgreen-500"></i><span id="userDisplayName">Usuário</span></div>
@@ -227,16 +227,28 @@ th{user-select:none}.col-filter-popover{display:none}.col-filter-popover.active{
 </main>
 
 <script>
-const API_CAPITAL='https://pstec.consultoriarf.net/capital';
-const CAPITAL_CACHE_KEY='pstec_capital_data_v2';
+const API_CAPITAL={
+ carteira:'https://pstec.consultoriarf.net/capital_carteira',
+ faturamento:'https://pstec.consultoriarf.net/capital_faturamento',
+ financeiro:'https://pstec.consultoriarf.net/capital_financeiro'
+};
+const CAPITAL_CACHE_KEYS={
+ carteira:'pstec_capital_carteira_v3',
+ faturamento:'pstec_capital_faturamento_v3',
+ financeiro:'pstec_capital_financeiro_v3'
+};
 const HIDDEN_COLS_KEY='pstec_capital_hidden_cols_v2';
 const FILTERS_COLLAPSED_KEY='pstec_capital_filters_collapsed';
 const EXPORT_COLS_KEY='pstec_capital_export_cols_v2';
-let rawCapital=[], currentRows=[], activeTab='carteira';
+let capitalData={carteira:[],faturamento:[],financeiro:[]}, currentRows=[], activeTab='carteira';
 let capitalViewMode=localStorage.getItem('pstec_capital_view_mode')||'table';
 let capitalCharts={};
 let capitalDashboardClickState={carteira:{},faturamento:{},financeiro:{}};
-let capitalDataReady=false,capitalRefreshing=false,capitalCacheSavedAt=null,capitalLastApiSyncAt=0,capitalAutoRefreshTimer=null;
+let capitalDataReady={carteira:false,faturamento:false,financeiro:false};
+let capitalRefreshing={carteira:false,faturamento:false,financeiro:false};
+let capitalCacheSavedAt={carteira:null,faturamento:null,financeiro:null};
+let capitalLastApiSyncAt={carteira:0,faturamento:0,financeiro:0};
+let capitalAutoRefreshTimer=null;
 let hiddenCols={carteira:new Set(),faturamento:new Set(),financeiro:new Set()};
 let colSelections={carteira:{},faturamento:{},financeiro:{}};
 let sortState={carteira:{key:null,asc:true},faturamento:{key:null,asc:true},financeiro:{key:null,asc:true}};
@@ -259,6 +271,7 @@ function closeSearchHelpModal(){const m=document.getElementById('searchHelpModal
 function debounceGlobalSearch(){clearTimeout(searchTimer);searchTimer=setTimeout(render,180)}
 
 function deriv(r){
+ // A Carteira continua calculando os indicadores de capital sobre os campos da carteira.
  const cot=n(r['Cotação Prata Atual']);
  const qtdPrataPedido=n(r['Qtde. AG por pedido']);
  const prataPedido=qtdPrataPedido*cot;
@@ -269,18 +282,35 @@ function deriv(r){
  const vlAFat=n(r['Vl. a faturar']);
  const totalPagar=totalMP+impPagar;
  const saldoFin=vlAFat-totalPagar;
- const qtdFat=n(r['Qtde. Entregue']);
- const fatValor=qtdFat*n(r['Vl. Unitário']);
- const fatPrataLote=n(r.qtdpratapc)*qtdFat;
- const fatPrata=fatPrataLote*cot;
- const fatAgcn=fatPrata*0.15;
- const fatMPComum=n(r.vl_mp_comum_pc)*qtdFat;
- const fatTotalMP=fatPrata+fatAgcn+fatMPComum;
- const fatImp=n(r.imposto)*qtdFat;
- const fatSaldo=fatValor-fatTotalMP-fatImp;
- const fatPct=fatValor?fatTotalMP/fatValor*100:0;
- const finTotal=n(r['A RECEBER'])+n(r.RECEBIDO);
- return {...r,_prataPedido:prataPedido,_agcn:agcn,_totalMP:totalMP,_totalPagar:totalPagar,_saldoFin:saldoFin,_fatQtd:qtdFat,_fatValor:fatValor,_fatPrataLote:fatPrataLote,_fatPrata:fatPrata,_fatAgcn:fatAgcn,_fatMPComum:fatMPComum,_fatTotalMP:fatTotalMP,_fatImp:fatImp,_fatSaldo:fatSaldo,_fatPct:fatPct,_finTotal:finTotal,_saldoReceber:n(r['Saldo a receber']??r['SALDO A RECEBER']??r['A RECEBER'])};
+
+ // Faturamento/Financeiro agora chegam prontos de consultas próprias, sem repetir o financeiro por item da carteira.
+ const qtdFat=n(r['Qtde.'] ?? r['Qtde. Entregue']);
+ const fatValor=n(r['Valor Total']);
+ const fatPrataLote=n(r['Qtde. Prata/lote']);
+ const fatPrata=n(r['Vl. Total Prata']);
+ const fatAgcn=n(r['Vl. AGCN']);
+ const fatMPComum=n(r['Vl. MP Comum']);
+ const fatTotalMP=n(r['Vl. Total de MP']);
+ const fatImp=n(r['Impostos']);
+ const fatSaldo=n(r['Saldo']);
+ const fatPct=n(r['% MP']);
+ const recebido=n(r['Recebido'] ?? r.RECEBIDO);
+ const aReceber=n(r['A receber'] ?? r['A RECEBER']);
+ const saldoReceber=n(r['Saldo a receber'] ?? r['SALDO A RECEBER']);
+ const finTotal=recebido+aReceber;
+
+ // Aliases invisíveis preservam filtros/gráficos existentes entre as três fontes.
+ return {
+   ...r,
+   'Código': r['Código'] ?? r['Cód. Produto'] ?? '',
+   'Nº Orçamento': r['Nº Orçamento'] ?? r['Orçamento'] ?? '',
+   RECEBIDO: recebido,
+   'A RECEBER': aReceber,
+   _prataPedido:prataPedido,_agcn:agcn,_totalMP:totalMP,_totalPagar:totalPagar,_saldoFin:saldoFin,
+   _fatQtd:qtdFat,_fatValor:fatValor,_fatPrataLote:fatPrataLote,_fatPrata:fatPrata,_fatAgcn:fatAgcn,
+   _fatMPComum:fatMPComum,_fatTotalMP:fatTotalMP,_fatImp:fatImp,_fatSaldo:fatSaldo,_fatPct:fatPct,
+   _finTotal:finTotal,_saldoReceber:saldoReceber
+ };
 }
 
 const C=(id,label,type='text',opts={})=>({id,label,type,defaultVisible:opts.defaultVisible!==false,monetary:!!opts.monetary,get:opts.get||((r)=>r[id])});
@@ -289,10 +319,10 @@ const columns={
   C('Empresa','Empresa','text',{defaultVisible:false}),C('Nº OS','Nº OS'),C('Status OS','Status OS','badge'),C('Nº Orçamento','Nº Orçamento'),C('Dt. aprovação','Dt. aprovação','date'),C('Prev. entrega(original)','Prev. entrega(original)','date'),C('Cliente','Cliente'),C('Código','Código'),C('Tipo','Tipo'),C('Item','Item'),C('Nº Pedido','Nº Pedido'),C('Qtde. Total','Qtde. Total','num',{defaultVisible:false}),C('Qtde. Entregue','Qtde. Entregue','num',{defaultVisible:false}),C('Saldo a entregar','Saldo a entregar','num'),C('Vl. Unitário','Vl. Unitário','brl',{defaultVisible:false,monetary:true}),C('Vl. Total','Vl. Total','brl',{defaultVisible:false,monetary:true}),C('Vl. a faturar','Vl. a faturar','brl',{monetary:true}),C('Disponibilidade Material','Disponibilidade Material','badge'),C('Prata','Prata','badge'),C('qtdpratapc','Qtde. Prata/pc','num',{defaultVisible:false}),C('Qtde. AG por pedido','Qtde Prata Pedido','num',{defaultVisible:false}),C('_prataPedido','Vl. prata por pedido','brl',{defaultVisible:false,monetary:true,get:r=>r._prataPedido}),C('_agcn','Vl. AGCN','brl',{defaultVisible:false,monetary:true,get:r=>r._agcn}),C('Vl. MP comum','Vl. MP Comum','brl',{defaultVisible:false,monetary:true}),C('_totalMP','VL. Total Material','brl',{monetary:true,get:r=>r._totalMP}),C('Impostos a pagar','Imp. Pagar','brl',{monetary:true}),C('Etapa','Etapa'),C('Dt. Prev. OS','Dt. Prev. OS','date',{defaultVisible:false}),C('_totalPagar','Total a pagar','brl',{monetary:true,get:r=>r._totalPagar}),C('_saldoFin','Saldo Financeiro','brl',{monetary:true,get:r=>r._saldoFin})
  ],
  faturamento:[
-  C('Empresa','Empresa','text',{defaultVisible:false}),C('Cliente','Cliente'),C('NF','NF','text',{get:r=>r.NF||r['Notas Fiscais']||''}),C('Nº Orçamento','Orçamento'),C('Emissão','Emissão','date',{get:r=>r.Emissão||firstDateFromList(r['Dts. emissão'])}),C('Código','Cód. Produto'),C('Item','Item'),C('Plano de contas','Plano de contas','text',{defaultVisible:false,get:r=>r['Plano de contas']||''}),C('_fatQtd','Qtde.','num',{get:r=>r._fatQtd}),C('_fatValor','Valor Total','brl',{monetary:true,get:r=>r._fatValor}),C('Prata','Prata','badge'),C('qtdpratapc','Qtde. Prata/pc','num',{defaultVisible:false}),C('_fatPrataLote','Qtde. Prata/lote','num',{defaultVisible:false,get:r=>r._fatPrataLote}),C('_fatPrata','Vl. Total Prata','brl',{defaultVisible:false,monetary:true,get:r=>r._fatPrata}),C('_fatAgcn','Vl. AGCN','brl',{defaultVisible:false,monetary:true,get:r=>r._fatAgcn}),C('_fatMPComum','Vl. MP Comum','brl',{defaultVisible:false,monetary:true,get:r=>r._fatMPComum}),C('_fatTotalMP','Vl. Total de MP','brl',{monetary:true,get:r=>r._fatTotalMP}),C('_fatImp','Impostos','brl',{monetary:true,get:r=>r._fatImp}),C('_fatSaldo','Saldo','brl',{monetary:true,get:r=>r._fatSaldo}),C('_fatPct','% MP','pct',{get:r=>r._fatPct}),C('status_nf','status_nf','badge')
+  C('Empresa','Empresa','text',{defaultVisible:false}),C('Cliente','Cliente'),C('NF','NF'),C('Orçamento','Orçamento'),C('Emissão','Emissão','date'),C('Cód. Produto','Cód. Produto'),C('Item','Item'),C('Plano de contas','Plano de contas','text',{defaultVisible:false}),C('Qtde.','Qtde.','num'),C('Valor Total','Valor Total','brl',{monetary:true}),C('Prata','Prata','badge'),C('Qtde. Prata/pc','Qtde. Prata/pc','num',{defaultVisible:false}),C('Qtde. Prata/lote','Qtde. Prata/lote','num',{defaultVisible:false}),C('Vl. Total Prata','Vl. Total Prata','brl',{defaultVisible:false,monetary:true}),C('Vl. AGCN','Vl. AGCN','brl',{defaultVisible:false,monetary:true}),C('Vl. MP Comum','Vl. MP Comum','brl',{defaultVisible:false,monetary:true}),C('Vl. Total de MP','Vl. Total de MP','brl',{monetary:true}),C('Impostos','Impostos','brl',{monetary:true}),C('Saldo','Saldo','brl',{monetary:true}),C('% MP','% MP','pct'),C('status_nf','status_nf','badge')
  ],
  financeiro:[
-  C('Empresa','Empresa','text',{defaultVisible:false}),C('Cliente','Cliente'),C('NF','NF'),C('Emissão','Emissão','date'),C('_fatQtd','Qtde.','num',{defaultVisible:false,get:r=>r._fatQtd}),C('_fatValor','Valor Total','brl',{monetary:true,get:r=>r._fatValor}),C('_fatPrata','Vl. Total Prata','brl',{defaultVisible:false,monetary:true,get:r=>r._fatPrata}),C('_fatAgcn','Vl. AGCN','brl',{defaultVisible:false,monetary:true,get:r=>r._fatAgcn}),C('_fatMPComum','Vl. MP Comum','brl',{defaultVisible:false,monetary:true,get:r=>r._fatMPComum}),C('_fatTotalMP','Vl. Total de MP','brl',{monetary:true,get:r=>r._fatTotalMP}),C('_fatImp','Impostos','brl',{monetary:true,get:r=>r._fatImp}),C('_fatSaldo','Saldo','brl',{monetary:true,get:r=>r._fatSaldo}),C('_fatPct','% MP','pct',{defaultVisible:false,get:r=>r._fatPct}),C('status_nf','status_nf','badge'),C('RECEBIDO','Recebido','brl',{monetary:true}),C('A RECEBER','A receber','brl',{monetary:true}),C('_saldoReceber','Saldo a receber','brl',{monetary:true,get:r=>r._saldoReceber})
+  C('Empresa','Empresa','text',{defaultVisible:false}),C('Cliente','Cliente'),C('NF','NF'),C('Emissão','Emissão','date'),C('Qtde.','Qtde.','num',{defaultVisible:false}),C('Valor Total','Valor Total','brl',{monetary:true}),C('Vl. Total Prata','Vl. Total Prata','brl',{defaultVisible:false,monetary:true}),C('Vl. AGCN','Vl. AGCN','brl',{defaultVisible:false,monetary:true}),C('Vl. MP Comum','Vl. MP Comum','brl',{defaultVisible:false,monetary:true}),C('Vl. Total de MP','Vl. Total de MP','brl',{monetary:true}),C('Impostos','Impostos','brl',{monetary:true}),C('Saldo','Saldo','brl',{monetary:true}),C('% MP','% MP','pct',{defaultVisible:false}),C('status_nf','status_nf','badge'),C('Recebido','Recebido','brl',{monetary:true}),C('A receber','A receber','brl',{monetary:true}),C('Saldo a receber','Saldo a receber','brl',{monetary:true})
  ]
 };
 
@@ -333,29 +363,31 @@ function setTab(tab){
  activeTab=tab;document.querySelectorAll('.col-filter-popover').forEach(p=>p.classList.remove('active'));document.getElementById('columnsMenu').classList.add('hidden');
  document.querySelectorAll('.tab-btn').forEach(b=>b.className='tab-btn px-4 py-2 rounded-xl text-xs font-black bg-white/90 text-slate-700 hover:bg-white flex items-center gap-2 border border-white/70 shadow-sm');
  document.getElementById(tab==='carteira'?'tabCarteira':tab==='faturamento'?'tabFaturamento':'tabFinanceiro').className='tab-btn px-4 py-2 rounded-xl text-xs font-black bg-slate-900 text-white shadow-sm flex items-center gap-2 border border-slate-900';
- applyTabTheme(tab);populateFilters();render();lucide.createIcons();
+ applyTabTheme(tab);populateFilters();render();updateCapitalLastUpdate(tab);lucide.createIcons();
+ if(!capitalDataReady[tab]) loadCapitalTab(tab);
 }
 function baseRows(){
- let rows=rawCapital.map(deriv);
+ let rows=(capitalData[activeTab]||[]).map(deriv);
+ // A Carteira mantém exatamente a regra visual atual; Faturamento e Financeiro já chegam na granularidade correta do SQL.
  if(activeTab==='carteira')rows=rows.filter(r=>String(r['Status orçamento']||'').toUpperCase()==='APROVADO'&&n(r['Saldo a entregar'])>0&&String(r['Nº Orçamento']||'').trim()!=='');
- if(activeTab==='faturamento')rows=rows.filter(r=>n(r['Qtde. Entregue'])>0||String(r['Notas Fiscais']||r.NF||'').trim()!=='');
- if(activeTab==='financeiro'){
-   const map=new Map();
-   rows.filter(r=>String(r.NF||'').trim()!==''||n(r['A RECEBER'])!==0||n(r.RECEBIDO)!==0).forEach(r=>{const k=String(r.id_os||`${r.Empresa}|${r['Nº OS']}|${r.NF}`);if(!map.has(k))map.set(k,r)});rows=[...map.values()];
- }
  return rows;
 }
 function uniqueVals(rows,key,getter=null){return [...new Set(rows.map(r=>{const s=String(getter?getter(r):(r[key]??'')).trim();return s||'(Vazio)'}))].sort((a,b)=>a.localeCompare(b,'pt-BR',{numeric:true,sensitivity:'base'}))}
 function setOpts(id,vals,label='Todos'){const el=document.getElementById(id);if(!el)return;const cur=el.value;const all=[...vals];if(cur&&!all.includes(cur))all.unshift(cur);el.innerHTML=`<option value="">${label}</option>`+all.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');el.value=cur}
+function rowDateForTab(r,tab){
+ if(tab==='carteira')return isoDate(r.previsao_ent_pesq||r['Dt. Negociada']||r['Prev. entrega(original)']);
+ return isoDate(r.Emissão);
+}
 function populateFilters(){
- const allRows=rawCapital.map(deriv), rows=baseRows();
+ const rows=baseRows();
+ const allLoadedRows=Object.entries(capitalData).flatMap(([tab,data])=>(data||[]).map(deriv));
  const years=new Set();
- allRows.forEach(r=>{
-   [isoDate(r.previsao_ent_pesq||r['Dt. Negociada']||r['Prev. entrega(original)']), isoDate(r.Emissão)||firstDateFromList(r['Dts. emissão'])].filter(Boolean).forEach(d=>years.add(d.slice(0,4)));
- });
+ Object.entries(capitalData).forEach(([tab,data])=>(data||[]).forEach(raw=>{const d=rowDateForTab(deriv(raw),tab);if(d)years.add(d.slice(0,4));}));
  setOpts('capitalYearFilter',[...years].sort((a,b)=>b.localeCompare(a)),'Todos');
- setOpts('empresaFilter',uniqueVals(allRows,'Empresa'),'Todos');
- setOpts('clienteFilter',uniqueVals(allRows,'Cliente'),'Todos');
+ // Empresa/Cliente são filtros comuns. Enquanto só uma aba estiver carregada, usam os dados disponíveis;
+ // após visitar outras abas, o domínio é ampliado sem perder a seleção atual.
+ setOpts('empresaFilter',uniqueVals(allLoadedRows.length?allLoadedRows:rows,'Empresa'),'Todos');
+ setOpts('clienteFilter',uniqueVals(allLoadedRows.length?allLoadedRows:rows,'Cliente'),'Todos');
  if(activeTab==='carteira'){
    setOpts('carteiraStatusOsFilter',uniqueVals(rows,'Status OS'),'Todos');
    setOpts('carteiraOsFilter',uniqueVals(rows,'Nº OS'),'Todos');
@@ -364,11 +396,11 @@ function populateFilters(){
    setOpts('carteiraDisponibilidadeFilter',uniqueVals(rows,'Disponibilidade Material'),'Todos');
    setOpts('carteiraPrataFilter',uniqueVals(rows,'Prata'),'Todos');
    setOpts('carteiraTipoFilter',uniqueVals(rows,'Tipo'),'Todos');
-   const etapas=uniqueVals(rows,'Etapa');setOpts('carteiraEtapaFilter',etapas,'Todos');document.getElementById('carteiraEtapaWrap')?.classList.toggle('hidden',etapas.length===0);
+   const etapas=uniqueVals(rows,'Etapa').filter(v=>v!=='(Vazio)');setOpts('carteiraEtapaFilter',etapas,'Todos');document.getElementById('carteiraEtapaWrap')?.classList.toggle('hidden',etapas.length===0);
  } else if(activeTab==='faturamento'){
-   setOpts('faturamentoNfFilter',uniqueVals(rows,'NF',r=>r.NF||r['Notas Fiscais']||''),'Todos');
-   setOpts('faturamentoOrcFilter',uniqueVals(rows,'Nº Orçamento'),'Todos');
-   const planos=uniqueVals(rows,'Plano de contas');
+   setOpts('faturamentoNfFilter',uniqueVals(rows,'NF'),'Todos');
+   setOpts('faturamentoOrcFilter',uniqueVals(rows,'Orçamento'),'Todos');
+   const planos=uniqueVals(rows,'Plano de contas').filter(v=>v!=='(Vazio)');
    setOpts('faturamentoPlanoFilter',planos,'Todos');
    document.getElementById('faturamentoPlanoWrap')?.classList.toggle('hidden',planos.length===0);
    setOpts('faturamentoPrataFilter',uniqueVals(rows,'Prata'),'Todos');
@@ -378,7 +410,7 @@ function populateFilters(){
    setOpts('financeiroStatusFilter',uniqueVals(rows,'status_nf'),'Todos');
  }
 }
-function rowDate(r){if(activeTab==='carteira')return isoDate(r.previsao_ent_pesq||r['Dt. Negociada']||r['Prev. entrega(original)']);if(activeTab==='faturamento')return isoDate(r.Emissão)||firstDateFromList(r['Dts. emissão']);return isoDate(r.Emissão)}
+function rowDate(r){return rowDateForTab(r,activeTab)}
 function activeExclusiveFilters(){
  if(activeTab==='carteira')return{
    d1:document.getElementById('carteiraDateFrom').value,d2:document.getElementById('carteiraDateTo').value,
@@ -386,20 +418,20 @@ function activeExclusiveFilters(){
  };
  if(activeTab==='faturamento')return{
    d1:document.getElementById('faturamentoDateFrom').value,d2:document.getElementById('faturamentoDateTo').value,
-   pairs:[['NF',document.getElementById('faturamentoNfFilter').value],['Nº Orçamento',document.getElementById('faturamentoOrcFilter').value],['Plano de contas',document.getElementById('faturamentoPlanoFilter').value],['Prata',document.getElementById('faturamentoPrataFilter').value],['status_nf',document.getElementById('faturamentoStatusFilter').value]]
+   pairs:[['NF',document.getElementById('faturamentoNfFilter').value],['Orçamento',document.getElementById('faturamentoOrcFilter').value],['Plano de contas',document.getElementById('faturamentoPlanoFilter').value],['Prata',document.getElementById('faturamentoPrataFilter').value],['status_nf',document.getElementById('faturamentoStatusFilter').value]]
  };
  return{
    d1:document.getElementById('financeiroDateFrom').value,d2:document.getElementById('financeiroDateTo').value,
    pairs:[['NF',document.getElementById('financeiroNfFilter').value],['status_nf',document.getElementById('financeiroStatusFilter').value]]
  };
 }
-function exclusiveValue(r,key){let v;if(key==='NF'&&activeTab==='faturamento')v=String(r.NF||r['Notas Fiscais']||'');else v=String(r[key]??'');v=v.trim();return v||'(Vazio)'}
+function exclusiveValue(r,key){let v;if(key==='NF'&&activeTab==='faturamento')v=String(r.NF||'');else v=String(r[key]??'');v=v.trim();return v||'(Vazio)'}
 function rowMatchesFilters(r,ignoreColId=null){
  const search=document.getElementById('searchInput').value||'',emp=document.getElementById('empresaFilter').value,cli=document.getElementById('clienteFilter').value,codeItem=normalizeText(document.getElementById('codigoItemFilter').value||'');
  const commonYear=document.getElementById('capitalYearFilter')?.value||'', commonMonth=document.getElementById('capitalMonthFilter')?.value||'';
  if(emp&&((String(r.Empresa||'').trim()||'(Vazio)')!==emp))return false;
  if(cli&&((String(r.Cliente||'').trim()||'(Vazio)')!==cli))return false;
- if(codeItem&&!normalizeText(`${r['Código']||''} ${r.Item||''}`).includes(codeItem))return false;
+ if(codeItem&&!normalizeText(`${r['Código']||r['Cód. Produto']||''} ${r.Item||''}`).includes(codeItem))return false;
  if(search&&!matchesWildcardSearch(Object.values(r).join(' '),search))return false;
  if(commonYear||commonMonth){const cd=rowDate(r);if(!cd)return false;if(commonYear&&cd.slice(0,4)!==commonYear)return false;if(commonMonth&&cd.slice(5,7)!==commonMonth)return false;}
  const ex=activeExclusiveFilters();
@@ -463,7 +495,7 @@ function render(){
  document.getElementById('shownCount').textContent=shown.length;document.getElementById('totalCount').textContent=currentRows.length;document.getElementById('tableFilterCount').textContent=`${Object.keys(colSelections[activeTab]).length} filtros de coluna`;document.getElementById('btnResetSort').disabled=!sortState[activeTab].key;renderKPIs(currentRows);renderColumnsMenu();if(capitalViewMode==='dashboard')renderCapitalDashboard(currentRows);lucide.createIcons();
 }
 function kpi(title,val,cls='text-pstec-700'){return `<div class="capital-kpi p-2.5 rounded-xl border shadow-sm"><span class="text-[9px] font-black uppercase text-slate-500 block">${title}</span><span class="text-base lg:text-lg font-black ${cls}">${val}</span></div>`}
-function renderKPIs(rows){let html='';if(activeTab==='carteira')html=kpi('Itens em carteira',rows.length)+kpi('Saldo a entregar',num(rows.reduce((a,r)=>a+n(r['Saldo a entregar']),0)),'text-slate-800')+kpi('Valor a faturar',brl(rows.reduce((a,r)=>a+n(r['Vl. a faturar']),0)),'text-blue-700')+kpi('Capital necessário',brl(rows.reduce((a,r)=>a+n(r._totalPagar),0)),'text-amber-700');else if(activeTab==='faturamento')html=kpi('Itens faturados',rows.length)+kpi('Valor faturado',brl(rows.reduce((a,r)=>a+n(r._fatValor),0)),'text-pstec-700')+kpi('Total MP',brl(rows.reduce((a,r)=>a+n(r._fatTotalMP),0)),'text-amber-700')+kpi('Saldo após MP + impostos',brl(rows.reduce((a,r)=>a+n(r._fatSaldo),0)),'text-emerald-700');else html=kpi('Registros financeiros',rows.length)+kpi('A receber',brl(rows.reduce((a,r)=>a+n(r['A RECEBER']),0)),'text-red-600')+kpi('Recebido',brl(rows.reduce((a,r)=>a+n(r.RECEBIDO),0)),'text-emerald-700')+kpi('Total financeiro',brl(rows.reduce((a,r)=>a+n(r._finTotal),0)),'text-pstec-700');document.getElementById('kpiGrid').innerHTML=html}
+function renderKPIs(rows){let html='';if(activeTab==='carteira')html=kpi('Itens em carteira',rows.length)+kpi('Saldo a entregar',num(rows.reduce((a,r)=>a+n(r['Saldo a entregar']),0)),'text-slate-800')+kpi('Valor a faturar',brl(rows.reduce((a,r)=>a+n(r['Vl. a faturar']),0)),'text-blue-700')+kpi('Capital necessário',brl(rows.reduce((a,r)=>a+n(r._totalPagar),0)),'text-amber-700');else if(activeTab==='faturamento')html=kpi('Itens faturados',rows.length)+kpi('Valor faturado',brl(rows.reduce((a,r)=>a+n(r._fatValor),0)),'text-pstec-700')+kpi('Total MP',brl(rows.reduce((a,r)=>a+n(r._fatTotalMP),0)),'text-amber-700')+kpi('Saldo após MP + impostos',brl(rows.reduce((a,r)=>a+n(r._fatSaldo),0)),'text-emerald-700');else html=kpi('Registros financeiros',rows.length)+kpi('A receber',brl(rows.reduce((a,r)=>a+n(r['A receber']??r['A RECEBER']),0)),'text-red-600')+kpi('Recebido',brl(rows.reduce((a,r)=>a+n(r['Recebido']??r.RECEBIDO),0)),'text-emerald-700')+kpi('Total financeiro',brl(rows.reduce((a,r)=>a+n(r._finTotal),0)),'text-pstec-700');document.getElementById('kpiGrid').innerHTML=html}
 function setCapitalView(mode){
  capitalViewMode=mode==='dashboard'?'dashboard':'table';
  localStorage.setItem('pstec_capital_view_mode',capitalViewMode);
@@ -596,11 +628,11 @@ function renderCapitalDashboard(rows){
    const clientsMP=topEntries(aggregateBy(rows,r=>r.Cliente,r=>r._fatTotalMP),10);setCapitalDashboardTitle(5,'Material faturado por cliente — Top 10');capitalChart('capChart5','bar',clientsMP.map(x=>x[0]),clientsMP.map(x=>x[1]),{datasetLabel:'Valor',indexAxis:'y',onClick:v=>applyCapitalDashboardFilter('cliente',v)});
    const cmp=[['Faturamento',rows.reduce((a,r)=>a+n(r._fatValor),0)],['Material',rows.reduce((a,r)=>a+n(r._fatTotalMP),0)],['Impostos',rows.reduce((a,r)=>a+n(r._fatImp),0)],['Saldo',rows.reduce((a,r)=>a+n(r._fatSaldo),0)]];setCapitalDashboardTitle(6,'Faturamento x material x impostos x saldo');capitalChart('capChart6','bar',cmp.map(x=>x[0]),cmp.map(x=>x[1]));
  }else{
-   const rec=rows.reduce((a,r)=>a+n(r.RECEBIDO),0), ar=rows.reduce((a,r)=>a+n(r['A RECEBER']),0);setCapitalDashboardTitle(1,'Recebido x A receber');capitalChart('capChart1','doughnut',['Recebido','A receber'],[Math.max(0,rec),Math.max(0,ar)],{datasetLabel:'Valor',legend:true,colors:['#10b981','#ef4444']});
+   const rec=rows.reduce((a,r)=>a+n(r['Recebido']??r.RECEBIDO),0), ar=rows.reduce((a,r)=>a+n(r['A receber']??r['A RECEBER']),0);setCapitalDashboardTitle(1,'Recebido x A receber');capitalChart('capChart1','doughnut',['Recebido','A receber'],[Math.max(0,rec),Math.max(0,ar)],{datasetLabel:'Valor',legend:true,colors:['#10b981','#ef4444']});
    const clients=topEntries(aggregateBy(rows,r=>r.Cliente,r=>r['A RECEBER']),10);setCapitalDashboardTitle(2,'A receber por cliente — Top 10');capitalChart('capChart2','bar',clients.map(x=>x[0]),clients.map(x=>x[1]),{datasetLabel:'Valor',indexAxis:'y',onClick:v=>applyCapitalDashboardFilter('cliente',v)});
    const stat=topEntries(aggregateBy(rows,r=>r.status_nf||'(Vazio)',r=>r['A RECEBER']),10);setCapitalDashboardTitle(3,'A receber por controle de recebimento');capitalChart('capChart3','bar',stat.map(x=>x[0]),stat.map(x=>x[1]),{datasetLabel:'Valor',onClick:v=>applyCapitalDashboardFilter('status',v)});
    const months=monthEntries(rows,r=>r.Emissão,r=>r['A RECEBER']);setCapitalDashboardTitle(4,'A receber por mês de emissão');capitalChart('capChart4','bar',months.map(x=>monthLabel(x[0])),months.map(x=>x[1]),{datasetLabel:'Valor',onClick:(v,i)=>applyCapitalDashboardFilter('month',v,months[i][0])});
-   const months2=[...new Set(rows.map(r=>isoDate(r.Emissão)?.slice(0,7)).filter(Boolean))].sort();const recvMap=new Map(),arMap=new Map();rows.forEach(r=>{const k=isoDate(r.Emissão)?.slice(0,7);if(!k)return;recvMap.set(k,(recvMap.get(k)||0)+n(r.RECEBIDO));arMap.set(k,(arMap.get(k)||0)+n(r['A RECEBER']))});setCapitalDashboardTitle(5,'Recebido x A receber por mês');capitalMultiChart('capChart5',months2.map(monthLabel),[{label:'Recebido',data:months2.map(k=>recvMap.get(k)||0),backgroundColor:'#10b981'},{label:'A receber',data:months2.map(k=>arMap.get(k)||0),backgroundColor:'#ef4444'}],{onClick:(v,i)=>applyCapitalDashboardFilter('month',v,months2[i])});
+   const months2=[...new Set(rows.map(r=>isoDate(r.Emissão)?.slice(0,7)).filter(Boolean))].sort();const recvMap=new Map(),arMap=new Map();rows.forEach(r=>{const k=isoDate(r.Emissão)?.slice(0,7);if(!k)return;recvMap.set(k,(recvMap.get(k)||0)+n(r['Recebido']??r.RECEBIDO));arMap.set(k,(arMap.get(k)||0)+n(r['A receber']??r['A RECEBER']))});setCapitalDashboardTitle(5,'Recebido x A receber por mês');capitalMultiChart('capChart5',months2.map(monthLabel),[{label:'Recebido',data:months2.map(k=>recvMap.get(k)||0),backgroundColor:'#10b981'},{label:'A receber',data:months2.map(k=>arMap.get(k)||0),backgroundColor:'#ef4444'}],{onClick:(v,i)=>applyCapitalDashboardFilter('month',v,months2[i])});
    const total=rows.reduce((a,r)=>a+n(r._finTotal),0);const cmp=[['Total financeiro',total],['Recebido',rec],['A receber',ar]];setCapitalDashboardTitle(6,'Resumo financeiro');capitalChart('capChart6','bar',cmp.map(x=>x[0]),cmp.map(x=>x[1]));
  }
 }
@@ -620,14 +652,76 @@ function applyExportPreset(preset){document.querySelectorAll('.export-col').forE
 function setExportCols(v){document.querySelectorAll('.export-col').forEach(cb=>cb.checked=v)}
 function executeExcelExport(){const ids=[...document.querySelectorAll('.export-col:checked')].map(cb=>cb.value);if(!ids.length){alert('Selecione pelo menos uma coluna.');return}localStorage.setItem(`${EXPORT_COLS_KEY}_${activeTab}`,JSON.stringify(ids));const cols=ids.map(id=>getCol(id)).filter(Boolean);const rows=currentRows.map(r=>Object.fromEntries(cols.map(c=>{let v=getValue(r,c);if(['brl','num','pct'].includes(c.type))v=n(v);else if(c.type==='date')v=fmtDate(v)==='-'?'':fmtDate(v);return[c.label,v??'']})));const ws=XLSX.utils.json_to_sheet(rows);ws['!cols']=cols.map(c=>({wch:Math.min(38,Math.max(12,c.label.length+3))}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,activeTab.toUpperCase());XLSX.writeFile(wb,`PSTEC_CAPITAL_${activeTab.toUpperCase()}_${new Date().toISOString().slice(0,10)}.xlsx`);closeExportModal()}
 
-function applyCapitalDataset(data,source='api',savedAt=null){rawCapital=Array.isArray(data)?data:[];capitalDataReady=true;capitalCacheSavedAt=savedAt||capitalCacheSavedAt;populateFilters();render();const dt=PstecCache.formatDateTime(savedAt);document.getElementById('lastUpdate').textContent=source==='cache'?`Cache local: ${dt||'-'}`:`Atualizado: ${dt||new Date().toLocaleTimeString('pt-BR')}`;PstecCache.updateStatus(source==='cache'?'cache':'api',savedAt)}
-async function refreshCapitalFromApi(manual=false,quiet=false){if(capitalRefreshing)return;capitalRefreshing=true;const icon=document.getElementById('refreshIcon'),btn=document.getElementById('btnRefresh');if(manual){icon?.classList.add('animate-spin');if(btn)btn.disabled=true}else if(capitalDataReady){PstecCache.updateStatus('updating',capitalCacheSavedAt)}try{const res=await fetch(`${API_CAPITAL}?_t=${Date.now()}`,{cache:'no-store',headers:{'Cache-Control':'no-cache'}});if(!res.ok)throw new Error(`API ${res.status}`);const data=await res.json();if(!Array.isArray(data))throw new Error('Formato inválido retornado pela API /capital');const savedAt=new Date().toISOString();capitalLastApiSyncAt=Date.now();applyCapitalDataset(data,'api',savedAt);try{await PstecCache.write(CAPITAL_CACHE_KEY,data,savedAt);capitalCacheSavedAt=savedAt}catch(cacheErr){console.warn('Não foi possível atualizar o cache do Capital:',cacheErr)}}catch(e){console.error(e);if(capitalDataReady){PstecCache.updateStatus('cache',capitalCacheSavedAt,'API indisponível. Mantendo o cache local.');if(manual&&!quiet)alert('A API não respondeu. Mantendo os dados do cache local.')}else{PstecCache.updateStatus('error',null,e.message);if(!quiet)alert('Não foi possível carregar o Capital de Giro e ainda não existe cache local neste computador.')}}finally{capitalRefreshing=false;icon?.classList.remove('animate-spin');if(btn)btn.disabled=false;lucide.createIcons()}}
-async function loadCapital(){PstecCache.updateStatus('loading');let cached=null;try{cached=await PstecCache.read(CAPITAL_CACHE_KEY)}catch(e){console.warn('Cache local do Capital indisponível:',e)}if(cached&&Array.isArray(cached.data)&&cached.data.length){capitalCacheSavedAt=cached.savedAt||null;capitalLastApiSyncAt=capitalCacheSavedAt?(new Date(capitalCacheSavedAt).getTime()||0):0;applyCapitalDataset(cached.data,'cache',capitalCacheSavedAt);refreshCapitalFromApi(false,true)}else await refreshCapitalFromApi(false,false)}
-async function fetchCapital(silent=false){return refreshCapitalFromApi(!silent,silent)}
-function startCapitalAutoRefresh(){const interval=PstecCache.AUTO_REFRESH_INTERVAL_MS;if(capitalAutoRefreshTimer)clearInterval(capitalAutoRefreshTimer);capitalAutoRefreshTimer=setInterval(()=>{if(document.visibilityState==='visible'&&!capitalRefreshing&&Date.now()-(capitalLastApiSyncAt||0)>=interval)refreshCapitalFromApi(false,true)},30000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&!capitalRefreshing&&Date.now()-(capitalLastApiSyncAt||0)>=interval)refreshCapitalFromApi(false,true)})}
+function updateCapitalLastUpdate(tab=activeTab){
+ const savedAt=capitalCacheSavedAt[tab];
+ const dt=PstecCache.formatDateTime(savedAt);
+ const el=document.getElementById('lastUpdate');
+ if(el)el.textContent=savedAt?`Dados ${tab}: ${dt||'-'}`:'Aguardando dados...';
+}
+function applyCapitalDataset(tab,data,source='api',savedAt=null){
+ capitalData[tab]=Array.isArray(data)?data:[];
+ capitalDataReady[tab]=true;
+ capitalCacheSavedAt[tab]=savedAt||capitalCacheSavedAt[tab];
+ if(tab===activeTab){
+   populateFilters();render();updateCapitalLastUpdate(tab);
+   PstecCache.updateStatus(source==='cache'?'cache':'api',savedAt);
+ }
+}
+async function refreshCapitalFromApi(tab=activeTab,manual=false,quiet=false){
+ if(capitalRefreshing[tab])return;
+ capitalRefreshing[tab]=true;
+ const isActive=tab===activeTab,icon=document.getElementById('refreshIcon'),btn=document.getElementById('btnRefresh');
+ if(manual&&isActive){icon?.classList.add('animate-spin');if(btn)btn.disabled=true}
+ else if(isActive&&capitalDataReady[tab])PstecCache.updateStatus('updating',capitalCacheSavedAt[tab]);
+ try{
+   const res=await fetch(`${API_CAPITAL[tab]}?_t=${Date.now()}`,{cache:'no-store',headers:{'Cache-Control':'no-cache'}});
+   if(!res.ok)throw new Error(`${API_CAPITAL[tab]} — HTTP ${res.status}`);
+   const data=await res.json();
+   if(!Array.isArray(data))throw new Error(`Formato inválido retornado por ${API_CAPITAL[tab]}`);
+   const savedAt=new Date().toISOString();
+   capitalLastApiSyncAt[tab]=Date.now();
+   applyCapitalDataset(tab,data,'api',savedAt);
+   try{await PstecCache.write(CAPITAL_CACHE_KEYS[tab],data,savedAt);capitalCacheSavedAt[tab]=savedAt}catch(cacheErr){console.warn(`Não foi possível atualizar o cache ${tab}:`,cacheErr)}
+ }catch(e){
+   console.error(e);
+   if(isActive){
+     if(capitalDataReady[tab]){PstecCache.updateStatus('cache',capitalCacheSavedAt[tab],`API ${tab} indisponível. Mantendo o cache local.`);if(manual&&!quiet)alert(`A API de ${tab} não respondeu. Mantendo os dados do cache local.`)}
+     else{PstecCache.updateStatus('error',null,e.message);if(!quiet)alert(`Não foi possível carregar Capital — ${tab} e ainda não existe cache local neste computador.`)}
+   }
+ }finally{
+   capitalRefreshing[tab]=false;
+   if(manual&&isActive){icon?.classList.remove('animate-spin');if(btn)btn.disabled=false}
+   lucide.createIcons();
+ }
+}
+async function loadCapitalTab(tab=activeTab){
+ if(capitalDataReady[tab])return;
+ if(tab===activeTab)PstecCache.updateStatus('loading');
+ let cached=null;
+ try{cached=await PstecCache.read(CAPITAL_CACHE_KEYS[tab])}catch(e){console.warn(`Cache local ${tab} indisponível:`,e)}
+ if(cached&&Array.isArray(cached.data)&&cached.data.length){
+   capitalCacheSavedAt[tab]=cached.savedAt||null;
+   capitalLastApiSyncAt[tab]=capitalCacheSavedAt[tab]?(new Date(capitalCacheSavedAt[tab]).getTime()||0):0;
+   applyCapitalDataset(tab,cached.data,'cache',capitalCacheSavedAt[tab]);
+   refreshCapitalFromApi(tab,false,true);
+ }else await refreshCapitalFromApi(tab,false,false);
+}
+async function fetchCapital(silent=false){return refreshCapitalFromApi(activeTab,!silent,silent)}
+function startCapitalAutoRefresh(){
+ const interval=PstecCache.AUTO_REFRESH_INTERVAL_MS;
+ if(capitalAutoRefreshTimer)clearInterval(capitalAutoRefreshTimer);
+ capitalAutoRefreshTimer=setInterval(()=>{
+   const tab=activeTab;
+   if(document.visibilityState==='visible'&&!capitalRefreshing[tab]&&Date.now()-(capitalLastApiSyncAt[tab]||0)>=interval)refreshCapitalFromApi(tab,false,true)
+ },30000);
+ document.addEventListener('visibilitychange',()=>{
+   const tab=activeTab;
+   if(document.visibilityState==='visible'&&!capitalRefreshing[tab]&&Date.now()-(capitalLastApiSyncAt[tab]||0)>=interval)refreshCapitalFromApi(tab,false,true)
+ });
+}
 
 document.addEventListener('click',e=>{if(!e.target.closest('#columnsMenu')&&!e.target.closest('button[onclick="toggleColumnsMenu()"]'))document.getElementById('columnsMenu')?.classList.add('hidden');if(!e.target.closest('.col-filter-popover')&&!e.target.closest('[id^="filterBtn_"]'))document.querySelectorAll('.col-filter-popover').forEach(p=>p.classList.remove('active'))});
-document.addEventListener('DOMContentLoaded',()=>{loadHiddenCols();applySavedFiltersState();applyTabTheme(activeTab);document.getElementById('userDisplayName').textContent=localStorage.getItem('pstec_usuario_nome')||'Usuário';setCapitalView(capitalViewMode);lucide.createIcons();loadCapital();startCapitalAutoRefresh()});
+document.addEventListener('DOMContentLoaded',()=>{loadHiddenCols();applySavedFiltersState();applyTabTheme(activeTab);document.getElementById('userDisplayName').textContent=localStorage.getItem('pstec_usuario_nome')||'Usuário';setCapitalView(capitalViewMode);lucide.createIcons();loadCapitalTab(activeTab);startCapitalAutoRefresh()});
 </script>
 
 <div id="capitalDashboardHelpModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[120]">
