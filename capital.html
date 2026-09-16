@@ -145,11 +145,14 @@ th{user-select:none}.col-filter-popover{display:none}.col-filter-popover.active{
       </div>
 
       <!-- FILTROS COMUNS: permanecem ativos ao trocar Carteira / Faturamento / Financeiro -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2">
         <div class="capital-filter-group"><label class="capital-filter-label">Empresa</label><select id="empresaFilter" onchange="render()" class="capital-filter-control"><option value="">Todos</option></select></div>
         <div class="capital-filter-group"><label class="capital-filter-label">Cliente</label><select id="clienteFilter" onchange="render()" class="capital-filter-control"><option value="">Todos</option></select></div>
         <div class="capital-filter-group sm:col-span-2"><label class="capital-filter-label">Código, Item</label><input id="codigoItemFilter" oninput="debounceGlobalSearch()" placeholder="Código ou descrição do item..." class="capital-filter-control"></div>
+        <div class="capital-filter-group"><label id="capitalYearLabel" class="capital-filter-label">Ano — Previsão de entrega</label><select id="capitalYearFilter" onchange="render()" class="capital-filter-control"><option value="">Todos</option></select></div>
+        <div class="capital-filter-group"><label id="capitalMonthLabel" class="capital-filter-label">Mês — Previsão de entrega</label><select id="capitalMonthFilter" onchange="render()" class="capital-filter-control"><option value="">Todos</option><option value="01">Janeiro</option><option value="02">Fevereiro</option><option value="03">Março</option><option value="04">Abril</option><option value="05">Maio</option><option value="06">Junho</option><option value="07">Julho</option><option value="08">Agosto</option><option value="09">Setembro</option><option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option></select></div>
       </div>
+      <div class="text-[10px] text-slate-500 flex items-center gap-1 px-1"><i data-lucide="calendar-search" class="w-3 h-3"></i><span>Pesquisa por Data:</span><b id="capitalCommonDateField" class="text-pstec-700">Previsão de entrega</b><span>— Ano e Mês permanecem ativos ao trocar entre as 3 telas.</span></div>
 
       <!-- EXCLUSIVOS DA CARTEIRA -->
       <div id="filterTabCarteira" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 xl:grid-cols-12 gap-2">
@@ -316,7 +319,11 @@ function restoreDefaultColumns(){hiddenCols[activeTab]=new Set(getCols().filter(
 function applyTabTheme(tab){
  document.body.setAttribute('data-capital-tab',tab);
  const labels={carteira:'Carteira',faturamento:'Faturamento',financeiro:'Faturamento (financeiro)'};
+ const dateFields={carteira:'Previsão de entrega',faturamento:'Data de emissão',financeiro:'Data de emissão'};
  document.getElementById('filterPanelTitle').textContent=`Filtros do Capital — ${labels[tab]}`;
+ const df=dateFields[tab];
+ const yf=document.getElementById('capitalYearLabel'), mf=document.getElementById('capitalMonthLabel'), hf=document.getElementById('capitalCommonDateField');
+ if(yf)yf.textContent=`Ano — ${df}`; if(mf)mf.textContent=`Mês — ${df}`; if(hf)hf.textContent=df;
  document.getElementById('tableViewLabel').textContent=labels[tab];
  document.getElementById('filterTabCarteira').classList.toggle('hidden',tab!=='carteira');
  document.getElementById('filterTabFaturamento').classList.toggle('hidden',tab!=='faturamento');
@@ -342,6 +349,11 @@ function uniqueVals(rows,key,getter=null){return [...new Set(rows.map(r=>String(
 function setOpts(id,vals,label='Todos'){const el=document.getElementById(id);if(!el)return;const cur=el.value;const all=[...vals];if(cur&&!all.includes(cur))all.unshift(cur);el.innerHTML=`<option value="">${label}</option>`+all.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');el.value=cur}
 function populateFilters(){
  const allRows=rawCapital.map(deriv), rows=baseRows();
+ const years=new Set();
+ allRows.forEach(r=>{
+   [isoDate(r.previsao_ent_pesq||r['Dt. Negociada']||r['Prev. entrega(original)']), isoDate(r.Emissão)||firstDateFromList(r['Dts. emissão'])].filter(Boolean).forEach(d=>years.add(d.slice(0,4)));
+ });
+ setOpts('capitalYearFilter',[...years].sort((a,b)=>b.localeCompare(a)),'Todos');
  setOpts('empresaFilter',uniqueVals(allRows,'Empresa'),'Todos');
  setOpts('clienteFilter',uniqueVals(allRows,'Cliente'),'Todos');
  if(activeTab==='carteira'){
@@ -384,10 +396,12 @@ function activeExclusiveFilters(){
 function exclusiveValue(r,key){if(key==='NF'&&activeTab==='faturamento')return String(r.NF||r['Notas Fiscais']||'');return String(r[key]??'')}
 function rowMatchesFilters(r,ignoreColId=null){
  const search=document.getElementById('searchInput').value||'',emp=document.getElementById('empresaFilter').value,cli=document.getElementById('clienteFilter').value,codeItem=normalizeText(document.getElementById('codigoItemFilter').value||'');
+ const commonYear=document.getElementById('capitalYearFilter')?.value||'', commonMonth=document.getElementById('capitalMonthFilter')?.value||'';
  if(emp&&String(r.Empresa||'')!==emp)return false;
  if(cli&&String(r.Cliente||'')!==cli)return false;
  if(codeItem&&!normalizeText(`${r['Código']||''} ${r.Item||''}`).includes(codeItem))return false;
  if(search&&!matchesWildcardSearch(Object.values(r).join(' '),search))return false;
+ if(commonYear||commonMonth){const cd=rowDate(r);if(!cd)return false;if(commonYear&&cd.slice(0,4)!==commonYear)return false;if(commonMonth&&cd.slice(5,7)!==commonMonth)return false;}
  const ex=activeExclusiveFilters();
  for(const [key,val] of ex.pairs){if(val&&exclusiveValue(r,key)!==val)return false}
  if(ex.d1||ex.d2){const dv=rowDate(r);if(!dv)return false;if(ex.d1&&dv<ex.d1)return false;if(ex.d2&&dv>ex.d2)return false}
@@ -406,8 +420,20 @@ function renderHeader(){
 }
 function safeId(s){return String(s).replace(/[^a-zA-Z0-9_-]/g,'_')}
 function toggleColFilter(id){const pop=document.getElementById(`filterPop_${safeId(id)}`),open=pop.classList.contains('active');document.querySelectorAll('.col-filter-popover').forEach(p=>p.classList.remove('active'));if(!open){buildColFilter(id);pop.classList.add('active')}}
-function buildColFilter(id){const c=getCol(id),pop=document.getElementById(`filterPop_${safeId(id)}`);if(!c||!pop)return;const vals=[...new Set(filteredRows(id,true).map(r=>formatForFilter(r,c)))].sort((a,b)=>a.localeCompare(b,'pt-BR',{numeric:true,sensitivity:'base'}));const active=colSelections[activeTab][id];pop.innerHTML=`<div class="space-y-2"><input id="colSearch_${safeId(id)}" oninput="filterPopover('${esc(id)}')" placeholder="Pesquisar..." class="w-full border rounded-lg px-2 py-1 text-xs"><label class="flex items-center gap-2 p-1 font-bold text-pstec-700"><input id="all_${safeId(id)}" type="checkbox" ${!active?'checked':''} onchange="toggleAllPopover('${esc(id)}',this.checked)">(Selecionar tudo)</label><div id="list_${safeId(id)}" class="max-h-52 overflow-y-auto custom-scroll border-y py-1">${vals.map(v=>`<label class="poprow flex items-center gap-2 p-1 hover:bg-slate-50 cursor-pointer"><input class="chk_${safeId(id)}" type="checkbox" value="${esc(v)}" ${!active||active.has(v)?'checked':''}><span class="truncate" title="${esc(v)}">${esc(v)}</span></label>`).join('')}</div><div class="flex justify-end gap-1"><button onclick="clearColFilter('${esc(id)}')" class="px-2 py-1 bg-slate-100 rounded text-[10px] font-bold">Limpar</button><button onclick="applyColFilter('${esc(id)}')" class="px-2 py-1 bg-pstec-700 text-white rounded text-[10px] font-bold">Aplicar</button></div></div>`}
-function filterPopover(id){const q=normalizeText(document.getElementById(`colSearch_${safeId(id)}`).value);document.querySelectorAll(`#list_${safeId(id)} .poprow`).forEach(row=>row.classList.toggle('hidden',q&&!normalizeText(row.textContent).includes(q)))}
+function capitalMonthName(m){return ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'][Number(m)]||m}
+function buildDateTreeFilter(id,c,pop){
+ const rows=filteredRows(id,true), active=colSelections[activeTab][id];
+ const groups=new Map();
+ rows.forEach(r=>{const raw=getValue(r,c), iso=isoDate(raw);if(!iso)return;const [y,m,d]=iso.split('-'), display=fmtDate(raw);if(!groups.has(y))groups.set(y,new Map());const months=groups.get(y);if(!months.has(m))months.set(m,new Map());months.get(m).set(display,{display,iso});});
+ const leaves=[...groups.values()].flatMap(months=>[...months.values()].flatMap(ds=>[...ds.values()]));
+ const allSelected=v=>!active||active.has(v);
+ pop.innerHTML=`<div class="space-y-2"><input id="colSearch_${safeId(id)}" oninput="filterPopover('${esc(id)}')" placeholder="Pesquisar data, mês ou ano..." class="w-full border rounded-lg px-2 py-1 text-xs"><label class="flex items-center gap-2 p-1 font-bold text-pstec-700"><input id="all_${safeId(id)}" type="checkbox" ${!active?'checked':''} onchange="toggleAllPopover('${esc(id)}',this.checked)">(Selecionar tudo)</label><div id="list_${safeId(id)}" class="max-h-64 overflow-y-auto custom-scroll border-y py-1">${[...groups.entries()].sort((a,b)=>b[0].localeCompare(a[0])).map(([y,months])=>{
+   const yDates=[...months.values()].flatMap(ds=>[...ds.values()]); const yChecked=yDates.every(x=>allSelected(x.display));
+   return `<details open class="date-tree-year"><summary class="flex items-center gap-2 px-1 py-1 font-black text-slate-700 cursor-pointer list-none"><input type="checkbox" ${yChecked?'checked':''} onclick="event.stopPropagation()" onchange="toggleCapitalDateGroup('${esc(id)}','year-${y}',this.checked)"><span>${y}</span><span class="text-[9px] text-slate-400">(${yDates.length})</span></summary><div data-date-group="year-${y}" class="pl-3">${[...months.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([m,datesMap])=>{const dates=[...datesMap.values()].sort((a,b)=>a.iso.localeCompare(b.iso));const mChecked=dates.every(x=>allSelected(x.display));return `<details class="date-tree-month"><summary class="flex items-center gap-2 px-1 py-1 font-bold text-slate-600 cursor-pointer list-none"><input type="checkbox" ${mChecked?'checked':''} onclick="event.stopPropagation()" onchange="toggleCapitalDateGroup('${esc(id)}','month-${y}-${m}',this.checked)"><span>${capitalMonthName(m)}</span><span class="text-[9px] text-slate-400">(${dates.length})</span></summary><div data-date-group="month-${y}-${m}" class="pl-4">${dates.map(x=>`<label class="poprow date-leaf flex items-center gap-2 p-1 hover:bg-slate-50 cursor-pointer" data-search="${x.display} ${capitalMonthName(m)} ${y}"><input class="chk_${safeId(id)} date-leaf-check" type="checkbox" value="${esc(x.display)}" ${allSelected(x.display)?'checked':''}><span>${esc(x.display)}</span></label>`).join('')}</div></details>`}).join('')}</div></details>`}).join('')}</div><div class="flex justify-end gap-1"><button onclick="clearColFilter('${esc(id)}')" class="px-2 py-1 bg-slate-100 rounded text-[10px] font-bold">Limpar</button><button onclick="applyColFilter('${esc(id)}')" class="px-2 py-1 bg-pstec-700 text-white rounded text-[10px] font-bold">Aplicar</button></div></div>`;
+}
+function toggleCapitalDateGroup(id,group,checked){const pop=document.getElementById(`filterPop_${safeId(id)}`),container=pop?.querySelector(`[data-date-group="${group}"]`);if(!container)return;container.querySelectorAll(`.chk_${safeId(id)}`).forEach(cb=>cb.checked=checked)}
+function buildColFilter(id){const c=getCol(id),pop=document.getElementById(`filterPop_${safeId(id)}`);if(!c||!pop)return;if(c.type==='date'){buildDateTreeFilter(id,c,pop);return;}const vals=[...new Set(filteredRows(id,true).map(r=>formatForFilter(r,c)))].sort((a,b)=>a.localeCompare(b,'pt-BR',{numeric:true,sensitivity:'base'}));const active=colSelections[activeTab][id];pop.innerHTML=`<div class="space-y-2"><input id="colSearch_${safeId(id)}" oninput="filterPopover('${esc(id)}')" placeholder="Pesquisar..." class="w-full border rounded-lg px-2 py-1 text-xs"><label class="flex items-center gap-2 p-1 font-bold text-pstec-700"><input id="all_${safeId(id)}" type="checkbox" ${!active?'checked':''} onchange="toggleAllPopover('${esc(id)}',this.checked)">(Selecionar tudo)</label><div id="list_${safeId(id)}" class="max-h-52 overflow-y-auto custom-scroll border-y py-1">${vals.map(v=>`<label class="poprow flex items-center gap-2 p-1 hover:bg-slate-50 cursor-pointer"><input class="chk_${safeId(id)}" type="checkbox" value="${esc(v)}" ${!active||active.has(v)?'checked':''}><span class="truncate" title="${esc(v)}">${esc(v)}</span></label>`).join('')}</div><div class="flex justify-end gap-1"><button onclick="clearColFilter('${esc(id)}')" class="px-2 py-1 bg-slate-100 rounded text-[10px] font-bold">Limpar</button><button onclick="applyColFilter('${esc(id)}')" class="px-2 py-1 bg-pstec-700 text-white rounded text-[10px] font-bold">Aplicar</button></div></div>`}
+function filterPopover(id){const q=normalizeText(document.getElementById(`colSearch_${safeId(id)}`).value);document.querySelectorAll(`#list_${safeId(id)} .poprow`).forEach(row=>{const txt=normalizeText(row.dataset.search||row.textContent);row.classList.toggle('hidden',q&&!txt.includes(q))});if(q)document.querySelectorAll(`#list_${safeId(id)} details`).forEach(d=>d.open=true)}
 function toggleAllPopover(id,checked){document.querySelectorAll(`.chk_${safeId(id)}`).forEach(cb=>{if(!cb.closest('.poprow').classList.contains('hidden'))cb.checked=checked})}
 function applyColFilter(id){const all=[...document.querySelectorAll(`.chk_${safeId(id)}`)],selected=all.filter(cb=>cb.checked).map(cb=>cb.value);if(selected.length===all.length)delete colSelections[activeTab][id];else colSelections[activeTab][id]=new Set(selected);document.querySelectorAll('.col-filter-popover').forEach(p=>p.classList.remove('active'));render()}
 function clearColFilter(id){delete colSelections[activeTab][id];document.querySelectorAll('.col-filter-popover').forEach(p=>p.classList.remove('active'));render()}
@@ -500,7 +526,27 @@ function capitalChart(canvasId,type,labels,values,opts={}){
  const colors=opts.colors||chartThemeColors(),isDoughnut=type==='doughnut',isHorizontal=opts.indexAxis==='y';
  const bg=type==='line'?colors[0]:labels.map((_,i)=>colors[i%colors.length]);
  const datasetLabel=opts.datasetLabel||(opts.currency===false?'Quantidade':'Valor');
- const ch=new Chart(el,{type,data:{labels,datasets:[{label:datasetLabel,data:values,backgroundColor:bg,borderColor:type==='line'?colors[0]:labels.map((_,i)=>colors[i%colors.length]),borderWidth:type==='line'?2:1,tension:.28,fill:type==='line'?false:undefined}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:opts.indexAxis||'x',layout:{padding:isDoughnut?8:{top:24,right:isHorizontal?58:16,left:8,bottom:4}},plugins:{legend:{display:true,position:'top',labels:{usePointStyle:true,pointStyle:'circle',boxWidth:8,boxHeight:8,font:{size:10,weight:'600'},color:'#475569'}},tooltip:{callbacks:{label:(ctx)=>`${ctx.dataset.label?ctx.dataset.label+': ':''}${opts.currency===false?num(ctx.raw):brl(ctx.raw)}`}},datalabels:window.ChartDataLabels?{display:ctx=>n(ctx.dataset.data[ctx.dataIndex])!==0,formatter:v=>capitalDashboardValueLabel(v,opts.currency!==false),color:isDoughnut?'#0f172a':'#334155',backgroundColor:isDoughnut?'rgba(255,255,255,.82)':null,borderRadius:isDoughnut?4:0,padding:isDoughnut?3:0,anchor:isDoughnut?'center':'end',align:isDoughnut?'center':(isHorizontal?'right':'top'),offset:isDoughnut?0:3,clamp:true,clip:false,font:{size:9,weight:'700'}}:false},scales:isDoughnut?{}:{y:{beginAtZero:true,ticks:{callback:v=>opts.currency===false?num(v):new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1}).format(v)}},x:{ticks:{autoSkip:true,maxRotation:0,minRotation:0}}},onClick:(evt,elements)=>{if(!elements.length||!opts.onClick)return;const idx=elements[0].index;opts.onClick(labels[idx],idx)}}});
+ const valueLabel=v=>capitalDashboardValueLabel(v,opts.currency!==false);
+ const doughnutLegendLabels=(chart)=>{
+   const ds=chart.data.datasets[0], total=(ds.data||[]).reduce((a,v)=>a+n(v),0)||1;
+   return chart.data.labels.map((label,i)=>({
+     text:`${label} · ${valueLabel(ds.data[i])} · ${((n(ds.data[i])/total)*100).toLocaleString('pt-BR',{maximumFractionDigits:1})}%`,
+     fillStyle:Array.isArray(ds.backgroundColor)?ds.backgroundColor[i]:ds.backgroundColor,
+     strokeStyle:Array.isArray(ds.borderColor)?ds.borderColor[i]:ds.borderColor,
+     lineWidth:1,
+     hidden:!chart.getDataVisibility(i),
+     index:i,
+     pointStyle:'circle'
+   }));
+ };
+ const scales=isDoughnut?{}:(isHorizontal?{
+   x:{beginAtZero:true,ticks:{callback:v=>opts.currency===false?num(v):new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1}).format(v),color:'#64748b',font:{size:10}}},
+   y:{type:'category',ticks:{autoSkip:false,color:'#334155',font:{size:10,weight:'600'},callback:function(v){return labels[Number(v)] ?? this.getLabelForValue(v)}},grid:{display:false}}
+ }:{
+   y:{beginAtZero:true,ticks:{callback:v=>opts.currency===false?num(v):new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1}).format(v),color:'#64748b',font:{size:10}}},
+   x:{ticks:{autoSkip:labels.length>14,maxRotation:labels.length>12?35:0,minRotation:0,color:'#475569',font:{size:10},callback:function(v){return this.getLabelForValue(v)}}}
+ });
+ const ch=new Chart(el,{type,data:{labels,datasets:[{label:datasetLabel,data:values,backgroundColor:bg,borderColor:type==='line'?colors[0]:labels.map((_,i)=>colors[i%colors.length]),borderWidth:type==='line'?2:1,tension:.28,fill:type==='line'?false:undefined}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:opts.indexAxis||'x',layout:{padding:isDoughnut?8:{top:24,right:isHorizontal?70:16,left:isHorizontal?8:8,bottom:4}},plugins:{legend:{display:isDoughnut||opts.forceLegend===true,position:isDoughnut?'right':'top',labels:{usePointStyle:true,pointStyle:'circle',boxWidth:8,boxHeight:8,font:{size:10,weight:'600'},color:'#475569',generateLabels:isDoughnut?doughnutLegendLabels:undefined}},tooltip:{callbacks:{label:(ctx)=>`${ctx.dataset.label?ctx.dataset.label+': ':''}${opts.currency===false?num(ctx.raw):brl(ctx.raw)}`}},datalabels:window.ChartDataLabels?{display:ctx=>{if(n(ctx.dataset.data[ctx.dataIndex])===0)return false;if(isHorizontal||isDoughnut||labels.length<=14)return true;return 'auto'},formatter:v=>valueLabel(v),color:isDoughnut?'#0f172a':'#334155',backgroundColor:isDoughnut?'rgba(255,255,255,.88)':null,borderRadius:isDoughnut?4:0,padding:isDoughnut?3:0,anchor:isDoughnut?'center':'end',align:isDoughnut?'center':(isHorizontal?'right':'top'),offset:isDoughnut?0:3,clamp:true,clip:false,font:{size:9,weight:'700'}}:false},scales,onClick:(evt,elements)=>{if(!elements.length||!opts.onClick)return;const idx=elements[0].index;opts.onClick(labels[idx],idx)}}});
  capitalCharts[canvasId]=ch;return ch;
 }
 function capitalMultiChart(canvasId,labels,datasets,opts={}){
@@ -559,7 +605,7 @@ function renderCapitalDashboard(rows){
 
 function clearFilters(){
  capitalDashboardClickState[activeTab]={};
- ['searchInput','empresaFilter','clienteFilter','codigoItemFilter'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
+ ['searchInput','empresaFilter','clienteFilter','codigoItemFilter','capitalYearFilter','capitalMonthFilter'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
  const ids=activeTab==='carteira'?['carteiraDateFrom','carteiraDateTo','carteiraStatusOsFilter','carteiraOsFilter','carteiraOrcFilter','carteiraPedidoFilter','carteiraDisponibilidadeFilter','carteiraPrataFilter','carteiraTipoFilter','carteiraEtapaFilter']:activeTab==='faturamento'?['faturamentoDateFrom','faturamentoDateTo','faturamentoNfFilter','faturamentoOrcFilter','faturamentoPlanoFilter','faturamentoPrataFilter','faturamentoStatusFilter']:['financeiroDateFrom','financeiroDateTo','financeiroNfFilter','financeiroStatusFilter'];
  ids.forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});colSelections[activeTab]={};populateFilters();render();
 }

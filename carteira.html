@@ -224,13 +224,28 @@
                 <!-- DATES & CHECKBOX FILTERS GRID -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 text-xs" id="filterDropdownsGrid">
                     
-                    <!-- Dt. Pesquisa (De / Até) -->
+                    <!-- Pesquisa por Data: a Carteira sempre usa Dt. Pesquisa -->
+                    <div class="bg-pstec-50 border border-pstec-100 rounded-xl px-2.5 py-1 flex items-center gap-1.5 md:col-span-2">
+                        <i data-lucide="calendar-search" class="w-3.5 h-3.5 text-pstec-700 shrink-0"></i>
+                        <span class="text-[10px] text-slate-500 font-bold whitespace-nowrap">Pesquisa por Data:</span>
+                        <span class="text-[10px] text-pstec-700 font-black whitespace-nowrap">Dt. Pesquisa</span>
+                    </div>
                     <div class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 flex items-center gap-1.5">
-                        <span class="text-[10px] text-slate-400 font-bold whitespace-nowrap">Dt. Pesq. De:</span>
+                        <span class="text-[10px] text-slate-400 font-bold whitespace-nowrap">Ano:</span>
+                        <select id="yearFilter" onchange="renderCarteiraView()" class="bg-transparent w-full text-slate-800 focus:outline-none font-bold text-[11px]"><option value="">Todos</option></select>
+                    </div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 flex items-center gap-1.5">
+                        <span class="text-[10px] text-slate-400 font-bold whitespace-nowrap">Mês:</span>
+                        <select id="monthFilter" onchange="renderCarteiraView()" class="bg-transparent w-full text-slate-800 focus:outline-none font-bold text-[11px]">
+                            <option value="">Todos</option><option value="01">Janeiro</option><option value="02">Fevereiro</option><option value="03">Março</option><option value="04">Abril</option><option value="05">Maio</option><option value="06">Junho</option><option value="07">Julho</option><option value="08">Agosto</option><option value="09">Setembro</option><option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
+                        </select>
+                    </div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 flex items-center gap-1.5">
+                        <span class="text-[10px] text-slate-400 font-bold whitespace-nowrap">Dt. Pesquisa — de:</span>
                         <input type="date" id="dateFrom" onchange="renderCarteiraView()" class="bg-transparent w-full text-slate-800 focus:outline-none font-medium">
                     </div>
                     <div class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 flex items-center gap-1.5">
-                        <span class="text-[10px] text-slate-400 font-bold whitespace-nowrap">Dt. Pesq. Até:</span>
+                        <span class="text-[10px] text-slate-400 font-bold whitespace-nowrap">Dt. Pesquisa — até:</span>
                         <input type="date" id="dateTo" onchange="renderCarteiraView()" class="bg-transparent w-full text-slate-800 focus:outline-none font-medium">
                     </div>
 
@@ -1005,7 +1020,7 @@
                                 <button onclick="clearColFilter('${col.key}')" class="text-[10px] text-red-600 hover:underline">Limpar</button>
                             </div>
 
-                            <input type="text" placeholder="Filtrar (ex: GRID, MAURI ou -)..." oninput="filterColOptionsUI(this, '${col.key}')" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 mb-2 text-[11px] focus:outline-none font-medium">
+                            <input type="text" placeholder="${['Dt. aprovação','Prev. entrega(original)','Dt. Negociada','Dt. Pesquisa'].includes(col.key) ? 'Pesquisar data, mês ou ano...' : 'Filtrar (ex: GRID, MAURI ou -)...'}" oninput="filterColOptionsUI(this, '${col.key}')" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 mb-2 text-[11px] focus:outline-none font-medium">
 
                             <div class="flex justify-between items-center text-[10px] font-bold pb-1.5">
                                 <button onclick="setAllColFilter('${col.key}', true)" class="text-pstec-700 hover:underline">Marcar Todos</button>
@@ -1025,9 +1040,117 @@
             lucide.createIcons();
         }
 
+        function isCarteiraDateColumn(key) {
+            return ['Dt. aprovação','Prev. entrega(original)','Dt. Negociada','Dt. Pesquisa'].includes(key);
+        }
+
+        function carteiraDateParts(raw) {
+            if (raw === null || raw === undefined) return null;
+            const str = String(raw).trim();
+            if (!str || ['NaT','None','null'].includes(str)) return null;
+            let iso = str.substring(0,10);
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+                const m = str.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+                if (!m) return null;
+                iso = `${m[3]}-${m[2]}-${m[1]}`;
+            }
+            const [year,month,day] = iso.split('-');
+            const monthNames = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+            return {year,month,day,iso,display:`${day}/${month}/${year}`,monthName:monthNames[Number(month)]||month};
+        }
+
+        function renderCarteiraDateOptionsHTML(key, availableData, selectedSet) {
+            const groups = new Map();
+            availableData.forEach(item => {
+                const raw = item[key];
+                const p = carteiraDateParts(raw);
+                if (!p) return;
+                if (!groups.has(p.year)) groups.set(p.year,new Map());
+                const months = groups.get(p.year);
+                if (!months.has(p.month)) months.set(p.month,[]);
+                if (!months.get(p.month).some(x=>x.raw===String(raw).trim())) months.get(p.month).push({raw:String(raw).trim(),...p});
+            });
+            return [...groups.entries()].sort((a,b)=>b[0].localeCompare(a[0])).map(([year,months])=>{
+                const allYear=[...months.values()].flat();
+                const yearChecked=allYear.length>0 && (selectedSet.size===0 || allYear.every(x=>selectedSet.has(x.raw)));
+                return `<details class="date-tree-year" open>
+                    <summary class="flex items-center gap-2 px-1 py-1 font-black text-slate-700 cursor-pointer list-none">
+                        <input type="checkbox" ${yearChecked?'checked':''} onclick="event.stopPropagation()" onchange="toggleCarteiraDateGroup('${key}','year-${year}',this.checked)">
+                        <span>${year}</span><span class="text-[9px] text-slate-400">(${allYear.length})</span>
+                    </summary>
+                    <div data-date-group="year-${year}" class="pl-3 space-y-1">
+                    ${[...months.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([month,dates])=>{
+                        const mChecked=dates.length>0 && (selectedSet.size===0 || dates.every(x=>selectedSet.has(x.raw)));
+                        return `<details class="date-tree-month">
+                            <summary class="flex items-center gap-2 px-1 py-1 font-bold text-slate-600 cursor-pointer list-none">
+                                <input type="checkbox" ${mChecked?'checked':''} onclick="event.stopPropagation()" onchange="toggleCarteiraDateGroup('${key}','month-${year}-${month}',this.checked)">
+                                <span>${dates[0]?.monthName||month}</span><span class="text-[9px] text-slate-400">(${dates.length})</span>
+                            </summary>
+                            <div data-date-group="month-${year}-${month}" class="pl-4 space-y-0.5">
+                                ${dates.sort((a,b)=>a.iso.localeCompare(b.iso)).map(x=>`<label class="date-leaf flex items-center gap-2 px-2 py-1 hover:bg-slate-100 cursor-pointer rounded-md text-slate-700 font-medium text-[11px]" data-search="${x.display} ${x.monthName} ${x.year}">
+                                    <input type="checkbox" value="${x.raw.replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" ${(selectedSet.size===0||selectedSet.has(x.raw))?'checked':''} onchange="toggleCarteiraDateOption('${key}', this.value, this.checked)" class="date-leaf-check rounded text-pstec-700 focus:ring-pstec-500">
+                                    <span>${x.display}</span>
+                                </label>`).join('')}
+                            </div>
+                        </details>`;
+                    }).join('')}
+                    </div>
+                </details>`;
+            }).join('');
+        }
+
+        function allCarteiraDateValues(key) {
+            const vals = new Set();
+            getFilteredCarteira(key).forEach(item => {
+                const raw = item[key];
+                if (carteiraDateParts(raw)) vals.add(String(raw).trim());
+            });
+            return vals;
+        }
+
+        function ensureCarteiraDateSelectionInitialized(key) {
+            if (!colFilterState[key]) colFilterState[key] = new Set();
+            if (colFilterState[key].size === 0) {
+                allCarteiraDateValues(key).forEach(v => colFilterState[key].add(v));
+            }
+            return colFilterState[key];
+        }
+
+        function normalizeCarteiraDateSelection(key) {
+            const allVals = allCarteiraDateValues(key);
+            const sel = colFilterState[key] || new Set();
+            if (allVals.size > 0 && sel.size === allVals.size && [...allVals].every(v => sel.has(v))) sel.clear();
+        }
+
+        function toggleCarteiraDateOption(key, value, checked) {
+            const sel = ensureCarteiraDateSelectionInitialized(key);
+            checked ? sel.add(value) : sel.delete(value);
+            normalizeCarteiraDateSelection(key);
+            renderTableHeader();
+            renderCarteiraView();
+        }
+
+        function toggleCarteiraDateGroup(key, group, checked) {
+            const pop = document.getElementById(`col_popover_${key}`);
+            if (!pop) return;
+            const container = pop.querySelector(`[data-date-group="${group}"]`);
+            if (!container) return;
+            const values=[...container.querySelectorAll('.date-leaf-check')].map(cb=>cb.value);
+            const sel = ensureCarteiraDateSelectionInitialized(key);
+            values.forEach(v=>checked?sel.add(v):sel.delete(v));
+            normalizeCarteiraDateSelection(key);
+            renderTableHeader();
+            renderCarteiraView();
+        }
+
         function renderColOptionsListHTML(key) {
             const availableData = getFilteredCarteira(key);
             
+            const selectedSet = colFilterState[key] || new Set();
+            if (isCarteiraDateColumn(key)) {
+                return renderCarteiraDateOptionsHTML(key, availableData, selectedSet);
+            }
+
             const set = new Set();
             for (let i = 0; i < availableData.length; i++) {
                 const val = availableData[i][key];
@@ -1036,7 +1159,6 @@
                 }
             }
             const sorted = Array.from(set).sort();
-            const selectedSet = colFilterState[key] || new Set();
 
             return sorted.map(val => {
                 const isChecked = selectedSet.has(val) ? 'checked' : '';
@@ -1069,8 +1191,15 @@
             const term = inputEl.value.trim().toLowerCase();
             const container = document.getElementById(`col_opts_${key}`);
             if (!container) return;
+            if (isCarteiraDateColumn(key)) {
+                container.querySelectorAll('.date-leaf').forEach(lbl => {
+                    const txt = String(lbl.dataset.search || lbl.textContent || '').toLowerCase();
+                    lbl.style.display = !term || txt.includes(term) ? 'flex' : 'none';
+                });
+                container.querySelectorAll('details').forEach(d => { if(term) d.open=true; });
+                return;
+            }
             const labels = container.querySelectorAll('label');
-
             labels.forEach(lbl => {
                 const txt = lbl.textContent.toLowerCase();
                 lbl.style.display = matchesWildcardSearch(txt, term) ? 'flex' : 'none';
@@ -1110,7 +1239,22 @@
             renderCarteiraView();
         }
 
+        function populateCarteiraYearFilter() {
+            const el = document.getElementById('yearFilter');
+            if (!el) return;
+            const current = el.value;
+            const years = [...new Set(rawCarteira.map(item => {
+                const raw = item['Dt. Pesquisa'];
+                if (!raw || ['NaT','None','null'].includes(String(raw))) return '';
+                const d = String(raw).substring(0,10);
+                return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d.substring(0,4) : '';
+            }).filter(Boolean))].sort((a,b)=>b.localeCompare(a));
+            el.innerHTML = '<option value="">Todos</option>' + years.map(y => `<option value="${y}">${y}</option>`).join('');
+            if (current && years.includes(current)) el.value = current;
+        }
+
         function renderDropdownsHTML() {
+            populateCarteiraYearFilter();
             configDropdowns.forEach(conf => {
                 const container = document.getElementById(conf.id);
                 if (!container) return;
@@ -1343,8 +1487,10 @@
             const search = (document.getElementById('searchInput')?.value || '').trim();
             const dtFrom = document.getElementById('dateFrom')?.value || '';
             const dtTo = document.getElementById('dateTo')?.value || '';
+            const yearFilter = document.getElementById('yearFilter')?.value || '';
+            const monthFilter = document.getElementById('monthFilter')?.value || '';
 
-            const hasDateFilter = Boolean(dtFrom || dtTo);
+            const hasDateFilter = Boolean(dtFrom || dtTo || yearFilter || monthFilter);
             const filtered = [];
 
             for (let i = 0; i < rawCarteira.length; i++) {
@@ -1405,6 +1551,8 @@
 
                 if (hasDateFilter) {
                     if (!dtPesquisa) continue;
+                    if (yearFilter && dtPesquisa.substring(0,4) !== yearFilter) continue;
+                    if (monthFilter && dtPesquisa.substring(5,7) !== monthFilter) continue;
                     if (dtFrom && dtPesquisa < dtFrom) continue;
                     if (dtTo && dtPesquisa > dtTo) continue;
                 }
@@ -2159,6 +2307,27 @@
             const isDoughnut = type === 'doughnut';
             const isHorizontal = opts.indexAxis === 'y';
             const datasetLabel = opts.label || (opts.currency === false ? 'Quantidade' : 'Valor');
+            const valueLabel = value => carteiraDashboardValueLabel(value, opts.currency !== false);
+            const doughnutLegendLabels = chart => {
+                const ds = chart.data.datasets[0];
+                const total = (ds.data || []).reduce((a,v)=>a+Number(v||0),0) || 1;
+                return chart.data.labels.map((label,i)=>({
+                    text: `${label} · ${valueLabel(ds.data[i])} · ${((Number(ds.data[i]||0)/total)*100).toLocaleString('pt-BR',{maximumFractionDigits:1})}%`,
+                    fillStyle: Array.isArray(ds.backgroundColor) ? ds.backgroundColor[i] : ds.backgroundColor,
+                    strokeStyle: Array.isArray(ds.borderColor) ? ds.borderColor[i] : ds.borderColor,
+                    lineWidth: 1,
+                    hidden: !chart.getDataVisibility(i),
+                    index: i,
+                    pointStyle: 'circle'
+                }));
+            };
+            const scales = isDoughnut ? {} : (isHorizontal ? {
+                x: { beginAtZero: true, ticks: { callback: v => opts.currency === false ? Number(v||0).toLocaleString('pt-BR') : new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1}).format(v), color:'#64748b', font:{size:10} } },
+                y: { type:'category', ticks: { autoSkip:false, color:'#334155', font:{size:10,weight:'600'}, callback:function(v){ return labels[Number(v)] ?? this.getLabelForValue(v); } }, grid:{display:false} }
+            } : {
+                y: { beginAtZero: true, ticks: { callback: v => opts.currency === false ? Number(v||0).toLocaleString('pt-BR') : new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1}).format(v), color:'#64748b', font:{size:10} } },
+                x: { ticks: { autoSkip: labels.length > 14, maxRotation: labels.length > 12 ? 35 : 0, minRotation:0, color:'#475569', font:{size:10}, callback:function(v){ return this.getLabelForValue(v); } } }
+            });
             const chart = new Chart(el, {
                 type,
                 data: { labels, datasets: [{ label: datasetLabel, data: values, backgroundColor: background, borderColor: type === 'line' ? palette[0] : background, borderWidth: 1, tension: .28 }] },
@@ -2166,19 +2335,23 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     indexAxis: opts.indexAxis || 'x',
-                    layout: { padding: isDoughnut ? 8 : { top: 24, right: isHorizontal ? 58 : 16, left: 8, bottom: 4 } },
+                    layout: { padding: isDoughnut ? 8 : { top: 24, right: isHorizontal ? 70 : 16, left: 8, bottom: 4 } },
                     plugins: {
                         legend: {
-                            display: true,
-                            position: 'top',
-                            labels: { usePointStyle:true, pointStyle:'circle', boxWidth:8, boxHeight:8, font:{size:10, weight:'600'}, color:'#475569' }
+                            display: isDoughnut || opts.forceLegend === true,
+                            position: isDoughnut ? 'right' : 'top',
+                            labels: { usePointStyle:true, pointStyle:'circle', boxWidth:8, boxHeight:8, font:{size:10, weight:'600'}, color:'#475569', generateLabels:isDoughnut ? doughnutLegendLabels : undefined }
                         },
                         tooltip: { callbacks: { label: ctx => `${ctx.dataset.label ? ctx.dataset.label + ': ' : ''}${opts.currency === false ? Number(ctx.raw || 0).toLocaleString('pt-BR') : fmtBRL(ctx.raw || 0)}` } },
                         datalabels: window.ChartDataLabels ? {
-                            display: ctx => Number(ctx.dataset.data[ctx.dataIndex] || 0) !== 0,
-                            formatter: value => carteiraDashboardValueLabel(value, opts.currency !== false),
+                            display: ctx => {
+                                if (Number(ctx.dataset.data[ctx.dataIndex] || 0) === 0) return false;
+                                if (isHorizontal || isDoughnut || labels.length <= 14) return true;
+                                return 'auto';
+                            },
+                            formatter: value => valueLabel(value),
                             color: isDoughnut ? '#0f172a' : '#334155',
-                            backgroundColor: isDoughnut ? 'rgba(255,255,255,.82)' : null,
+                            backgroundColor: isDoughnut ? 'rgba(255,255,255,.88)' : null,
                             borderRadius: isDoughnut ? 4 : 0,
                             padding: isDoughnut ? 3 : 0,
                             anchor: isDoughnut ? 'center' : 'end',
@@ -2189,10 +2362,7 @@
                             font: { size: 9, weight: '700' }
                         } : false
                     },
-                    scales: isDoughnut ? {} : {
-                        y: { beginAtZero: true, ticks: { callback: v => new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1}).format(v) } },
-                        x: { ticks: { autoSkip: true, maxRotation: 0, minRotation: 0 } }
-                    },
+                    scales,
                     onClick: (evt, elements) => {
                         if (!elements.length || !opts.onClick) return;
                         const idx = elements[0].index;
@@ -2293,6 +2463,8 @@
             document.getElementById('searchInput').value = '';
             document.getElementById('dateFrom').value = '';
             document.getElementById('dateTo').value = '';
+            if (document.getElementById('yearFilter')) document.getElementById('yearFilter').value = '';
+            if (document.getElementById('monthFilter')) document.getElementById('monthFilter').value = '';
             
             Object.keys(filterState).forEach(k => {
                 filterState[k].clear();
