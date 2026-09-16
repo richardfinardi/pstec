@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/png" href="LOGO MINIMALISTA.png">
 <link rel="apple-touch-icon" href="LOGO MINIMALISTA.png">
-<title>Capital de Giro - PSTEC V1.6</title>
+<title>Capital de Giro - PSTEC V1.6.1</title>
 <script>if(!localStorage.getItem('pstec_token')) window.location.href='login-pstec.html';</script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
@@ -37,7 +37,7 @@ th{user-select:none}.col-filter-popover{display:none}.col-filter-popover.active{
 .capital-dashboard-card canvas{max-height:245px!important}
 .capital-dashboard-mini{background:rgba(255,255,255,.96);border:1px solid rgba(255,255,255,.72);border-radius:1rem;box-shadow:0 8px 24px rgba(15,23,42,.08)}
 .dashboard-toggle-active{background:#003B96!important;color:white!important;border-color:#003B96!important}
-.capital-multi-wrap{position:relative;width:100%}.capital-multi-btn{width:100%;background:#f8fafc;border:1px solid #e2e8f0;border-radius:.75rem;padding:.5rem .65rem;font-size:.75rem;font-weight:700;color:#334155;min-height:36px;display:flex;align-items:center;justify-content:space-between;gap:.5rem}.capital-multi-btn:hover{background:#f1f5f9}.capital-multi-menu{position:absolute;left:0;top:calc(100% + 4px);width:min(290px,90vw);background:white;border:1px solid #e2e8f0;border-radius:1rem;box-shadow:0 16px 35px rgba(15,23,42,.16);z-index:70;padding:.5rem}.capital-multi-menu.hidden{display:none}.capital-multi-options{max-height:230px;overflow:auto}.capital-multi-option{display:flex;align-items:center;gap:.5rem;padding:.4rem .55rem;border-radius:.6rem;font-size:.75rem;color:#334155;cursor:pointer}.capital-multi-option:hover{background:#f8fafc}
+.capital-filters-section{position:relative;z-index:80;overflow:visible}.capital-table-section{position:relative;z-index:1}.capital-multi-wrap{position:relative;width:100%;z-index:1}.capital-multi-wrap:has(.capital-multi-menu:not(.hidden)){z-index:120}.capital-multi-btn{width:100%;background:#f8fafc;border:1px solid #e2e8f0;border-radius:.75rem;padding:.5rem .65rem;font-size:.75rem;font-weight:700;color:#334155;min-height:36px;display:flex;align-items:center;justify-content:space-between;gap:.5rem}.capital-multi-btn:hover{background:#f1f5f9}.capital-multi-menu{position:absolute;left:0;top:calc(100% + 4px);width:min(290px,90vw);background:white;border:1px solid #e2e8f0;border-radius:1rem;box-shadow:0 16px 35px rgba(15,23,42,.16);z-index:200;padding:.5rem}.capital-multi-menu.capital-multi-menu-portal{position:fixed!important;left:auto;top:auto;z-index:99999!important;max-width:calc(100vw - 16px);box-shadow:0 22px 50px rgba(15,23,42,.28)}.capital-multi-menu.hidden{display:none}.capital-multi-options{max-height:230px;overflow:auto}.capital-multi-option{display:flex;align-items:center;gap:.5rem;padding:.4rem .55rem;border-radius:.6rem;font-size:.75rem;color:#334155;cursor:pointer}.capital-multi-option:hover{background:#f8fafc}
 
 @media(max-width:1023px){.capital-table-scroll{max-height:62vh;min-height:300px}}
 @media(max-width:639px){.capital-table-scroll{max-height:58vh;min-height:260px}}
@@ -89,7 +89,7 @@ th{user-select:none}.col-filter-popover{display:none}.col-filter-popover.active{
   <div class="max-w-[98%] mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3">
     <div class="flex items-center gap-4">
       <a href="index.html" class="flex items-center justify-center p-1.5 bg-white rounded-xl shadow-sm" title="Menu PSTEC"><img src="./logo.png" alt="PSTEC" class="h-9 max-h-10 w-auto object-contain"></a>
-      <div><h1 class="text-xl font-extrabold tracking-wide">GRUPO PSTEC</h1><p class="text-xs text-pstec-100">Capital de Giro V1.5</p></div>
+      <div><h1 class="text-xl font-extrabold tracking-wide">GRUPO PSTEC</h1><p class="text-xs text-pstec-100">Capital de Giro V1.6.1</p></div>
     </div>
     <div class="flex items-center gap-2">
       <div class="hidden md:flex items-center gap-1.5 px-3 py-2 bg-pstec-800 border border-pstec-600 rounded-xl text-xs font-bold text-slate-200"><i data-lucide="user-check" class="w-4 h-4 text-pstecgreen-500"></i><span id="userDisplayName">Usuário</span></div>
@@ -115,7 +115,7 @@ th{user-select:none}.col-filter-popover{display:none}.col-filter-popover.active{
 <main class="max-w-[96%] w-full mx-auto p-3 flex flex-col gap-3 flex-1">
   <section id="kpiGrid" class="grid grid-cols-2 lg:grid-cols-4 gap-2.5"></section>
 
-  <section class="capital-surface p-3 rounded-2xl border border-white/70 shadow-sm flex flex-col gap-3">
+  <section class="capital-surface capital-filters-section p-3 rounded-2xl border border-white/70 shadow-sm flex flex-col gap-3">
     <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
       <button onclick="toggleFiltersPanel()" class="flex items-center gap-1.5 p-1 hover:bg-slate-100 rounded-lg transition text-pstec-700 font-bold text-xs" title="Recolher/Expandir Filtros">
         <i data-lucide="filter" class="w-4 h-4"></i>
@@ -209,7 +209,7 @@ th{user-select:none}.col-filter-popover{display:none}.col-filter-popover.active{
     </div>
   </section>
 
-  <section id="capitalTableView" class="capital-surface rounded-2xl border border-white/70 shadow-sm overflow-hidden flex flex-col">
+  <section id="capitalTableView" class="capital-surface capital-table-section rounded-2xl border border-white/70 shadow-sm overflow-hidden flex flex-col">
     <div class="px-3 py-2 bg-slate-50/95 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
       <div class="text-xs font-extrabold text-slate-700">Tabela — <span id="tableViewLabel">Carteira</span> <span id="tableFilterCount" class="ml-1 text-[10px] bg-pstec-100 text-pstec-700 px-2 py-0.5 rounded-full">0 filtros de coluna</span></div>
       <button id="btnResetSort" onclick="resetSort()" class="px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-bold text-slate-600 hover:border-pstec-300 disabled:opacity-40" disabled><i data-lucide="rotate-ccw" class="w-3.5 h-3.5 inline mr-1"></i>Ordem padrão</button>
@@ -365,6 +365,7 @@ function applyTabTheme(tab){
  document.getElementById('filterTabFinanceiro').classList.toggle('hidden',tab!=='financeiro');
 }
 function setTab(tab){
+ closeAllCapitalMultiMenus();
  activeTab=tab;document.querySelectorAll('.col-filter-popover').forEach(p=>p.classList.remove('active'));document.getElementById('columnsMenu').classList.add('hidden');
  document.querySelectorAll('.tab-btn').forEach(b=>b.className='tab-btn px-4 py-2 rounded-xl text-xs font-black bg-white/90 text-slate-700 hover:bg-white flex items-center gap-2 border border-white/70 shadow-sm');
  document.getElementById(tab==='carteira'?'tabCarteira':tab==='faturamento'?'tabFaturamento':'tabFinanceiro').className='tab-btn px-4 py-2 rounded-xl text-xs font-black bg-slate-900 text-white shadow-sm flex items-center gap-2 border border-slate-900';
@@ -379,13 +380,38 @@ function baseRows(){
 }
 function uniqueVals(rows,key,getter=null){return [...new Set(rows.map(r=>{const s=String(getter?getter(r):(r[key]??'')).trim();return s||CAPITAL_EMPTY_VALUE}))].sort((a,b)=>a.localeCompare(b,'pt-BR',{numeric:true,sensitivity:'base'}))}
 function capitalFilterSet(id){if(!capitalFilterState[id])capitalFilterState[id]=new Set();return capitalFilterState[id]}
-function capitalAllFilterValues(id){const el=document.getElementById(id);if(!el)return new Set();return new Set([...el.querySelectorAll('input[data-capital-multi]')].map(x=>x.value))}
+function capitalAllFilterValues(id){const menu=document.getElementById(`${id}_menu`),el=menu||document.getElementById(id);if(!el)return new Set();return new Set([...el.querySelectorAll('input[data-capital-multi]')].map(x=>x.value))}
 function capitalMultiMatches(id,raw){const set=capitalFilterSet(id);if(set.size===0)return true;if(set.has(CAPITAL_NONE_SENTINEL))return false;const v=String(raw??'').trim()||CAPITAL_EMPTY_VALUE;return set.has(v)}
 function capitalFilterLabelText(label,set){if(set.has(CAPITAL_NONE_SENTINEL))return `${label} (0 sel.)`;return set.size===0?`${label} (Todos)`:`${label} (${set.size} sel.)`}
-function renderCapitalMultiFilter(id,label,options){const host=document.getElementById(id);if(!host)return;const set=capitalFilterSet(id),vals=[...new Set(options.map(o=>typeof o==='object'?String(o.v):String(o)))];[...set].forEach(v=>{if(v!==CAPITAL_NONE_SENTINEL&&!vals.includes(v))set.delete(v)});const normalized=options.map(o=>typeof o==='object'?{v:String(o.v),l:String(o.l)}:{v:String(o),l:String(o)});const opts=normalized.map(o=>{const checked=set.size===0?true:(!set.has(CAPITAL_NONE_SENTINEL)&&set.has(o.v));return `<label class="capital-multi-option"><input data-capital-multi type="checkbox" value="${esc(o.v)}" ${checked?'checked':''} onchange="event.stopPropagation();toggleCapitalMultiOption('${id}',this.value,this.checked)" class="rounded text-pstec-700 focus:ring-pstec-500"><span class="truncate" title="${esc(o.l)}">${esc(o.l)}</span></label>`}).join('');host.dataset.filterLabel=label;host.innerHTML=`<div class="capital-multi-wrap"><button type="button" onclick="event.stopPropagation();toggleCapitalMultiMenu('${id}_menu')" class="capital-multi-btn"><span id="${id}_label" class="truncate">${esc(capitalFilterLabelText(label,set))}</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i></button><div id="${id}_menu" class="capital-multi-menu hidden" onclick="event.stopPropagation()"><div class="flex items-center justify-between pb-2 mb-1 border-b border-slate-100"><button type="button" onclick="event.stopPropagation();setCapitalMultiAll('${id}',true)" class="text-[10px] font-black text-pstec-700 hover:underline">Marcar Todos</button><button type="button" onclick="event.stopPropagation();setCapitalMultiAll('${id}',false)" class="text-[10px] font-black text-red-600 hover:underline">Desmarcar</button></div>${normalized.length>8?`<input type="text" placeholder="Pesquisar..." oninput="filterCapitalMultiOptions(this,'${id}_opts')" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 mb-1.5 text-[11px] font-semibold outline-none">`:''}<div id="${id}_opts" class="capital-multi-options custom-scroll">${opts}</div></div></div>`}
-function toggleCapitalMultiMenu(menuId){document.querySelectorAll('.capital-multi-menu').forEach(m=>{if(m.id!==menuId)m.classList.add('hidden')});document.getElementById(menuId)?.classList.toggle('hidden')}
+function renderCapitalMultiFilter(id,label,options){const host=document.getElementById(id);if(!host)return;closeCapitalMultiMenu(`${id}_menu`);const set=capitalFilterSet(id),vals=[...new Set(options.map(o=>typeof o==='object'?String(o.v):String(o)))];[...set].forEach(v=>{if(v!==CAPITAL_NONE_SENTINEL&&!vals.includes(v))set.delete(v)});const normalized=options.map(o=>typeof o==='object'?{v:String(o.v),l:String(o.l)}:{v:String(o),l:String(o)});const opts=normalized.map(o=>{const checked=set.size===0?true:(!set.has(CAPITAL_NONE_SENTINEL)&&set.has(o.v));return `<label class="capital-multi-option"><input data-capital-multi type="checkbox" value="${esc(o.v)}" ${checked?'checked':''} onchange="event.stopPropagation();toggleCapitalMultiOption('${id}',this.value,this.checked)" class="rounded text-pstec-700 focus:ring-pstec-500"><span class="truncate" title="${esc(o.l)}">${esc(o.l)}</span></label>`}).join('');host.dataset.filterLabel=label;host.innerHTML=`<div id="${id}_wrap" class="capital-multi-wrap"><button type="button" onclick="event.stopPropagation();toggleCapitalMultiMenu('${id}_menu')" class="capital-multi-btn"><span id="${id}_label" class="truncate">${esc(capitalFilterLabelText(label,set))}</span><i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i></button><div id="${id}_menu" data-owner="${id}" class="capital-multi-menu hidden" onclick="event.stopPropagation()"><div class="flex items-center justify-between pb-2 mb-1 border-b border-slate-100"><button type="button" onclick="event.stopPropagation();setCapitalMultiAll('${id}',true)" class="text-[10px] font-black text-pstec-700 hover:underline">Marcar Todos</button><button type="button" onclick="event.stopPropagation();setCapitalMultiAll('${id}',false)" class="text-[10px] font-black text-red-600 hover:underline">Desmarcar</button></div>${normalized.length>8?`<input type="text" placeholder="Pesquisar..." oninput="filterCapitalMultiOptions(this,'${id}_opts')" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 mb-1.5 text-[11px] font-semibold outline-none">`:''}<div id="${id}_opts" class="capital-multi-options custom-scroll">${opts}</div></div></div>`}
+function closeCapitalMultiMenu(menuOrId){
+ const menu=typeof menuOrId==='string'?document.getElementById(menuOrId):menuOrId;if(!menu)return;
+ menu.classList.add('hidden');menu.classList.remove('capital-multi-menu-portal');
+ ['left','right','top','bottom','width','maxHeight'].forEach(k=>menu.style[k]='');
+ const owner=menu.dataset.owner,wrap=owner?document.getElementById(`${owner}_wrap`):null;
+ if(wrap&&menu.parentElement!==wrap)wrap.appendChild(menu);
+}
+function closeAllCapitalMultiMenus(exceptId=''){
+ document.querySelectorAll('.capital-multi-menu').forEach(m=>{if(m.id!==exceptId)closeCapitalMultiMenu(m)});
+}
+function positionCapitalMultiMenu(menu){
+ const owner=menu.dataset.owner,wrap=owner?document.getElementById(`${owner}_wrap`):null,btn=wrap?.querySelector('.capital-multi-btn');if(!btn)return;
+ const r=btn.getBoundingClientRect();
+ if(menu.parentElement!==document.body)document.body.appendChild(menu);
+ menu.classList.add('capital-multi-menu-portal');menu.classList.remove('hidden');
+ const width=Math.min(Math.max(r.width,260),Math.min(340,window.innerWidth-16));
+ menu.style.width=`${width}px`;menu.style.left=`${Math.max(8,Math.min(r.left,window.innerWidth-width-8))}px`;
+ const h=Math.min(menu.scrollHeight,360);let top=r.bottom+5;
+ if(top+h>window.innerHeight-8&&r.top-h-5>=8)top=r.top-h-5;else top=Math.min(top,window.innerHeight-h-8);
+ menu.style.top=`${Math.max(8,top)}px`;
+}
+function toggleCapitalMultiMenu(menuId){
+ const menu=document.getElementById(menuId);if(!menu)return;const opening=menu.classList.contains('hidden');
+ closeAllCapitalMultiMenus(menuId);
+ if(opening)positionCapitalMultiMenu(menu);else closeCapitalMultiMenu(menu);
+}
 function filterCapitalMultiOptions(input,id){const q=normalizeText(input.value);document.getElementById(id)?.querySelectorAll('.capital-multi-option').forEach(l=>l.style.display=!q||normalizeText(l.textContent).includes(q)?'flex':'none')}
-function refreshCapitalMultiUI(id){const host=document.getElementById(id),set=capitalFilterSet(id);if(!host)return;const lbl=document.getElementById(`${id}_label`);if(lbl)lbl.textContent=capitalFilterLabelText(host.dataset.filterLabel||id,set);host.querySelectorAll('input[data-capital-multi]').forEach(cb=>cb.checked=set.size===0?true:(!set.has(CAPITAL_NONE_SENTINEL)&&set.has(cb.value)))}
+function refreshCapitalMultiUI(id){const host=document.getElementById(id),set=capitalFilterSet(id);if(!host)return;const lbl=document.getElementById(`${id}_label`);if(lbl)lbl.textContent=capitalFilterLabelText(host.dataset.filterLabel||id,set);const menu=document.getElementById(`${id}_menu`);(menu||host).querySelectorAll('input[data-capital-multi]').forEach(cb=>cb.checked=set.size===0?true:(!set.has(CAPITAL_NONE_SENTINEL)&&set.has(cb.value)))}
 function toggleCapitalMultiOption(id,val,checked){const set=capitalFilterSet(id),all=capitalAllFilterValues(id);if(set.size===0)all.forEach(v=>set.add(v));if(set.has(CAPITAL_NONE_SENTINEL))set.clear();if(checked)set.add(val);else set.delete(val);if(all.size&&set.size===all.size&&[...all].every(v=>set.has(v)))set.clear();else if(set.size===0)set.add(CAPITAL_NONE_SENTINEL);refreshCapitalMultiUI(id);render()}
 function setCapitalMultiAll(id,enable){const set=capitalFilterSet(id);set.clear();if(!enable)set.add(CAPITAL_NONE_SENTINEL);refreshCapitalMultiUI(id);render()}
 function rowDateForTab(r,tab){if(tab==='carteira')return isoDate(r.previsao_ent_pesq||r['Dt. Negociada']||r['Prev. entrega(original)']);return isoDate(r.Emissão)}
@@ -654,7 +680,8 @@ function startCapitalAutoRefresh(){
 document.addEventListener('click',e=>{if(!e.target.closest('#columnsMenu')&&!e.target.closest('button[onclick="toggleColumnsMenu()"]'))document.getElementById('columnsMenu')?.classList.add('hidden');if(!e.target.closest('.col-filter-popover')&&!e.target.closest('[id^="filterBtn_"]'))document.querySelectorAll('.col-filter-popover').forEach(p=>p.classList.remove('active'))});
 document.addEventListener('DOMContentLoaded',()=>{loadHiddenCols();applySavedFiltersState();applyTabTheme(activeTab);document.getElementById('userDisplayName').textContent=localStorage.getItem('pstec_usuario_nome')||'Usuário';setCapitalView(capitalViewMode);lucide.createIcons();loadCapitalTab(activeTab);startCapitalAutoRefresh()});
 
-document.addEventListener('click',()=>document.querySelectorAll('.capital-multi-menu').forEach(m=>m.classList.add('hidden')));
+document.addEventListener('click',()=>closeAllCapitalMultiMenus());
+window.addEventListener('resize',()=>closeAllCapitalMultiMenus());
 </script>
 
 <div id="capitalDashboardHelpModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[120]">
