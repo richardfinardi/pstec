@@ -50,6 +50,7 @@
     </script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="./pstec-cache.js"></script>
 
     <style>
@@ -57,6 +58,9 @@
         .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .carteira-dashboard-card { background:#fff; border:1px solid #e2e8f0; border-radius:1rem; box-shadow:0 6px 20px rgba(15,23,42,.06); padding:.9rem; min-height:300px; display:flex; flex-direction:column; }
+        .carteira-dashboard-card canvas { max-height:245px!important; }
+        .carteira-dashboard-active { background:#003B96!important; color:#fff!important; border-color:#003B96!important; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col bg-slate-100 text-slate-800">
@@ -170,6 +174,14 @@
                 </div>
 
                 <div class="flex items-center gap-3">
+                    <div class="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5">
+                        <button id="btnCarteiraTableView" onclick="setCarteiraView('table')" class="carteira-dashboard-active px-2.5 py-1 rounded-md text-[11px] font-extrabold flex items-center gap-1">
+                            <i data-lucide="table-2" class="w-3.5 h-3.5"></i><span>Tabela</span>
+                        </button>
+                        <button id="btnCarteiraDashboardView" onclick="setCarteiraView('dashboard')" class="px-2.5 py-1 rounded-md text-[11px] font-extrabold text-slate-600 flex items-center gap-1">
+                            <i data-lucide="chart-no-axes-combined" class="w-3.5 h-3.5"></i><span>Dashboard</span>
+                        </button>
+                    </div>
                     <!-- BOTÃO GERENCIADOR DE VISIBILIDADE DAS COLUNAS DA TABELA -->
                     <div class="relative custom-dd-container">
                         <button onclick="toggleDropdownMenu('tableColsVisibilityMenu')" class="flex items-center gap-1 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold rounded-lg text-[11px] transition" title="Exibir ou Ocultar Colunas da Tabela">
@@ -244,8 +256,39 @@
             </div>
         </div>
 
+        <!-- DASHBOARD DA CARTEIRA -->
+        <section id="carteiraDashboardView" class="hidden flex flex-col gap-3">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm px-4 py-3 flex flex-wrap items-center justify-between gap-2">
+                <div>
+                    <h2 class="text-sm font-black text-slate-800">Dashboard Operacional da Carteira</h2>
+                    <p class="text-[11px] text-slate-500">Os gráficos respeitam os filtros da tela. Clique em uma barra ou fatia para aplicar o filtro correspondente.</p>
+                </div>
+                <span id="carteiraDashboardCount" class="px-2.5 py-1 rounded-full text-[10px] font-black bg-pstec-100 text-pstec-700">0 registros</span>
+            </div>
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-3">
+                <div class="carteira-dashboard-card"><h3 class="text-[11px] font-black uppercase text-slate-600 mb-2">Valor a faturar por mês de entrega</h3><div class="flex-1 relative"><canvas id="carteiraChartPrazo"></canvas></div></div>
+                <div class="carteira-dashboard-card"><h3 class="text-[11px] font-black uppercase text-slate-600 mb-2">Valor a faturar por cliente — Top 10</h3><div class="flex-1 relative"><canvas id="carteiraChartClientes"></canvas></div></div>
+                <div class="carteira-dashboard-card"><h3 class="text-[11px] font-black uppercase text-slate-600 mb-2">Valor a faturar por Status OS</h3><div class="flex-1 relative"><canvas id="carteiraChartStatus"></canvas></div></div>
+                <div class="carteira-dashboard-card"><h3 class="text-[11px] font-black uppercase text-slate-600 mb-2">Valor a faturar por Disponibilidade Material</h3><div class="flex-1 relative"><canvas id="carteiraChartMaterial"></canvas></div></div>
+                <div class="carteira-dashboard-card"><h3 class="text-[11px] font-black uppercase text-slate-600 mb-2">Valor a faturar por Etapa</h3><div class="flex-1 relative"><canvas id="carteiraChartEtapa"></canvas></div></div>
+                <div class="carteira-dashboard-card"><h3 class="text-[11px] font-black uppercase text-slate-600 mb-2">Carteira com Prata x sem Prata</h3><div class="flex-1 relative"><canvas id="carteiraChartPrata"></canvas></div></div>
+            </div>
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+                    <div><h3 class="text-xs font-black text-slate-800 uppercase">Entregas vencidas com saldo</h3><p class="text-[10px] text-slate-500">Top 10 por valor a faturar</p></div>
+                    <span id="carteiraAtrasadosBadge" class="px-2 py-1 rounded-full bg-red-50 text-red-700 text-[10px] font-black">0 atrasados</span>
+                </div>
+                <div class="overflow-x-auto custom-scroll">
+                    <table class="w-full min-w-[760px] text-[11px]">
+                        <thead class="bg-slate-50 text-slate-600 uppercase text-[9px]"><tr><th class="p-2 text-left">Cliente</th><th class="p-2 text-left">Orçamento</th><th class="p-2 text-left">OS</th><th class="p-2 text-left">Previsão</th><th class="p-2 text-right">Saldo</th><th class="p-2 text-right">Vl. a faturar</th></tr></thead>
+                        <tbody id="carteiraAtrasadosBody" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
         <!-- TABELA PRINCIPAL DE CARTEIRA (ALTURA DINÂMICA) -->
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+        <div id="carteiraTableView" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
             <div id="tableScrollContainer" class="overflow-x-auto custom-scroll transition-all duration-300 max-h-[60vh]">
                 <table class="w-full text-left text-[11px] border-collapse whitespace-nowrap">
                     <thead id="mainTableHeader" class="sticky top-0 z-20 bg-pstec-700 text-white font-extrabold uppercase text-[10px] tracking-wider select-none">
@@ -509,6 +552,8 @@
         let carteiraLastApiSyncAt = 0;
         let carteiraAutoRefreshTimer = null;
         let currentFilteredData = [];
+        let carteiraViewMode = localStorage.getItem('pstec_carteira_view_mode') || 'table';
+        let carteiraCharts = {};
         
         let sortColumn = 'Dt. aprovação';
         let sortAsc = false;
@@ -663,6 +708,7 @@
             }
 
             updateValuesBtnUI();
+            setCarteiraView(carteiraViewMode, false);
 
             document.addEventListener('click', (e) => {
                 if (!e.target.closest('.custom-dd-container') && !e.target.closest('.col-filter-popover')) {
@@ -1396,6 +1442,8 @@
             document.getElementById('kpiValorLucro').textContent = fmtBRL(vlLucroTotal);
             document.getElementById('kpiValorFaltaComprar').textContent = fmtBRL(vlFaltaComprarUnico);
 
+            if (carteiraViewMode === 'dashboard') renderCarteiraDashboard();
+
             if (totalItens === 0) {
                 tbody.innerHTML = '';
                 emptyState.classList.remove('hidden');
@@ -1733,6 +1781,147 @@
                 modal.classList.add('hidden');
                 modal.classList.remove('flex');
             }
+        }
+
+        function setCarteiraView(mode, rerender = true) {
+            carteiraViewMode = mode === 'dashboard' ? 'dashboard' : 'table';
+            localStorage.setItem('pstec_carteira_view_mode', carteiraViewMode);
+            const table = document.getElementById('carteiraTableView');
+            const dash = document.getElementById('carteiraDashboardView');
+            if (table) table.classList.toggle('hidden', carteiraViewMode !== 'table');
+            if (dash) dash.classList.toggle('hidden', carteiraViewMode !== 'dashboard');
+            const bt = document.getElementById('btnCarteiraTableView');
+            const bd = document.getElementById('btnCarteiraDashboardView');
+            bt?.classList.toggle('carteira-dashboard-active', carteiraViewMode === 'table');
+            bd?.classList.toggle('carteira-dashboard-active', carteiraViewMode === 'dashboard');
+            bt?.classList.toggle('text-slate-600', carteiraViewMode !== 'table');
+            bd?.classList.toggle('text-slate-600', carteiraViewMode !== 'dashboard');
+            if (rerender && carteiraViewMode === 'dashboard') renderCarteiraDashboard();
+            lucide.createIcons();
+        }
+
+        function destroyCarteiraCharts() {
+            Object.values(carteiraCharts).forEach(ch => { try { ch.destroy(); } catch(e){} });
+            carteiraCharts = {};
+        }
+
+        function carteiraAggregate(rows, labelGetter, valueGetter) {
+            const map = new Map();
+            rows.forEach(item => {
+                const label = String(labelGetter(item) || '').trim() || '(Vazio)';
+                map.set(label, (map.get(label) || 0) + parseNum(valueGetter(item)));
+            });
+            return [...map.entries()];
+        }
+
+        function carteiraTop(entries, limit = 10) {
+            return entries.sort((a,b) => b[1] - a[1]).slice(0, limit);
+        }
+
+        function carteiraMonthData(rows) {
+            const map = new Map();
+            rows.forEach(item => {
+                const raw = item['Dt. Pesquisa'];
+                if (!raw) return;
+                const iso = String(raw).substring(0,10);
+                if (!/^\d{4}-\d{2}/.test(iso)) return;
+                const key = iso.slice(0,7);
+                map.set(key, (map.get(key) || 0) + parseNum(item['Vl. a faturar']));
+            });
+            return [...map.entries()].sort((a,b) => a[0].localeCompare(b[0]));
+        }
+
+        function carteiraMonthLabel(key) {
+            const [y,m] = key.split('-');
+            return `${m}/${y}`;
+        }
+
+        function createCarteiraChart(id, type, labels, values, opts = {}) {
+            const el = document.getElementById(id);
+            if (!el || !window.Chart) return;
+            const palette = opts.colors || ['#003B96','#1a5ce6','#7CBD20','#10b981','#8b5cf6','#f59e0b','#ef4444','#06b6d4','#64748b','#d946ef'];
+            const background = type === 'line' ? palette[0] : labels.map((_,i) => palette[i % palette.length]);
+            const chart = new Chart(el, {
+                type,
+                data: { labels, datasets: [{ label: opts.label || '', data: values, backgroundColor: background, borderColor: type === 'line' ? palette[0] : background, borderWidth: 1, tension: .28 }] },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: opts.indexAxis || 'x',
+                    plugins: {
+                        legend: { display: opts.legend ?? (type === 'doughnut') },
+                        tooltip: { callbacks: { label: ctx => opts.currency === false ? Number(ctx.raw || 0).toLocaleString('pt-BR') : fmtBRL(ctx.raw || 0) } }
+                    },
+                    scales: type === 'doughnut' ? {} : {
+                        y: { beginAtZero: true, ticks: { callback: v => new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1}).format(v) } },
+                        x: { ticks: { autoSkip: true, maxRotation: 0, minRotation: 0 } }
+                    },
+                    onClick: (evt, elements) => {
+                        if (!elements.length || !opts.onClick) return;
+                        const idx = elements[0].index;
+                        opts.onClick(labels[idx], idx);
+                    }
+                }
+            });
+            carteiraCharts[id] = chart;
+        }
+
+        function applyCarteiraDashboardFilter(key, value) {
+            if (!filterState[key]) return;
+            filterState[key].clear();
+            if (value && value !== '(Vazio)') filterState[key].add(String(value));
+            renderDropdownsHTML();
+            renderCarteiraView();
+        }
+
+        function applyCarteiraDashboardMonth(key) {
+            const [y,m] = key.split('-').map(Number);
+            const last = new Date(y,m,0).getDate();
+            document.getElementById('dateFrom').value = `${y}-${String(m).padStart(2,'0')}-01`;
+            document.getElementById('dateTo').value = `${y}-${String(m).padStart(2,'0')}-${String(last).padStart(2,'0')}`;
+            renderCarteiraView();
+        }
+
+        function renderCarteiraDashboard() {
+            if (carteiraViewMode !== 'dashboard') return;
+            destroyCarteiraCharts();
+            const rows = currentFilteredData || [];
+            document.getElementById('carteiraDashboardCount').textContent = `${rows.length.toLocaleString('pt-BR')} registros`;
+
+            const months = carteiraMonthData(rows);
+            createCarteiraChart('carteiraChartPrazo','bar',months.map(x=>carteiraMonthLabel(x[0])),months.map(x=>x[1]),{onClick:(label,idx)=>applyCarteiraDashboardMonth(months[idx][0])});
+
+            const clients = carteiraTop(carteiraAggregate(rows,r=>r.Cliente,r=>r['Vl. a faturar']),10);
+            createCarteiraChart('carteiraChartClientes','bar',clients.map(x=>x[0]),clients.map(x=>x[1]),{indexAxis:'y',onClick:v=>applyCarteiraDashboardFilter('Cliente',v)});
+
+            const status = carteiraTop(carteiraAggregate(rows,r=>r['Status OS'],r=>r['Vl. a faturar']),12);
+            createCarteiraChart('carteiraChartStatus','bar',status.map(x=>x[0]),status.map(x=>x[1]),{onClick:v=>applyCarteiraDashboardFilter('Status OS',v)});
+
+            const material = carteiraTop(carteiraAggregate(rows,r=>r['Disponibilidade Material'],r=>r['Vl. a faturar']),12);
+            createCarteiraChart('carteiraChartMaterial','bar',material.map(x=>x[0]),material.map(x=>x[1]),{indexAxis:'y',onClick:v=>applyCarteiraDashboardFilter('Disponibilidade Material',v)});
+
+            const etapa = carteiraTop(carteiraAggregate(rows,r=>r.Etapa,r=>r['Vl. a faturar']),12);
+            createCarteiraChart('carteiraChartEtapa','bar',etapa.map(x=>x[0]),etapa.map(x=>x[1]),{indexAxis:'y',onClick:v=>applyCarteiraDashboardFilter('Etapa',v)});
+
+            const prata = carteiraAggregate(rows,r=>r.Prata||'(Vazio)',r=>r['Vl. a faturar']);
+            createCarteiraChart('carteiraChartPrata','doughnut',prata.map(x=>x[0]),prata.map(x=>Math.max(0,x[1])),{legend:true,onClick:v=>applyCarteiraDashboardFilter('Prata',v)});
+
+            const today = new Date();
+            const todayIso = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+            const atrasados = rows.filter(item => {
+                const d = item['Dt. Pesquisa'] ? String(item['Dt. Pesquisa']).substring(0,10) : '';
+                return d && d < todayIso && parseNum(item['Saldo a entregar']) > 0;
+            }).sort((a,b)=>parseNum(b['Vl. a faturar'])-parseNum(a['Vl. a faturar']));
+            document.getElementById('carteiraAtrasadosBadge').textContent = `${atrasados.length.toLocaleString('pt-BR')} atrasados`;
+            document.getElementById('carteiraAtrasadosBody').innerHTML = atrasados.slice(0,10).map(item=>`
+                <tr class="hover:bg-red-50/50">
+                    <td class="p-2 font-bold text-slate-700">${item.Cliente || '-'}</td>
+                    <td class="p-2 font-mono">${item['Nº Orçamento'] || '-'}</td>
+                    <td class="p-2 font-mono">${item['Nº OS'] || '-'}</td>
+                    <td class="p-2">${fmtDate(item['Dt. Pesquisa'])}</td>
+                    <td class="p-2 text-right font-mono">${parseNum(item['Saldo a entregar']).toLocaleString('pt-BR')}</td>
+                    <td class="p-2 text-right font-mono font-black text-red-700">${fmtBRL(parseNum(item['Vl. a faturar']))}</td>
+                </tr>`).join('') || '<tr><td colspan="6" class="p-5 text-center text-slate-400">Nenhuma entrega vencida com saldo nos filtros atuais.</td></tr>';
         }
 
         function clearAllFilters() {

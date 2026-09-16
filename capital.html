@@ -13,6 +13,7 @@ tailwind.config={theme:{extend:{colors:{pstec:{50:'#f0f5ff',100:'#e0ebff',500:'#
 </script>
 <script src="https://unpkg.com/lucide@latest"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="./pstec-cache.js"></script>
 <style>
 :root{--screen-bg:#df6d79;--screen-bg-soft:#f8dde1;--theme-accent:#c84d5d}
@@ -31,6 +32,10 @@ th{user-select:none}.col-filter-popover{display:none}.col-filter-popover.active{
 .capital-filter-label{display:block;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.045em;color:#64748b;margin:0 0 3px 2px}
 .capital-filter-group{min-width:0}
 .capital-table-scroll{max-height:calc(100vh - 350px);min-height:340px}
+.capital-dashboard-card{background:rgba(255,255,255,.96);border:1px solid rgba(255,255,255,.72);border-radius:1rem;box-shadow:0 8px 24px rgba(15,23,42,.08);padding:.85rem;min-height:300px;display:flex;flex-direction:column}
+.capital-dashboard-card canvas{max-height:245px!important}
+.capital-dashboard-mini{background:rgba(255,255,255,.96);border:1px solid rgba(255,255,255,.72);border-radius:1rem;box-shadow:0 8px 24px rgba(15,23,42,.08)}
+.dashboard-toggle-active{background:#003B96!important;color:white!important;border-color:#003B96!important}
 @media(max-width:1023px){.capital-table-scroll{max-height:62vh;min-height:300px}}
 @media(max-width:639px){.capital-table-scroll{max-height:58vh;min-height:260px}}
 </style>
@@ -115,6 +120,10 @@ th{user-select:none}.col-filter-popover{display:none}.col-filter-popover.active{
         <i id="filterChevron" data-lucide="chevron-up" class="w-4 h-4 text-slate-400"></i>
       </button>
       <div class="flex flex-wrap items-center gap-2">
+        <div class="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5">
+          <button id="btnCapitalTableView" onclick="setCapitalView('table')" class="dashboard-toggle-active px-2.5 py-1 rounded-md text-[11px] font-extrabold flex items-center gap-1"><i data-lucide="table-2" class="w-3.5 h-3.5"></i>Tabela</button>
+          <button id="btnCapitalDashboardView" onclick="setCapitalView('dashboard')" class="px-2.5 py-1 rounded-md text-[11px] font-extrabold text-slate-600 flex items-center gap-1"><i data-lucide="chart-no-axes-combined" class="w-3.5 h-3.5"></i>Dashboard</button>
+        </div>
         <div class="relative">
           <button onclick="toggleColumnsMenu()" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-[11px] font-extrabold text-slate-700 flex items-center gap-1"><i data-lucide="columns" class="w-3.5 h-3.5 text-pstec-700"></i>Exibir Colunas ⚙️</button>
           <div id="columnsMenu" class="hidden absolute right-0 top-full mt-1 w-72 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 p-3 text-xs">
@@ -176,7 +185,22 @@ th{user-select:none}.col-filter-popover{display:none}.col-filter-popover.active{
     </div>
   </section>
 
-  <section class="capital-surface rounded-2xl border border-white/70 shadow-sm overflow-hidden flex flex-col">
+  <section id="capitalDashboardView" class="hidden flex flex-col gap-3">
+    <div class="capital-dashboard-mini px-4 py-3 flex flex-wrap items-center justify-between gap-2">
+      <div><h2 class="text-sm font-black text-slate-800">Dashboard — <span id="capitalDashboardTitle">Carteira</span></h2><p class="text-[11px] text-slate-500">Os gráficos respeitam todos os filtros atuais. Clique nas barras/fatias para filtrar a tela.</p></div>
+      <span id="capitalDashboardCount" class="px-2.5 py-1 rounded-full text-[10px] font-black bg-pstec-100 text-pstec-700">0 registros</span>
+    </div>
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-3">
+      <div class="capital-dashboard-card"><h3 id="capChartTitle1" class="text-[11px] font-black uppercase text-slate-600 mb-2">Gráfico 1</h3><div class="flex-1 relative"><canvas id="capChart1"></canvas></div></div>
+      <div class="capital-dashboard-card"><h3 id="capChartTitle2" class="text-[11px] font-black uppercase text-slate-600 mb-2">Gráfico 2</h3><div class="flex-1 relative"><canvas id="capChart2"></canvas></div></div>
+      <div class="capital-dashboard-card"><h3 id="capChartTitle3" class="text-[11px] font-black uppercase text-slate-600 mb-2">Gráfico 3</h3><div class="flex-1 relative"><canvas id="capChart3"></canvas></div></div>
+      <div class="capital-dashboard-card"><h3 id="capChartTitle4" class="text-[11px] font-black uppercase text-slate-600 mb-2">Gráfico 4</h3><div class="flex-1 relative"><canvas id="capChart4"></canvas></div></div>
+      <div class="capital-dashboard-card"><h3 id="capChartTitle5" class="text-[11px] font-black uppercase text-slate-600 mb-2">Gráfico 5</h3><div class="flex-1 relative"><canvas id="capChart5"></canvas></div></div>
+      <div class="capital-dashboard-card"><h3 id="capChartTitle6" class="text-[11px] font-black uppercase text-slate-600 mb-2">Gráfico 6</h3><div class="flex-1 relative"><canvas id="capChart6"></canvas></div></div>
+    </div>
+  </section>
+
+  <section id="capitalTableView" class="capital-surface rounded-2xl border border-white/70 shadow-sm overflow-hidden flex flex-col">
     <div class="px-3 py-2 bg-slate-50/95 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
       <div class="text-xs font-extrabold text-slate-700">Tabela — <span id="tableViewLabel">Carteira</span> <span id="tableFilterCount" class="ml-1 text-[10px] bg-pstec-100 text-pstec-700 px-2 py-0.5 rounded-full">0 filtros de coluna</span></div>
       <button id="btnResetSort" onclick="resetSort()" class="px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-bold text-slate-600 hover:border-pstec-300 disabled:opacity-40" disabled><i data-lucide="rotate-ccw" class="w-3.5 h-3.5 inline mr-1"></i>Ordem padrão</button>
@@ -202,6 +226,8 @@ const HIDDEN_COLS_KEY='pstec_capital_hidden_cols_v2';
 const FILTERS_COLLAPSED_KEY='pstec_capital_filters_collapsed';
 const EXPORT_COLS_KEY='pstec_capital_export_cols_v2';
 let rawCapital=[], currentRows=[], activeTab='carteira';
+let capitalViewMode=localStorage.getItem('pstec_capital_view_mode')||'table';
+let capitalCharts={};
 let capitalDataReady=false,capitalRefreshing=false,capitalCacheSavedAt=null,capitalLastApiSyncAt=0,capitalAutoRefreshTimer=null;
 let hiddenCols={carteira:new Set(),faturamento:new Set(),financeiro:new Set()};
 let colSelections={carteira:{},faturamento:{},financeiro:{}};
@@ -401,10 +427,89 @@ function render(){
  renderHeader();
  document.getElementById('tableBody').innerHTML=shown.length?shown.map((r,i)=>'<tr class="'+(i%2?'bg-slate-50/60':'bg-white')+' hover:bg-pstec-50/60">'+cols.map(c=>`<td class="px-3 py-2.5 font-medium text-slate-700 ${['brl','num','pct'].includes(c.type)?'text-right':''}">${cellHtml(r,c)}</td>`).join('')+'</tr>').join(''):`<tr><td colspan="${Math.max(cols.length,1)}" class="p-12 text-center text-slate-400 font-semibold">Nenhum registro encontrado.</td></tr>`;
  renderFooter(currentRows,cols);
- document.getElementById('shownCount').textContent=shown.length;document.getElementById('totalCount').textContent=currentRows.length;document.getElementById('tableFilterCount').textContent=`${Object.keys(colSelections[activeTab]).length} filtros de coluna`;document.getElementById('btnResetSort').disabled=!sortState[activeTab].key;renderKPIs(currentRows);renderColumnsMenu();lucide.createIcons();
+ document.getElementById('shownCount').textContent=shown.length;document.getElementById('totalCount').textContent=currentRows.length;document.getElementById('tableFilterCount').textContent=`${Object.keys(colSelections[activeTab]).length} filtros de coluna`;document.getElementById('btnResetSort').disabled=!sortState[activeTab].key;renderKPIs(currentRows);renderColumnsMenu();if(capitalViewMode==='dashboard')renderCapitalDashboard(currentRows);lucide.createIcons();
 }
 function kpi(title,val,cls='text-pstec-700'){return `<div class="capital-kpi p-2.5 rounded-xl border shadow-sm"><span class="text-[9px] font-black uppercase text-slate-500 block">${title}</span><span class="text-base lg:text-lg font-black ${cls}">${val}</span></div>`}
 function renderKPIs(rows){let html='';if(activeTab==='carteira')html=kpi('Itens em carteira',rows.length)+kpi('Saldo a entregar',num(rows.reduce((a,r)=>a+n(r['Saldo a entregar']),0)),'text-slate-800')+kpi('Valor a faturar',brl(rows.reduce((a,r)=>a+n(r['Vl. a faturar']),0)),'text-blue-700')+kpi('Capital necessário',brl(rows.reduce((a,r)=>a+n(r._totalPagar),0)),'text-amber-700');else if(activeTab==='faturamento')html=kpi('Itens faturados',rows.length)+kpi('Valor faturado',brl(rows.reduce((a,r)=>a+n(r._fatValor),0)),'text-pstec-700')+kpi('Total MP',brl(rows.reduce((a,r)=>a+n(r._fatTotalMP),0)),'text-amber-700')+kpi('Saldo após MP + impostos',brl(rows.reduce((a,r)=>a+n(r._fatSaldo),0)),'text-emerald-700');else html=kpi('Registros financeiros',rows.length)+kpi('A receber',brl(rows.reduce((a,r)=>a+n(r['A RECEBER']),0)),'text-red-600')+kpi('Recebido',brl(rows.reduce((a,r)=>a+n(r.RECEBIDO),0)),'text-emerald-700')+kpi('Total financeiro',brl(rows.reduce((a,r)=>a+n(r._finTotal),0)),'text-pstec-700');document.getElementById('kpiGrid').innerHTML=html}
+function setCapitalView(mode){
+ capitalViewMode=mode==='dashboard'?'dashboard':'table';
+ localStorage.setItem('pstec_capital_view_mode',capitalViewMode);
+ const table=document.getElementById('capitalTableView'),dash=document.getElementById('capitalDashboardView');
+ table?.classList.toggle('hidden',capitalViewMode!=='table');
+ dash?.classList.toggle('hidden',capitalViewMode!=='dashboard');
+ const bt=document.getElementById('btnCapitalTableView'),bd=document.getElementById('btnCapitalDashboardView');
+ bt?.classList.toggle('dashboard-toggle-active',capitalViewMode==='table');
+ bd?.classList.toggle('dashboard-toggle-active',capitalViewMode==='dashboard');
+ bt?.classList.toggle('text-slate-600',capitalViewMode!=='table');
+ bd?.classList.toggle('text-slate-600',capitalViewMode!=='dashboard');
+ if(capitalViewMode==='dashboard')renderCapitalDashboard(currentRows);
+ lucide.createIcons();
+}
+function destroyCapitalCharts(){Object.values(capitalCharts).forEach(ch=>{try{ch.destroy()}catch{}});capitalCharts={}}
+function chartThemeColors(){
+ const tab=activeTab;
+ if(tab==='carteira')return ['#bd4253','#df6d79','#f0a1aa','#7f1d2d','#f7c5cb','#8b5cf6','#0ea5e9','#10b981'];
+ if(tab==='faturamento')return ['#2e9e62','#49bd7d','#87d9aa','#16633c','#b7efd0','#0ea5e9','#f59e0b','#8b5cf6'];
+ return ['#a98200','#d0ac25','#ead164','#6f5800','#f7e8a6','#0ea5e9','#10b981','#ef4444'];
+}
+function sumBy(rows,key,getter){const m=new Map();rows.forEach(r=>{const k=String(key?getValue(r,key):getter?.(r)||'').trim()||'(Vazio)';const v=getter?getter(r):0;m.set(k,(m.get(k)||0)+n(v))});return [...m.entries()]}
+function aggregateBy(rows,labelGetter,valueGetter){const m=new Map();rows.forEach(r=>{const k=String(labelGetter(r)||'').trim()||'(Vazio)';m.set(k,(m.get(k)||0)+n(valueGetter(r)))});return [...m.entries()]}
+function topEntries(entries,limit=10){return entries.sort((a,b)=>b[1]-a[1]).slice(0,limit)}
+function monthEntries(rows,dateGetter,valueGetter){const m=new Map();rows.forEach(r=>{const d=isoDate(dateGetter(r));if(!d)return;const k=d.slice(0,7);m.set(k,(m.get(k)||0)+n(valueGetter(r)))});return [...m.entries()].sort((a,b)=>a[0].localeCompare(b[0]))}
+function monthLabel(k){const [y,m]=k.split('-');return `${m}/${y}`}
+function capitalChart(canvasId,type,labels,values,opts={}){
+ const el=document.getElementById(canvasId);if(!el||!window.Chart)return null;
+ const colors=opts.colors||chartThemeColors();
+ const bg=type==='line'?colors[0]:labels.map((_,i)=>colors[i%colors.length]);
+ const ch=new Chart(el,{type,data:{labels,datasets:[{label:opts.datasetLabel||'',data:values,backgroundColor:bg,borderColor:type==='line'?colors[0]:labels.map((_,i)=>colors[i%colors.length]),borderWidth:type==='line'?2:1,tension:.28,fill:type==='line'?false:undefined}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:opts.indexAxis||'x',plugins:{legend:{display:opts.legend??(type==='doughnut')},tooltip:{callbacks:{label:(ctx)=>opts.currency===false?num(ctx.raw):brl(ctx.raw)}}},scales:type==='doughnut'?{}:{y:{beginAtZero:true,ticks:{callback:v=>opts.currency===false?num(v):new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1}).format(v)}},x:{ticks:{autoSkip:true,maxRotation:0,minRotation:0}}},onClick:(evt,elements)=>{if(!elements.length||!opts.onClick)return;const idx=elements[0].index;opts.onClick(labels[idx],idx)}}});
+ capitalCharts[canvasId]=ch;return ch;
+}
+function capitalMultiChart(canvasId,labels,datasets,opts={}){
+ const el=document.getElementById(canvasId);if(!el||!window.Chart)return null;const colors=chartThemeColors();
+ const ds=datasets.map((d,i)=>({...d,backgroundColor:d.backgroundColor||colors[i%colors.length],borderColor:d.borderColor||colors[i%colors.length],borderWidth:1}));
+ const ch=new Chart(el,{type:'bar',data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${brl(ctx.raw)}`}}},scales:{y:{beginAtZero:true,ticks:{callback:v=>new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1}).format(v)}},x:{ticks:{autoSkip:true,maxRotation:0}}},onClick:(evt,elements)=>{if(!elements.length||!opts.onClick)return;opts.onClick(labels[elements[0].index],elements[0].index)}}});capitalCharts[canvasId]=ch;return ch;
+}
+function setCapitalDashboardTitle(i,text){const el=document.getElementById(`capChartTitle${i}`);if(el)el.textContent=text}
+function applyCapitalDashboardFilter(kind,value,rawKey=''){
+ if(kind==='cliente'){const el=document.getElementById('clienteFilter');if(el){el.value=value;render()}}
+ else if(kind==='status'){const id=activeTab==='carteira'?'carteiraStatusOsFilter':activeTab==='faturamento'?'faturamentoStatusFilter':'financeiroStatusFilter';const el=document.getElementById(id);if(el){el.value=value;render()}}
+ else if(kind==='material'){const el=document.getElementById('carteiraDisponibilidadeFilter');if(el){el.value=value;render()}}
+ else if(kind==='prata'){const id=activeTab==='carteira'?'carteiraPrataFilter':'faturamentoPrataFilter';const el=document.getElementById(id);if(el){el.value=value;render()}}
+ else if(kind==='month'){
+   const [y,m]=rawKey.split('-').map(Number);const last=new Date(y,m,0).getDate();
+   const pre=activeTab==='carteira'?'carteira':activeTab==='faturamento'?'faturamento':'financeiro';
+   const d1=document.getElementById(`${pre}DateFrom`),d2=document.getElementById(`${pre}DateTo`);if(d1&&d2){d1.value=`${y}-${String(m).padStart(2,'0')}-01`;d2.value=`${y}-${String(m).padStart(2,'0')}-${String(last).padStart(2,'0')}`;render()}
+ }
+}
+function renderCapitalDashboard(rows){
+ if(capitalViewMode!=='dashboard')return;destroyCapitalCharts();
+ const title=activeTab==='carteira'?'Carteira':activeTab==='faturamento'?'Faturamento':'Financeiro';
+ document.getElementById('capitalDashboardTitle').textContent=title;document.getElementById('capitalDashboardCount').textContent=`${rows.length.toLocaleString('pt-BR')} registros`;
+ const colors=chartThemeColors();
+ if(activeTab==='carteira'){
+   const clients=topEntries(aggregateBy(rows,r=>r.Cliente,r=>r._totalPagar),10);setCapitalDashboardTitle(1,'Capital necessário por cliente — Top 10');capitalChart('capChart1','bar',clients.map(x=>x[0]),clients.map(x=>x[1]),{indexAxis:'y',onClick:v=>applyCapitalDashboardFilter('cliente',v)});
+   const comp=[['Prata',rows.reduce((a,r)=>a+n(r._prataPedido),0)],['AGCN',rows.reduce((a,r)=>a+n(r._agcn),0)],['MP Comum',rows.reduce((a,r)=>a+n(r['Vl. MP comum']),0)],['Impostos',rows.reduce((a,r)=>a+n(r['Impostos a pagar']),0)]];setCapitalDashboardTitle(2,'Composição do capital necessário');capitalChart('capChart2','doughnut',comp.map(x=>x[0]),comp.map(x=>Math.max(0,x[1])),{legend:true});
+   const months=monthEntries(rows,r=>r.previsao_ent_pesq||r['Dt. Negociada']||r['Prev. entrega(original)'],r=>r._totalPagar);setCapitalDashboardTitle(3,'Capital necessário por mês de entrega');capitalChart('capChart3','bar',months.map(x=>monthLabel(x[0])),months.map(x=>x[1]),{onClick:(v,i)=>applyCapitalDashboardFilter('month',v,months[i][0])});
+   const comparison=[['Vl. a faturar',rows.reduce((a,r)=>a+n(r['Vl. a faturar']),0)],['Total a pagar',rows.reduce((a,r)=>a+n(r._totalPagar),0)],['Saldo financeiro',rows.reduce((a,r)=>a+n(r._saldoFin),0)]];setCapitalDashboardTitle(4,'Venda x capital x saldo financeiro');capitalChart('capChart4','bar',comparison.map(x=>x[0]),comparison.map(x=>x[1]));
+   const mat=topEntries(aggregateBy(rows,r=>r['Disponibilidade Material']||'(Vazio)',r=>r._totalPagar),10);setCapitalDashboardTitle(5,'Capital por disponibilidade de material');capitalChart('capChart5','bar',mat.map(x=>x[0]),mat.map(x=>x[1]),{indexAxis:'y',onClick:v=>applyCapitalDashboardFilter('material',v)});
+   const clientsFat=topEntries(aggregateBy(rows,r=>r.Cliente,r=>r['Vl. a faturar']),10);setCapitalDashboardTitle(6,'Valor a faturar por cliente — Top 10');capitalChart('capChart6','bar',clientsFat.map(x=>x[0]),clientsFat.map(x=>x[1]),{indexAxis:'y',onClick:v=>applyCapitalDashboardFilter('cliente',v)});
+ }else if(activeTab==='faturamento'){
+   const months=monthEntries(rows,r=>r.Emissão||firstDateFromList(r['Dts. emissão']),r=>r._fatValor);setCapitalDashboardTitle(1,'Faturamento por mês');capitalChart('capChart1','bar',months.map(x=>monthLabel(x[0])),months.map(x=>x[1]),{onClick:(v,i)=>applyCapitalDashboardFilter('month',v,months[i][0])});
+   const clients=topEntries(aggregateBy(rows,r=>r.Cliente,r=>r._fatValor),10);setCapitalDashboardTitle(2,'Faturamento por cliente — Top 10');capitalChart('capChart2','bar',clients.map(x=>x[0]),clients.map(x=>x[1]),{indexAxis:'y',onClick:v=>applyCapitalDashboardFilter('cliente',v)});
+   const comp=[['Prata',rows.reduce((a,r)=>a+n(r._fatPrata),0)],['AGCN',rows.reduce((a,r)=>a+n(r._fatAgcn),0)],['MP Comum',rows.reduce((a,r)=>a+n(r._fatMPComum),0)],['Impostos',rows.reduce((a,r)=>a+n(r._fatImp),0)]];setCapitalDashboardTitle(3,'Composição dos custos faturados');capitalChart('capChart3','doughnut',comp.map(x=>x[0]),comp.map(x=>Math.max(0,x[1])),{legend:true});
+   const stat=topEntries(aggregateBy(rows,r=>r.status_nf||'(Vazio)',r=>r._fatValor),10);setCapitalDashboardTitle(4,'Faturamento por controle de recebimento');capitalChart('capChart4','bar',stat.map(x=>x[0]),stat.map(x=>x[1]),{onClick:v=>applyCapitalDashboardFilter('status',v)});
+   const clientsMP=topEntries(aggregateBy(rows,r=>r.Cliente,r=>r._fatTotalMP),10);setCapitalDashboardTitle(5,'Material faturado por cliente — Top 10');capitalChart('capChart5','bar',clientsMP.map(x=>x[0]),clientsMP.map(x=>x[1]),{indexAxis:'y',onClick:v=>applyCapitalDashboardFilter('cliente',v)});
+   const cmp=[['Faturamento',rows.reduce((a,r)=>a+n(r._fatValor),0)],['Material',rows.reduce((a,r)=>a+n(r._fatTotalMP),0)],['Impostos',rows.reduce((a,r)=>a+n(r._fatImp),0)],['Saldo',rows.reduce((a,r)=>a+n(r._fatSaldo),0)]];setCapitalDashboardTitle(6,'Faturamento x material x impostos x saldo');capitalChart('capChart6','bar',cmp.map(x=>x[0]),cmp.map(x=>x[1]));
+ }else{
+   const rec=rows.reduce((a,r)=>a+n(r.RECEBIDO),0), ar=rows.reduce((a,r)=>a+n(r['A RECEBER']),0);setCapitalDashboardTitle(1,'Recebido x A receber');capitalChart('capChart1','doughnut',['Recebido','A receber'],[Math.max(0,rec),Math.max(0,ar)],{legend:true,colors:['#10b981','#ef4444']});
+   const clients=topEntries(aggregateBy(rows,r=>r.Cliente,r=>r['A RECEBER']),10);setCapitalDashboardTitle(2,'A receber por cliente — Top 10');capitalChart('capChart2','bar',clients.map(x=>x[0]),clients.map(x=>x[1]),{indexAxis:'y',onClick:v=>applyCapitalDashboardFilter('cliente',v)});
+   const stat=topEntries(aggregateBy(rows,r=>r.status_nf||'(Vazio)',r=>r['A RECEBER']),10);setCapitalDashboardTitle(3,'A receber por controle de recebimento');capitalChart('capChart3','bar',stat.map(x=>x[0]),stat.map(x=>x[1]),{onClick:v=>applyCapitalDashboardFilter('status',v)});
+   const months=monthEntries(rows,r=>r.Emissão,r=>r['A RECEBER']);setCapitalDashboardTitle(4,'A receber por mês de emissão');capitalChart('capChart4','bar',months.map(x=>monthLabel(x[0])),months.map(x=>x[1]),{onClick:(v,i)=>applyCapitalDashboardFilter('month',v,months[i][0])});
+   const months2=[...new Set(rows.map(r=>isoDate(r.Emissão)?.slice(0,7)).filter(Boolean))].sort();const recvMap=new Map(),arMap=new Map();rows.forEach(r=>{const k=isoDate(r.Emissão)?.slice(0,7);if(!k)return;recvMap.set(k,(recvMap.get(k)||0)+n(r.RECEBIDO));arMap.set(k,(arMap.get(k)||0)+n(r['A RECEBER']))});setCapitalDashboardTitle(5,'Recebido x A receber por mês');capitalMultiChart('capChart5',months2.map(monthLabel),[{label:'Recebido',data:months2.map(k=>recvMap.get(k)||0),backgroundColor:'#10b981'},{label:'A receber',data:months2.map(k=>arMap.get(k)||0),backgroundColor:'#ef4444'}],{onClick:(v,i)=>applyCapitalDashboardFilter('month',v,months2[i])});
+   const total=rows.reduce((a,r)=>a+n(r._finTotal),0);const cmp=[['Total financeiro',total],['Recebido',rec],['A receber',ar]];setCapitalDashboardTitle(6,'Resumo financeiro');capitalChart('capChart6','bar',cmp.map(x=>x[0]),cmp.map(x=>x[1]));
+ }
+}
+
 function clearFilters(){
  ['searchInput','empresaFilter','clienteFilter','codigoItemFilter'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
  const ids=activeTab==='carteira'?['carteiraDateFrom','carteiraDateTo','carteiraStatusOsFilter','carteiraOsFilter','carteiraOrcFilter','carteiraPedidoFilter','carteiraDisponibilidadeFilter','carteiraPrataFilter','carteiraTipoFilter','carteiraEtapaFilter']:activeTab==='faturamento'?['faturamentoDateFrom','faturamentoDateTo','faturamentoNfFilter','faturamentoOrcFilter','faturamentoPlanoFilter','faturamentoPrataFilter','faturamentoStatusFilter']:['financeiroDateFrom','financeiroDateTo','financeiroNfFilter','financeiroStatusFilter'];
@@ -426,7 +531,7 @@ async function fetchCapital(silent=false){return refreshCapitalFromApi(!silent,s
 function startCapitalAutoRefresh(){const interval=PstecCache.AUTO_REFRESH_INTERVAL_MS;if(capitalAutoRefreshTimer)clearInterval(capitalAutoRefreshTimer);capitalAutoRefreshTimer=setInterval(()=>{if(document.visibilityState==='visible'&&!capitalRefreshing&&Date.now()-(capitalLastApiSyncAt||0)>=interval)refreshCapitalFromApi(false,true)},30000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&!capitalRefreshing&&Date.now()-(capitalLastApiSyncAt||0)>=interval)refreshCapitalFromApi(false,true)})}
 
 document.addEventListener('click',e=>{if(!e.target.closest('#columnsMenu')&&!e.target.closest('button[onclick="toggleColumnsMenu()"]'))document.getElementById('columnsMenu')?.classList.add('hidden');if(!e.target.closest('.col-filter-popover')&&!e.target.closest('[id^="filterBtn_"]'))document.querySelectorAll('.col-filter-popover').forEach(p=>p.classList.remove('active'))});
-document.addEventListener('DOMContentLoaded',()=>{loadHiddenCols();applySavedFiltersState();applyTabTheme(activeTab);document.getElementById('userDisplayName').textContent=localStorage.getItem('pstec_usuario_nome')||'Usuário';lucide.createIcons();loadCapital();startCapitalAutoRefresh()});
+document.addEventListener('DOMContentLoaded',()=>{loadHiddenCols();applySavedFiltersState();applyTabTheme(activeTab);document.getElementById('userDisplayName').textContent=localStorage.getItem('pstec_usuario_nome')||'Usuário';setCapitalView(capitalViewMode);lucide.createIcons();loadCapital();startCapitalAutoRefresh()});
 </script>
 </body>
 </html>
