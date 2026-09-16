@@ -254,6 +254,7 @@
                     <tbody id="carteiraTableBody" class="divide-y divide-slate-100 font-medium text-slate-700">
                         <!-- Renderizado via JavaScript -->
                     </tbody>
+                    <tfoot id="mainTableFooter" class="sticky bottom-0 z-20 bg-slate-200 text-slate-900 font-extrabold border-t-2 border-pstec-700"></tfoot>
                 </table>
             </div>
 
@@ -578,6 +579,11 @@
             { key: 'Prioridade', label: 'Prioridade', align: 'left', sortable: false },
             { key: 'Empresa', label: 'Empresa', align: 'left', sortable: false }
         ];
+
+        const carteiraMonetaryColumns = new Set([
+            'Vl. Unitário', 'Vl. Total', 'Vl. a faturar', 'Vl. Liberado',
+            'Valor fat. disp.', 'Vl. Lucro', 'Valor falta comprar'
+        ]);
 
         const exportableColsConfig = [
             { id: 'col_AcaoIndex', label: 'ID Ação / Sequência', tableKey: null },
@@ -1404,6 +1410,30 @@
             renderTableBatch();
         }
 
+        function renderCarteiraTableFooter() {
+            const tfoot = document.getElementById('mainTableFooter');
+            if (!tfoot) return;
+
+            const visibleCols = tableColumnsConfig.filter(col => !hiddenTableCols.has(col.key));
+            if (!visibleCols.length) {
+                tfoot.innerHTML = '';
+                return;
+            }
+
+            const labelIndex = visibleCols.findIndex(col => !carteiraMonetaryColumns.has(col.key));
+            tfoot.innerHTML = `<tr>${visibleCols.map((col, idx) => {
+                // Toda coluna monetária visível SEMPRE recebe a soma do conjunto filtrado.
+                if (carteiraMonetaryColumns.has(col.key)) {
+                    const total = currentFilteredData.reduce((acc, item) => acc + parseNum(item[col.key]), 0);
+                    return `<td class="p-3 border-r border-slate-300 text-right font-mono text-pstec-800 whitespace-nowrap">${fmtBRL(total)}</td>`;
+                }
+                if (idx === labelIndex) {
+                    return `<td class="p-3 border-r border-slate-300 text-pstec-800 whitespace-nowrap">TOTAL FILTRADO</td>`;
+                }
+                return `<td class="p-3 border-r border-slate-300"></td>`;
+            }).join('')}</tr>`;
+        }
+
         function renderTableBatch() {
             const tbody = document.getElementById('carteiraTableBody');
             const itemsToRender = currentFilteredData.slice(0, currentRenderLimit);
@@ -1485,6 +1515,7 @@
                 return `<tr class="${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'} hover:bg-pstec-50/60 transition-colors">${cellsHTML}</tr>`;
             }).join('');
 
+            renderCarteiraTableFooter();
             updatePaginationControls(itemsToRender.length, currentFilteredData.length);
             lucide.createIcons();
         }
