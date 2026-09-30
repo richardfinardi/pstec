@@ -613,6 +613,68 @@ function stackedMonthlyStatusChart(id,monthKeys,rows){
 }
 
 
+function overallRevenueStatusChart(id,rows){
+ let el=document.getElementById(id);if(!el)return;
+ const statuses=['DENTRO DO PRAZO','FORA DO PRAZO','SEM PREVISÃO'];
+ const values=Object.fromEntries(statuses.map(s=>[s,0]));
+ rows.forEach(r=>{
+   let s=prazoBucket(r['Status Prazo']);
+   if(!statuses.includes(s))s='SEM PREVISÃO';
+   values[s]+=n(r.Valor);
+ });
+ const total=statuses.reduce((a,s)=>a+values[s],0);
+ const active=statuses.filter(s=>values[s]>0);
+ charts[id]=new Chart(el,{
+   type:'bar',
+   data:{
+     labels:['FATURAMENTO'],
+     datasets:active.map(s=>({
+       label:s,
+       data:[values[s]],
+       backgroundColor:statusChartColor(s),
+       borderWidth:0,
+       stack:'prazo',
+       barThickness:72,
+       maxBarThickness:72
+     }))
+   },
+   options:{
+     responsive:true,maintainAspectRatio:false,indexAxis:'y',
+     layout:{padding:{top:12,right:14,bottom:8,left:14}},
+     plugins:{
+       legend:{display:true,position:'top',labels:{usePointStyle:true,pointStyle:'rectRounded',boxWidth:11,boxHeight:11,font:{size:12,weight:'600'},padding:16}},
+       tooltip:{callbacks:{label:ctx=>{
+         const v=n(ctx.raw),p=total?v/total*100:0;
+         return ctx.dataset.label+': '+brl(v)+' ('+p.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%)';
+       }}},
+       datalabels:window.ChartDataLabels?{
+         display:ctx=>{
+           const v=n(ctx.raw),p=total?v/total*100:0;
+           return v>0&&p>=3;
+         },
+         formatter:(v,ctx)=>{
+           const p=total?n(v)/total*100:0;
+           const val=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',notation:'compact',maximumFractionDigits:1}).format(n(v));
+           return val+' · '+p.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%';
+         },
+         color:ctx=>norm(ctx.dataset.label)==='SEM PREVISÃO'?'#0f172a':'#ffffff',
+         anchor:'center',align:'center',clamp:true,clip:false,
+         font:{size:12,weight:'800'}
+       }:false
+     },
+     scales:{
+       x:{stacked:true,display:false,beginAtZero:true,max:total||undefined},
+       y:{stacked:true,display:false}
+     },
+     onClick:(evt,els)=>{
+       if(!els.length)return;
+       const status=active[els[0].datasetIndex];
+       toggleDashboardFilter('prazoBucket',status,'Prazo: '+status);
+     }
+   }
+ });
+}
+
 function clientRevenueStackedChart(id,rows){
  let el=document.getElementById(id);if(!el)return;
  const statuses=['DENTRO DO PRAZO','FORA DO PRAZO','SEM PREVISÃO'];
@@ -709,8 +771,7 @@ function renderDashboard(rows){
  chart('ch2','line',mkeys.map(monthLabel),mkeys.map(k=>months[k].total?months[k].ok/months[k].total*100:0),{label:'Pontualidade',percent:true,borderColor:'#0047cc'});
  let fat={};rows.forEach(r=>{let m=isoDate(r['Emissão']).slice(0,7);if(m)fat[m]=(fat[m]||0)+n(r.Valor)});let fkeys=Object.keys(fat).sort();
  stackedMonthlyStatusChart('ch3',fkeys,rows);
- let vp={};rows.forEach(r=>{let k=prazoBucket(r['Status Prazo']);vp[k]=(vp[k]||0)+n(r.Valor)});let vpE=Object.entries(vp);
- chart('ch4','bar',vpE.map(x=>x[0]),vpE.map(x=>x[1]),{label:'Valor',money:true,colors:vpE.map(x=>statusChartColor(x[0])),click:function(v){toggleDashboardFilter('prazoBucket',v,'Prazo: '+v)}});
+ overallRevenueStatusChart('ch4',rows);
  clientRevenueStackedChart('ch5',rows);
  let late={};rows.filter(r=>prazoBucket(r['Status Prazo'])==='FORA DO PRAZO'&&n(r['Dias Prazo'])>0).forEach(r=>{let k=text(r.Cliente)||'(Vazio)';if(!late[k])late[k]=[];late[k].push(n(r['Dias Prazo']))});let le=Object.entries(late).map(x=>[x[0],x[1].reduce((a,b)=>a+b,0)/x[1].length]).sort((a,b)=>b[1]-a[1]).slice(0,10);
  clientDelayChart('ch6',le);
