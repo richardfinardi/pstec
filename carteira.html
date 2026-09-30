@@ -14,7 +14,7 @@
     <meta property="og:image" content="https://consultoriarf.net/producao_pstec/LOGO MINIMALISTA.png">
     <meta property="og:type" content="website">
 
-    <title>Carteira de Produção - PSTEC V3.2 Pro</title>
+    <title>Carteira de Produção - PSTEC V3.2.1 Pro</title>
 
     <!-- Autenticação Token -->
     <script>
@@ -89,7 +89,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-extrabold tracking-wide text-white">GRUPO PSTEC</h1>
-                    <p class="text-xs text-pstec-100">Carteira de Produção V3.2 Pro</p>
+                    <p class="text-xs text-pstec-100">Carteira de Produção V3.2.1 Pro</p>
                 </div>
             </div>
 
@@ -331,13 +331,13 @@
             </div>
             <div id="tableScrollContainer" class="carteira-table-scroll overflow-auto custom-scroll transition-all duration-300">
                 <table class="w-max min-w-full text-left text-[11px] border-collapse whitespace-nowrap">
-                    <thead id="mainTableHeader" class="sticky top-0 z-20 bg-pstec-700 text-white font-extrabold uppercase text-[10px] tracking-wider select-none">
+                    <thead id="mainTableHeader" class="sticky top-0 z-30 bg-pstec-700 text-white font-extrabold uppercase text-[10px] tracking-wider select-none">
                         <!-- Renderizado via JS -->
                     </thead>
                     <tbody id="carteiraTableBody" class="divide-y divide-slate-100 font-medium text-slate-700">
                         <!-- Renderizado via JavaScript -->
                     </tbody>
-                    <tfoot id="mainTableFooter" class="sticky bottom-0 z-20 bg-slate-200 text-slate-900 font-extrabold border-t-2 border-pstec-700"></tfoot>
+                    <tfoot id="mainTableFooter" class="sticky bottom-0 z-10 bg-slate-200 text-slate-900 font-extrabold border-t-2 border-pstec-700"></tfoot>
                 </table>
             </div>
 
@@ -373,7 +373,7 @@
     <!-- FOOTER -->
     <footer class="bg-white border-t border-slate-200 py-3 mt-auto">
         <div class="max-w-[96%] mx-auto px-4 flex justify-between items-center text-xs text-slate-500">
-            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V3.2 Pro</span>
+            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V3.2.1 Pro</span>
             <span id="lastUpdateLabel">Atualizado: -</span>
         </div>
     </footer>
@@ -1188,26 +1188,23 @@
                             </button>
                         </div>
 
-                        <div id="col_popover_${col.key}" class="hidden absolute left-0 top-full mt-1 w-64 bg-white text-slate-800 border border-slate-200 rounded-2xl shadow-2xl z-40 p-3 text-xs normal-case font-normal col-filter-popover">
-                            <div class="flex justify-between items-center pb-2 border-b border-slate-100 mb-2 font-bold">
-                                <span>Filtro: ${col.label}</span>
-                                <button onclick="clearColFilter('${col.key}')" class="text-[10px] text-red-600 hover:underline">Limpar</button>
-                            </div>
+                        <div id="col_popover_${col.key}" class="hidden absolute left-0 top-full mt-1 w-64 bg-white text-slate-800 border border-slate-200 rounded-xl shadow-2xl z-50 p-2 text-xs normal-case font-normal col-filter-popover">
+                            <div class="space-y-2">
+                                <input type="text" placeholder="${['Dt. aprovação','Prev. entrega(original)','Dt. Negociada','Dt. Pesquisa'].includes(col.key) ? 'Pesquisar data, mês ou ano...' : 'Pesquisar...'}" oninput="filterColOptionsUI(this, '${col.key}')" class="w-full border border-slate-200 rounded-lg px-2 py-1 text-xs focus:outline-none">
 
-                            <input type="text" placeholder="${['Dt. aprovação','Prev. entrega(original)','Dt. Negociada','Dt. Pesquisa'].includes(col.key) ? 'Pesquisar data, mês ou ano...' : 'Filtrar (ex: GRID, MAURI ou -)...'}" oninput="filterColOptionsUI(this, '${col.key}')" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 mb-2 text-[11px] focus:outline-none font-medium">
+                                <label class="flex items-center gap-2 p-1 font-bold text-pstec-700 cursor-pointer">
+                                    <input id="all_${safeCarteiraDomId(col.key)}" type="checkbox" onchange="toggleAllCarteiraColumnFilter('${col.key}', this.checked)" class="rounded text-pstec-700 focus:ring-pstec-500">
+                                    <span>(Selecionar tudo)</span>
+                                </label>
 
-                            <div class="flex justify-between items-center text-[10px] font-bold pb-1.5">
-                                <button onclick="setAllColFilter('${col.key}', true)" class="text-pstec-700 hover:underline">Marcar Todos</button>
-                                <button onclick="setAllColFilter('${col.key}', false)" class="text-red-600 hover:underline">Desmarcar</button>
-                            </div>
+                                <div id="col_opts_${col.key}" class="max-h-52 overflow-y-auto custom-scroll border-y py-1 text-left">
+                                    ${renderColOptionsListHTML(col.key)}
+                                </div>
 
-                            <div id="col_opts_${col.key}" class="max-h-48 overflow-y-auto custom-scroll space-y-0.5 text-left">
-                                ${renderColOptionsListHTML(col.key)}
-                            </div>
-
-                            <div class="flex justify-end gap-1 pt-2 mt-2 border-t border-slate-100">
-                                <button onclick="clearColFilter('${col.key}')" class="px-2 py-1 bg-slate-100 rounded-lg text-[10px] font-bold text-slate-700">Limpar</button>
-                                <button onclick="applyColFilterDraft('${col.key}')" class="px-2 py-1 bg-pstec-700 text-white rounded-lg text-[10px] font-bold">Aplicar</button>
+                                <div class="flex justify-end gap-1">
+                                    <button onclick="clearColFilter('${col.key}')" class="px-2 py-1 bg-slate-100 rounded text-[10px] font-bold">Limpar</button>
+                                    <button onclick="applyColFilterDraft('${col.key}')" class="px-2 py-1 bg-pstec-700 text-white rounded text-[10px] font-bold">Aplicar</button>
+                                </div>
                             </div>
                         </div>
                     </th>
@@ -1310,6 +1307,7 @@
         function toggleCarteiraDateOption(key, value, checked) {
             const sel = ensureColFilterDraft(key);
             checked ? sel.add(value) : sel.delete(value);
+            syncCarteiraSelectAllCheckbox(key);
         }
 
         function toggleCarteiraDateGroup(key, group, checked) {
@@ -1321,6 +1319,7 @@
             const sel = ensureColFilterDraft(key);
             values.forEach(v=>checked?sel.add(v):sel.delete(v));
             container.querySelectorAll('.date-leaf-check').forEach(cb=>cb.checked=checked);
+            syncCarteiraSelectAllCheckbox(key);
         }
 
         function getAvailableColFilterValues(key) {
@@ -1341,7 +1340,7 @@
             return sorted.map(val => {
                 const isChecked = !noneMode && (allMode || selectedSet.has(val));
                 return `
-                    <label class="flex items-center gap-2 px-2 py-1 hover:bg-slate-100 cursor-pointer rounded-md text-slate-700 font-medium text-[11px]">
+                    <label class="poprow flex items-center gap-2 p-1 hover:bg-slate-50 cursor-pointer text-slate-700 font-medium text-[11px]">
                         <input type="checkbox" value="${carteiraHtmlAttr(val)}" ${isChecked?'checked':''} onchange="toggleColOption('${key}', this.value, this.checked)" class="rounded text-pstec-700 focus:ring-pstec-500">
                         <span class="truncate max-w-[190px]" title="${carteiraHtmlAttr(val)}">${val}</span>
                     </label>
@@ -1385,6 +1384,7 @@
                 const container = document.getElementById(`col_opts_${key}`);
                 if (container) container.innerHTML = renderColOptionsListHTML(key);
                 popover.classList.remove('hidden');
+                syncCarteiraSelectAllCheckbox(key);
                 requestAnimationFrame(() => positionCarteiraColFilter(key));
             } else {
                 delete colFilterDraftState[key];
@@ -1420,19 +1420,31 @@
         function toggleColOption(key, val, checked) {
             const set = ensureColFilterDraft(key);
             if (checked) set.add(val); else set.delete(val);
+            syncCarteiraSelectAllCheckbox(key);
         }
 
-        function setAllColFilter(key, enableAll) {
+        function syncCarteiraSelectAllCheckbox(key) {
+            const master = document.getElementById(`all_${safeCarteiraDomId(key)}`);
+            if (!master) return;
+            const container = document.getElementById(`col_opts_${key}`);
+            const checks = container ? [...container.querySelectorAll('input[type="checkbox"]')] : [];
+            master.checked = checks.length > 0 && checks.every(cb => cb.checked);
+            master.indeterminate = checks.some(cb => cb.checked) && !master.checked;
+        }
+
+        function toggleAllCarteiraColumnFilter(key, checked) {
             const set = ensureColFilterDraft(key);
             set.clear();
-            if (enableAll) {
-                const allVals = isCarteiraDateColumn(key)
-                    ? allCarteiraDateValues(key)
-                    : new Set(getAvailableColFilterValues(key));
-                allVals.forEach(v => set.add(v));
-            }
-            const container=document.getElementById(`col_opts_${key}`);
-            container?.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=enableAll);
+
+            const container = document.getElementById(`col_opts_${key}`);
+            const checks = container ? [...container.querySelectorAll('input[type="checkbox"]')] : [];
+
+            checks.forEach(cb => {
+                cb.checked = checked;
+                if (checked) set.add(cb.value);
+            });
+
+            syncCarteiraSelectAllCheckbox(key);
         }
 
         function applyColFilterDraft(key) {
