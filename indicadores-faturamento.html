@@ -432,7 +432,8 @@ function renderDashboard(rows){
  let months={};items.filter(x=>norm(x.statusEntrega)==='TOTAL'&&['DENTRO DO PRAZO','FORA DO PRAZO'].includes(norm(x.statusPrazo))).forEach(x=>{let m=x.emissao.slice(0,7);if(!m)return;if(!months[m])months[m]={ok:0,total:0};months[m].total++;if(norm(x.statusPrazo)==='DENTRO DO PRAZO')months[m].ok++});let mkeys=Object.keys(months).sort();
  chart('ch2','line',mkeys.map(monthLabel),mkeys.map(k=>months[k].total?months[k].ok/months[k].total*100:0),{label:'Pontualidade',percent:true,borderColor:'#0047cc'});
  let fat={};rows.forEach(r=>{let m=isoDate(r['Emissão']).slice(0,7);if(m)fat[m]=(fat[m]||0)+n(r.Valor)});let fkeys=Object.keys(fat).sort();
- chart('ch3','bar',fkeys.map(monthLabel),fkeys.map(k=>fat[k]),{label:'Faturamento',money:true,click:function(v,i){toggleDashboardFilter('mes',fkeys[i],'Mês: '+v)}});
+ const monthColors=['#003B96','#1a5ce6','#0ea5e9','#14b8a6','#7CBD20','#84cc16','#eab308','#f59e0b','#f97316','#8b5cf6','#6366f1','#0891b2'];
+ chart('ch3','bar',fkeys.map(monthLabel),fkeys.map(k=>fat[k]),{label:'Faturamento',money:true,colors:fkeys.map((_,i)=>monthColors[i%monthColors.length]),click:function(v,i){toggleDashboardFilter('mes',fkeys[i],'Mês: '+v)}});
  let vp={};rows.forEach(r=>{let k=text(r['Status Prazo'])||'SEM PREVISÃO';vp[k]=(vp[k]||0)+n(r.Valor)});let vpE=Object.entries(vp);
  chart('ch4','bar',vpE.map(x=>x[0]),vpE.map(x=>x[1]),{label:'Valor',money:true,colors:vpE.map(x=>statusChartColor(x[0])),click:function(v){toggleDashboardFilter('prazo',v,'Prazo: '+v)}});
  let cli={};rows.forEach(r=>{let k=text(r.Cliente)||'(Vazio)';cli[k]=(cli[k]||0)+n(r.Valor)});let ce=Object.entries(cli).sort((a,b)=>b[1]-a[1]).slice(0,10);
