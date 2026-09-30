@@ -14,7 +14,7 @@
     <meta property="og:image" content="https://consultoriarf.net/producao_pstec/LOGO MINIMALISTA.png">
     <meta property="og:type" content="website">
 
-    <title>Carteira de Produção - PSTEC V3.2.1 Pro</title>
+    <title>Carteira de Produção - PSTEC V3.2.2 Pro</title>
 
     <!-- Autenticação Token -->
     <script>
@@ -89,7 +89,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-extrabold tracking-wide text-white">GRUPO PSTEC</h1>
-                    <p class="text-xs text-pstec-100">Carteira de Produção V3.2.1 Pro</p>
+                    <p class="text-xs text-pstec-100">Carteira de Produção V3.2.2 Pro</p>
                 </div>
             </div>
 
@@ -373,7 +373,7 @@
     <!-- FOOTER -->
     <footer class="bg-white border-t border-slate-200 py-3 mt-auto">
         <div class="max-w-[96%] mx-auto px-4 flex justify-between items-center text-xs text-slate-500">
-            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V3.2.1 Pro</span>
+            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V3.2.2 Pro</span>
             <span id="lastUpdateLabel">Atualizado: -</span>
         </div>
     </footer>
@@ -479,7 +479,7 @@
 
 
     <!-- MODAL DE ANEXOS DO ORÇAMENTO -->
-    <div id="attachmentsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[70]">
+    <div id="attachmentsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[100000]">
         <div class="bg-white text-slate-800 rounded-3xl shadow-2xl max-w-2xl w-full flex flex-col max-h-[82vh] overflow-hidden border border-slate-200">
             <div class="bg-pstec-700 px-5 py-4 flex justify-between items-center gap-4 text-white shrink-0">
                 <div class="min-w-0">
@@ -2290,6 +2290,9 @@
         }
 
         async function openAttachmentsModal(filteredIdx) {
+            closeCarteiraColFilters();
+            document.querySelectorAll('.custom-dd-menu').forEach(m => m.classList.add('hidden'));
+
             const item = currentFilteredData[filteredIdx];
             if (!item) return;
 
