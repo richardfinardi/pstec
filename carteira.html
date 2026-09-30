@@ -14,7 +14,7 @@
     <meta property="og:image" content="https://consultoriarf.net/producao_pstec/LOGO MINIMALISTA.png">
     <meta property="og:type" content="website">
 
-    <title>Carteira de Produção - PSTEC V3.0.2 Pro</title>
+    <title>Carteira de Produção - PSTEC V3.1 Pro</title>
 
     <!-- Autenticação Token -->
     <script>
@@ -78,7 +78,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-extrabold tracking-wide text-white">GRUPO PSTEC</h1>
-                    <p class="text-xs text-pstec-100">Carteira de Produção V3.0.2 Pro</p>
+                    <p class="text-xs text-pstec-100">Carteira de Produção V3.1 Pro</p>
                 </div>
             </div>
 
@@ -108,6 +108,11 @@
                 <button onclick="openExportModal()" class="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition shadow-md" title="Configurar e exportar para Excel">
                     <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
                     <span class="hidden sm:inline">Exportar Excel</span>
+                </button>
+
+                <button onclick="PstecPortal.openCreate()" class="flex items-center gap-1.5 px-3.5 py-2 bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs rounded-xl transition shadow-md" title="Gerar portal do cliente com os registros filtrados">
+                    <i data-lucide="share-2" class="w-4 h-4"></i>
+                    <span class="hidden lg:inline">Portal Cliente</span>
                 </button>
 
                 <button id="btnRefresh" onclick="fetchCarteiraData(false)" class="flex items-center gap-2 px-3.5 py-2 bg-pstecgreen-500 hover:bg-pstecgreen-600 text-slate-950 font-bold text-xs transition-all shadow-md rounded-xl" title="Atualizar Carteira">
@@ -346,7 +351,7 @@
     <!-- FOOTER -->
     <footer class="bg-white border-t border-slate-200 py-3 mt-auto">
         <div class="max-w-[96%] mx-auto px-4 flex justify-between items-center text-xs text-slate-500">
-            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V3.0.2 Pro</span>
+            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V3.1 Pro</span>
             <span id="lastUpdateLabel">Atualizado: -</span>
         </div>
     </footer>
@@ -2704,5 +2709,6 @@
         </div>
     </div>
 
+    <script src="./portal-admin.js?v=1"></script>
 </body>
 </html>
