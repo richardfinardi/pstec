@@ -13,10 +13,10 @@
   }
   function rowKeyCounts(){
     const out={};
-    (window.currentFilteredData||[]).forEach(r=>{const k=rowKey(r);out[k]=(out[k]||0)+1});
+    (typeof currentFilteredData!=='undefined'?currentFilteredData:[]).forEach(r=>{const k=rowKey(r);out[k]=(out[k]||0)+1});
     return out;
   }
-  function visibleDefault(col){ return col.tableKey ? !window.hiddenTableCols?.has(col.tableKey) : true; }
+  function visibleDefault(col){ return col.tableKey ? !(typeof hiddenTableCols!=='undefined' && hiddenTableCols.has(col.tableKey)) : true; }
   function modal(id,show){const m=document.getElementById(id);if(!m)return;m.classList.toggle('hidden',!show);m.classList.toggle('flex',show);if(show)lucide.createIcons();}
   async function copy(text){try{await navigator.clipboard.writeText(text)}catch{const t=document.createElement('textarea');t.value=text;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove()}}
   const dt = v => { if(!v)return '-'; const d=new Date(v); return Number.isNaN(d.getTime())?'-':d.toLocaleString('pt-BR'); };
@@ -47,7 +47,7 @@
     const show=document.getElementById('portalValues')?.checked;
     const previous=new Set([...box.querySelectorAll('.portal-col:checked')].map(x=>x.value));
     const first=box.dataset.done!=='1';
-    box.innerHTML=(window.exportableColsConfig||[]).filter(c=>c.id!=='col_AcaoIndex').map(c=>{
+    box.innerHTML=(typeof exportableColsConfig!=='undefined'?exportableColsConfig:[]).filter(c=>c.id!=='col_AcaoIndex').map(c=>{
       const disabled=VALUE_COLS.has(c.id)&&!show;
       const checked=!disabled&&(first?visibleDefault(c):previous.has(c.id));
       return `<label class="flex gap-2 items-center p-2 rounded-lg ${disabled?'opacity-40':'hover:bg-white cursor-pointer'}"><input class="portal-col" type="checkbox" value="${esc(c.id)}" ${checked?'checked':''} ${disabled?'disabled':''}><span class="text-[11px] font-semibold">${esc(c.label)}</span></label>`;
@@ -56,7 +56,7 @@
   }
 
   function openCreate(){
-    inject(); const rows=window.currentFilteredData||[]; if(!rows.length)return alert('Não há registros filtrados para publicar.');
+    inject(); const rows=(typeof currentFilteredData!=='undefined'?currentFilteredData:[]); if(!rows.length)return alert('Não há registros filtrados para publicar.');
     const clients=[...new Set(rows.map(r=>String(r.Cliente||'').trim()).filter(Boolean))];
     document.getElementById('portalName').value=clients.length===1?`${clients[0]} — Carteira`:`Carteira — ${rows.length} itens`;
     document.getElementById('portalCount').textContent=rows.length.toLocaleString('pt-BR');
