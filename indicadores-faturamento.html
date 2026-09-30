@@ -167,6 +167,7 @@ const API='https://pstec.consultoriarf.net/faturamento_indicadores';
 const CACHE_KEY='pstec_faturamento_indicadores_v1';
 const HIDDEN_KEY='pstec_indicadores_hidden_cols_v1';
 const VIEW_KEY='pstec_indicadores_view_v1';
+const FILTER_STATE_KEY='pstec_indicadores_filter_state_v1';
 
 let data=[], currentRows=[], charts={}, refreshing=false, cacheSavedAt=null, lastApiSync=0, timer=null, searchTimer=null;
 let viewMode=localStorage.getItem(VIEW_KEY)||'table';
@@ -175,6 +176,54 @@ let sortState={key:null,asc:true};
 let dashboardFilter=null;
 let activeColFilter=null;
 const colSelections={};
+let filterStateRestored=false;
+
+function serializeColSelections(){
+ return Object.fromEntries(Object.entries(colSelections).map(([k,v])=>[k,[...(v||[])]]));
+}
+function saveFilterState(){
+ if(!filterStateRestored)return;
+ try{
+  const ids=['searchInput','fEmpresa','fCliente','fPedido','fNF','fOrcamento','fEntrega','fPrazo','fAno','fMes','fDe','fAte'];
+  const fields=Object.fromEntries(ids.map(id=>[id,document.getElementById(id)?.value||'']));
+  localStorage.setItem(FILTER_STATE_KEY,JSON.stringify({
+   fields,
+   dashboardFilter,
+   colSelections:serializeColSelections(),
+   sortState,
+   pageSize:document.getElementById('pageSize')?.value||'100',
+   filtersCollapsed:document.getElementById('filtersBody')?.classList.contains('hidden')||false
+  }));
+ }catch(e){console.warn('Falha ao salvar filtros dos indicadores:',e)}
+}
+function restoreFilterState(){
+ if(filterStateRestored)return;
+ filterStateRestored=true;
+ try{
+  const raw=localStorage.getItem(FILTER_STATE_KEY);
+  if(!raw)return;
+  const saved=JSON.parse(raw);
+  Object.entries(saved.fields||{}).forEach(([id,val])=>{
+   const el=document.getElementById(id);
+   if(!el)return;
+   if(el.tagName==='SELECT'){
+    const exists=[...el.options].some(o=>o.value===String(val));
+    if(exists)el.value=String(val);
+   }else el.value=val||'';
+  });
+  dashboardFilter=saved.dashboardFilter||null;
+  Object.keys(colSelections).forEach(k=>delete colSelections[k]);
+  Object.entries(saved.colSelections||{}).forEach(([k,v])=>{if(Array.isArray(v))colSelections[k]=new Set(v)});
+  if(saved.sortState&&typeof saved.sortState==='object')sortState=saved.sortState;
+  const ps=document.getElementById('pageSize');
+  if(ps&&saved.pageSize&&[...ps.options].some(o=>o.value===String(saved.pageSize)))ps.value=String(saved.pageSize);
+  const body=document.getElementById('filtersBody');
+  if(body&&saved.filtersCollapsed){
+   body.classList.add('hidden');
+   document.getElementById('filterChevron')?.setAttribute('data-lucide','chevron-down');
+  }
+ }catch(e){console.warn('Falha ao restaurar filtros dos indicadores:',e)}
+}
 
 function pick(r){for(let i=1;i<arguments.length;i++){let k=arguments[i];if(r[k]!==undefined&&r[k]!==null)return r[k]}return ''}
 function n(v){if(v===null||v===undefined||v==='')return 0;if(typeof v==='number')return Number.isFinite(v)?v:0;let s=String(v).trim().replace(/\s/g,'');if(s.includes(',')&&s.includes('.'))s=s.replace(/\./g,'').replace(',','.');else if(s.includes(','))s=s.replace(',','.');let x=Number(s);return Number.isFinite(x)?x:0}
@@ -402,9 +451,11 @@ function toggleAllColFilter(){
 
 function clearFilters(){
  ['searchInput','fEmpresa','fCliente','fPedido','fNF','fOrcamento','fEntrega','fPrazo','fAno','fMes','fDe','fAte'].forEach(id=>{let e=document.getElementById(id);if(e)e.value=''});
- Object.keys(colSelections).forEach(k=>delete colSelections[k]);dashboardFilter=null;render()
+ Object.keys(colSelections).forEach(k=>delete colSelections[k]);dashboardFilter=null;sortState={key:null,asc:true};
+ try{localStorage.removeItem(FILTER_STATE_KEY)}catch{}
+ render()
 }
-function toggleFilters(){let e=document.getElementById('filtersBody'),hide=!e.classList.contains('hidden');e.classList.toggle('hidden',hide);document.getElementById('filterChevron').setAttribute('data-lucide',hide?'chevron-down':'chevron-up');lucide.createIcons()}
+function toggleFilters(){let e=document.getElementById('filtersBody'),hide=!e.classList.contains('hidden');e.classList.toggle('hidden',hide);document.getElementById('filterChevron').setAttribute('data-lucide',hide?'chevron-down':'chevron-up');saveFilterState();lucide.createIcons()}
 function updateDashChip(){
  let e=document.getElementById('dashboardFilterChip');
  if(!dashboardFilter){e.classList.add('hidden');e.innerHTML='';return}
@@ -445,7 +496,7 @@ function monthLabel(k){if(!k)return '';let p=k.split('-'),names=['Jan','Fev','Ma
 function toggleDashboardFilter(type,value,label){if(dashboardFilter&&dashboardFilter.type===type&&dashboardFilter.value===value)dashboardFilter=null;else dashboardFilter={type:type,value:value,label:label};render()}
 
 function render(){
- currentRows=getBaseFilteredRows();renderKPIs(currentRows);updateDashChip();renderTable();renderDashboard(currentRows)
+ currentRows=getBaseFilteredRows();renderKPIs(currentRows);updateDashChip();renderTable();renderDashboard(currentRows);saveFilterState()
 }
 function setView(v){
  viewMode=v;localStorage.setItem(VIEW_KEY,v);document.getElementById('tableView').classList.toggle('hidden',v!=='table');document.getElementById('dashboardView').classList.toggle('hidden',v!=='dashboard');
@@ -473,7 +524,7 @@ function executeExcelExport(){
 function logout(){['pstec_token','pstec_usuario_nome','pstec_perm_faturamento','pstec_perm_finalizacao'].forEach(k=>localStorage.removeItem(k));window.location.href='login-pstec.html'}
 function updateLast(){let dt=PstecCache.formatDateTime(cacheSavedAt);document.getElementById('lastUpdate').textContent=cacheSavedAt?'Dados: '+(dt||'-'):'Aguardando dados...'}
 function applyDataset(raw,source,savedAt){
- data=(Array.isArray(raw)?raw:[]).map(normalizeRow);cacheSavedAt=savedAt||cacheSavedAt;populateFilters();render();updateLast();PstecCache.updateStatus(source==='cache'?'cache':'api',cacheSavedAt)
+ data=(Array.isArray(raw)?raw:[]).map(normalizeRow);cacheSavedAt=savedAt||cacheSavedAt;populateFilters();restoreFilterState();render();updateLast();PstecCache.updateStatus(source==='cache'?'cache':'api',cacheSavedAt)
 }
 async function fetchData(manual){
  if(refreshing)return;refreshing=true;let icon=document.getElementById('refreshIcon'),btn=document.getElementById('btnRefresh');if(manual){icon.classList.add('animate-spin');btn.disabled=true}else if(data.length)PstecCache.updateStatus('updating',cacheSavedAt);
