@@ -14,7 +14,7 @@
     <meta property="og:image" content="https://consultoriarf.net/producao_pstec/LOGO MINIMALISTA.png">
     <meta property="og:type" content="website">
 
-    <title>Carteira de Produção - PSTEC V3.0 Pro</title>
+    <title>Carteira de Produção - PSTEC V3.0.2 Pro</title>
 
     <!-- Autenticação Token -->
     <script>
@@ -78,7 +78,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-extrabold tracking-wide text-white">GRUPO PSTEC</h1>
-                    <p class="text-xs text-pstec-100">Carteira de Produção V3.0.1 Pro</p>
+                    <p class="text-xs text-pstec-100">Carteira de Produção V3.0.2 Pro</p>
                 </div>
             </div>
 
@@ -346,7 +346,7 @@
     <!-- FOOTER -->
     <footer class="bg-white border-t border-slate-200 py-3 mt-auto">
         <div class="max-w-[96%] mx-auto px-4 flex justify-between items-center text-xs text-slate-500">
-            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V3.0.1 Pro</span>
+            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V3.0.2 Pro</span>
             <span id="lastUpdateLabel">Atualizado: -</span>
         </div>
     </footer>
@@ -807,6 +807,9 @@
             { key: 'Capacidade disponivel', label: 'Capacidade Disp.', align: 'right', sortable: true },
             { key: 'Tipo', label: 'Tipo', align: 'left', sortable: true },
             { key: 'Prioridade', label: 'Prioridade', align: 'left', sortable: true },
+            { key: 'Análise critica industrial', label: 'Análise Crítica Industrial', align: 'center', sortable: true },
+            { key: 'Análise critica estrutura', label: 'Análise Crítica Estrutura', align: 'center', sortable: true },
+            { key: 'Análise critica plano controle', label: 'Análise Crítica Plano Controle', align: 'center', sortable: true },
             { key: 'Empresa', label: 'Empresa', align: 'left', sortable: true }
         ];
 
@@ -848,6 +851,9 @@
             { id: 'Capacidade disponivel', label: 'Capacidade Disponível', tableKey: 'Capacidade disponivel' },
             { id: 'Tipo', label: 'Tipo', tableKey: 'Tipo' },
             { id: 'Prioridade', label: 'Prioridade', tableKey: 'Prioridade' },
+            { id: 'Análise critica industrial', label: 'Análise Crítica Industrial', tableKey: 'Análise critica industrial' },
+            { id: 'Análise critica estrutura', label: 'Análise Crítica Estrutura', tableKey: 'Análise critica estrutura' },
+            { id: 'Análise critica plano controle', label: 'Análise Crítica Plano Controle', tableKey: 'Análise critica plano controle' },
             { id: 'Empresa', label: 'Empresa', tableKey: 'Empresa' }
         ];
 
@@ -1589,6 +1595,18 @@
             return `${num.toFixed(2).replace('.', ',')}%`;
         }
 
+        function analiseCriticaBadge(val) {
+            const raw = String(val ?? '').trim();
+            const norm = raw.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+            if (norm === 'sim') {
+                return '<span class="inline-flex items-center justify-center min-w-[46px] px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200 text-[10px] font-black">SIM</span>';
+            }
+            if (norm === 'nao') {
+                return '<span class="inline-flex items-center justify-center min-w-[46px] px-2 py-0.5 rounded-md bg-red-100 text-red-700 border border-red-200 text-[10px] font-black">NÃO</span>';
+            }
+            return '<span class="inline-flex items-center justify-center min-w-[46px] px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 border border-slate-200 text-[10px] font-black">-</span>';
+        }
+
         function normalizeStr(str) {
             if (!str) return '';
             return String(str)
@@ -1752,7 +1770,7 @@
                 }
 
                 if (search) {
-                    const fullItemStr = `${item['Nº Orçamento']||''} ${item.Cliente||''} ${item.Código||''} ${item.Item||''} ${item['Nº Pedido']||''} ${item['Nº OS']||''} ${item.Empresa||''} ${item.Etapa||''} ${item['Status OS']||''}`;
+                    const fullItemStr = `${item['Nº Orçamento']||''} ${item.Cliente||''} ${item.Código||''} ${item.Item||''} ${item['Nº Pedido']||''} ${item['Nº OS']||''} ${item.Empresa||''} ${item.Etapa||''} ${item['Status OS']||''} ${item['Análise critica industrial']||''} ${item['Análise critica estrutura']||''} ${item['Análise critica plano controle']||''}`;
                     if (!matchesWildcardSearch(fullItemStr, search)) continue;
                 }
 
@@ -1944,6 +1962,9 @@
                 if (!hiddenTableCols.has('Capacidade disponivel')) cellsHTML += `<td class="p-3 text-right font-mono">${parseNum(item['Capacidade disponivel']).toLocaleString('pt-BR')}</td>`;
                 if (!hiddenTableCols.has('Tipo')) cellsHTML += `<td class="p-3 text-slate-600">${item.Tipo || '-'}</td>`;
                 if (!hiddenTableCols.has('Prioridade')) cellsHTML += `<td class="p-3 font-bold text-slate-700">${item.Prioridade || '-'}</td>`;
+                if (!hiddenTableCols.has('Análise critica industrial')) cellsHTML += `<td class="p-3 text-center">${analiseCriticaBadge(item['Análise critica industrial'])}</td>`;
+                if (!hiddenTableCols.has('Análise critica estrutura')) cellsHTML += `<td class="p-3 text-center">${analiseCriticaBadge(item['Análise critica estrutura'])}</td>`;
+                if (!hiddenTableCols.has('Análise critica plano controle')) cellsHTML += `<td class="p-3 text-center">${analiseCriticaBadge(item['Análise critica plano controle'])}</td>`;
                 if (!hiddenTableCols.has('Empresa')) cellsHTML += `<td class="p-3 text-slate-500 uppercase max-w-[150px] truncate" title="${item.Empresa||''}">${item.Empresa || '-'}</td>`;
 
                 return `<tr class="${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'} hover:bg-pstec-50/60 transition-colors">${cellsHTML}</tr>`;
