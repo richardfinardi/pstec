@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<link rel="icon" type="image/png" href="LOGO MINIMALISTA.png">
+<link rel="apple-touch-icon" href="LOGO MINIMALISTA.png">
+<title>Indicadores de Faturamento - PSTEC</title>
+<script>if(!localStorage.getItem('pstec_token')) window.location.href='login-pstec.html';</script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config={theme:{extend:{colors:{pstec:{50:'#f0f5ff',100:'#e0ebff',500:'#1a5ce6',600:'#0047cc',700:'#003B96',800:'#002b70',900:'#001b4a'},pstecgreen:{500:'#7CBD20',600:'#68a318'}}}}};
+</script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<script src="./pstec-cache.js"></script>
+<style>
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#e8eef7;color:#0f172a}
+.surface{background:rgba(255,255,255,.97)}
+.kpi{background:rgba(255,255,255,.96);border:1px solid #dbe3ef;box-shadow:0 7px 20px rgba(15,23,42,.06)}
+.control{width:100%;background:#f8fafc;border:1px solid #e2e8f0;border-radius:.75rem;padding:.5rem .65rem;font-size:.75rem;font-weight:700;color:#334155;outline:none;min-height:36px}
+.control:focus{border-color:#1a5ce6;box-shadow:0 0 0 2px rgba(26,92,230,.10)}
+.lbl{display:block;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.045em;color:#64748b;margin:0 0 3px 2px}
+.custom-scroll::-webkit-scrollbar{width:6px;height:6px}.custom-scroll::-webkit-scrollbar-track{background:#f1f5f9}.custom-scroll::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px}
+.table-scroll{max-height:calc(100vh - 330px);min-height:320px}
+th{user-select:none}.sticky-head{position:sticky;top:0;z-index:20}.sticky-foot{position:sticky;bottom:0;z-index:15}
+.chart-card{background:#fff;border:1px solid #dbe3ef;border-radius:1rem;box-shadow:0 8px 24px rgba(15,23,42,.06);padding:.85rem;min-height:300px;display:flex;flex-direction:column}
+.chart-card canvas{max-height:245px!important}
+.filter-pop{display:none;position:fixed;z-index:99999;width:min(300px,calc(100vw - 16px));background:#fff;border:1px solid #dbe3ef;border-radius:1rem;box-shadow:0 22px 50px rgba(15,23,42,.25);padding:.6rem}
+.filter-pop.active{display:block}
+.badge{display:inline-flex;align-items:center;padding:.18rem .5rem;border-radius:.45rem;font-size:10px;font-weight:900}
+@media(max-width:1023px){.table-scroll{max-height:62vh;min-height:300px}}
+</style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+<div id="exportModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[100]">
+  <div class="bg-white rounded-3xl shadow-2xl max-w-3xl w-full border border-slate-200 overflow-hidden">
+    <div class="px-6 py-4 border-b flex items-center justify-between">
+      <div><h2 class="font-extrabold text-pstec-700">Exportar Excel</h2><p class="text-xs text-slate-500"><span id="exportCount">0</span> registros filtrados</p></div>
+      <button onclick="closeExportModal()" class="p-2 text-slate-400 hover:text-slate-700"><i data-lucide="x" class="w-5 h-5"></i></button>
+    </div>
+    <div class="p-6 space-y-4">
+      <div class="flex flex-wrap gap-4 text-xs font-bold">
+        <label class="flex items-center gap-2"><input type="radio" name="exportPreset" value="visible" checked onchange="applyExportPreset('visible')">Colunas visíveis</label>
+        <label class="flex items-center gap-2"><input type="radio" name="exportPreset" value="all" onchange="applyExportPreset('all')">Todas as colunas</label>
+        <button onclick="setExportCols(true)" class="text-pstec-700 hover:underline">Marcar todas</button>
+        <button onclick="setExportCols(false)" class="text-red-600 hover:underline">Desmarcar</button>
+      </div>
+      <div id="exportCols" class="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-slate-50 p-3 rounded-2xl border max-h-72 overflow-y-auto custom-scroll"></div>
+      <div class="flex justify-end gap-2"><button onclick="closeExportModal()" class="px-4 py-2 bg-slate-100 rounded-xl text-xs font-bold">Cancelar</button><button onclick="executeExcelExport()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold flex items-center gap-2"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i>Exportar</button></div>
+    </div>
+  </div>
+</div>
+
+<header class="bg-pstec-700 text-white sticky top-0 z-50 shadow-md">
+  <div class="max-w-[98%] mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3">
+    <div class="flex items-center gap-4">
+      <a href="index.html" class="flex items-center justify-center p-1.5 bg-white rounded-xl shadow-sm" title="Menu PSTEC"><img src="./logo.png" alt="PSTEC" class="h-9 max-h-10 w-auto object-contain"></a>
+      <div><h1 class="text-xl font-extrabold tracking-wide">GRUPO PSTEC</h1><p class="text-xs text-pstec-100">Indicadores de Faturamento V1.0</p></div>
+    </div>
+    <div class="flex items-center gap-2">
+      <div class="hidden md:flex items-center gap-1.5 px-3 py-2 bg-pstec-800 border border-pstec-600 rounded-xl text-xs font-bold"><i data-lucide="user-check" class="w-4 h-4 text-pstecgreen-500"></i><span id="userDisplayName">Usuário</span></div>
+      <div id="dataStatusBadge" class="hidden md:flex items-center gap-1.5 px-2.5 py-2 rounded-xl border text-[10px] font-black whitespace-nowrap bg-pstec-800 border-pstec-600"><span id="dataStatusDot" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span><span id="dataStatusText">CARREGANDO...</span></div>
+      <a href="index.html" class="flex items-center gap-1.5 px-3 py-2 bg-pstec-800 hover:bg-pstec-900 rounded-xl text-xs font-bold"><i data-lucide="layout-grid" class="w-4 h-4"></i><span class="hidden sm:inline">Menu</span></a>
+      <button id="btnRefresh" onclick="fetchData(true)" class="flex items-center gap-1.5 px-3 py-2 bg-pstecgreen-500 hover:bg-pstecgreen-600 text-slate-950 rounded-xl text-xs font-black"><i id="refreshIcon" data-lucide="refresh-cw" class="w-4 h-4"></i><span class="hidden sm:inline">Atualizar</span></button>
+      <button onclick="logout()" class="flex items-center gap-1.5 px-3 py-2 bg-red-600 hover:bg-red-700 rounded-xl text-xs font-bold"><i data-lucide="log-out" class="w-4 h-4"></i><span class="hidden sm:inline">Sair</span></button>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-[96%] w-full mx-auto p-3 flex flex-col gap-3 flex-1">
+  <section class="surface rounded-2xl border border-slate-200 shadow-sm px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+    <div><h2 class="text-sm font-black text-slate-800">Pontualidade de faturamento</h2><p class="text-[11px] text-slate-500">O indicador principal considera o momento em que o item do pedido foi totalmente entregue.</p></div>
+    <div class="flex items-center gap-2">
+      <div class="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5">
+        <button id="btnTable" onclick="setView('table')" class="bg-pstec-700 text-white px-2.5 py-1 rounded-md text-[11px] font-extrabold flex items-center gap-1"><i data-lucide="table-2" class="w-3.5 h-3.5"></i>Tabela</button>
+        <button id="btnDash" onclick="setView('dashboard')" class="px-2.5 py-1 rounded-md text-[11px] font-extrabold text-slate-600 flex items-center gap-1"><i data-lucide="chart-no-axes-combined" class="w-3.5 h-3.5"></i>Dashboard</button>
+      </div>
+      <span id="lastUpdate" class="text-[11px] text-slate-500 font-semibold">Atualizado: -</span>
+    </div>
+  </section>
+
+  <section id="kpiGrid" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2.5"></section>
+
+  <section class="surface p-3 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-3 relative z-30">
+    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
+      <button onclick="toggleFilters()" class="flex items-center gap-1.5 p-1 hover:bg-slate-100 rounded-lg text-pstec-700 font-bold text-xs"><i data-lucide="filter" class="w-4 h-4"></i>Filtros<i id="filterChevron" data-lucide="chevron-up" class="w-4 h-4 text-slate-400"></i></button>
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="relative">
+          <button onclick="toggleColumnsMenu()" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-[11px] font-extrabold text-slate-700 flex items-center gap-1"><i data-lucide="columns" class="w-3.5 h-3.5 text-pstec-700"></i>Exibir Colunas ⚙️</button>
+          <div id="columnsMenu" class="hidden absolute right-0 top-full mt-1 w-72 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 p-3 text-xs">
+            <div class="flex items-center justify-between mb-2"><b>Colunas visíveis</b><button onclick="restoreColumns()" class="text-pstec-700 font-bold hover:underline">Restaurar</button></div>
+            <div id="columnsChecks" class="max-h-72 overflow-y-auto custom-scroll space-y-1"></div>
+          </div>
+        </div>
+        <button onclick="clearFilters()" class="text-[11px] font-bold text-red-600 hover:underline flex items-center gap-1"><i data-lucide="filter-x" class="w-3.5 h-3.5"></i>Limpar Filtros</button>
+        <button onclick="openExportModal()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-bold flex items-center gap-1.5"><i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>Exportar Excel</button>
+      </div>
+    </div>
+
+    <div id="filtersBody" class="flex flex-col gap-2.5">
+      <div class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 flex items-center gap-2 text-xs">
+        <i data-lucide="search" class="w-4 h-4 text-pstec-600 shrink-0"></i>
+        <input id="searchInput" oninput="debounceRender()" placeholder="Pesquisa geral: cliente, pedido, NF, item, orçamento..." class="w-full bg-transparent text-slate-800 focus:outline-none font-bold py-1">
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-2">
+        <div><label class="lbl">Empresa</label><select id="fEmpresa" onchange="render()" class="control"></select></div>
+        <div><label class="lbl">Cliente</label><select id="fCliente" onchange="render()" class="control"></select></div>
+        <div><label class="lbl">Pedido</label><select id="fPedido" onchange="render()" class="control"></select></div>
+        <div><label class="lbl">NF</label><select id="fNF" onchange="render()" class="control"></select></div>
+        <div><label class="lbl">Orçamento</label><select id="fOrcamento" onchange="render()" class="control"></select></div>
+        <div><label class="lbl">Status entrega</label><select id="fEntrega" onchange="render()" class="control"></select></div>
+        <div><label class="lbl">Status prazo</label><select id="fPrazo" onchange="render()" class="control"></select></div>
+        <div><label class="lbl">Ano emissão</label><select id="fAno" onchange="render()" class="control"></select></div>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
+        <div><label class="lbl">Mês emissão</label><select id="fMes" onchange="render()" class="control"></select></div>
+        <div><label class="lbl">Emissão de</label><input id="fDe" type="date" onchange="render()" class="control"></div>
+        <div><label class="lbl">Emissão até</label><input id="fAte" type="date" onchange="render()" class="control"></div>
+        <div class="sm:col-span-2 flex items-end"><div id="dashboardFilterChip" class="hidden w-full bg-pstec-50 border border-pstec-100 rounded-xl px-3 py-2 text-[11px] font-bold text-pstec-700"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="dashboardView" class="hidden flex flex-col gap-3">
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-3">
+      <div class="chart-card"><h3 class="text-[11px] font-black uppercase text-slate-600 mb-2">Situação dos itens do pedido</h3><div class="flex-1 relative"><canvas id="ch1"></canvas></div></div>
+      <div class="chart-card"><h3 class="text-[11px] font-black uppercase text-slate-600 mb-2">Pontualidade por mês de conclusão</h3><div class="flex-1 relative"><canvas id="ch2"></canvas></div></div>
+      <div class="chart-card"><h3 class="text-[11px] font-black uppercase text-slate-600 mb-2">Faturamento por mês</h3><div class="flex-1 relative"><canvas id="ch3"></canvas></div></div>
+      <div class="chart-card"><h3 class="text-[11px] font-black uppercase text-slate-600 mb-2">Faturamento por status de prazo</h3><div class="flex-1 relative"><canvas id="ch4"></canvas></div></div>
+      <div class="chart-card"><h3 class="text-[11px] font-black uppercase text-slate-600 mb-2">Faturamento por cliente — Top 10</h3><div class="flex-1 relative"><canvas id="ch5"></canvas></div></div>
+      <div class="chart-card"><h3 class="text-[11px] font-black uppercase text-slate-600 mb-2">Atraso médio por cliente — Top 10</h3><div class="flex-1 relative"><canvas id="ch6"></canvas></div></div>
+    </div>
+  </section>
+
+  <section id="tableView" class="surface rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col relative z-10">
+    <div class="px-3 py-2 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+      <div class="text-xs font-extrabold text-slate-700">Faturamento detalhado <span id="columnFilterCount" class="ml-1 text-[10px] bg-pstec-100 text-pstec-700 px-2 py-0.5 rounded-full">0 filtros de coluna</span></div>
+      <button id="btnResetSort" onclick="resetSort()" class="px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-bold text-slate-600 disabled:opacity-40" disabled><i data-lucide="rotate-ccw" class="w-3.5 h-3.5 inline mr-1"></i>Ordem padrão</button>
+    </div>
+    <div class="table-scroll overflow-auto custom-scroll">
+      <table class="w-max min-w-full text-left text-[11px] whitespace-nowrap border-collapse">
+        <thead id="tableHead" class="sticky-head bg-pstec-700 text-white uppercase text-[10px] tracking-wide"></thead>
+        <tbody id="tableBody" class="divide-y divide-slate-100"></tbody>
+        <tfoot id="tableFoot" class="sticky-foot bg-slate-200 text-slate-900 font-extrabold border-t-2 border-pstec-700"></tfoot>
+      </table>
+    </div>
+    <div class="px-3 py-2 bg-slate-50 border-t border-slate-200 flex justify-between items-center gap-3 text-xs font-bold text-slate-600">
+      <span>Exibindo <span id="shownCount" class="text-pstec-700">0</span> de <span id="totalCount" class="text-slate-900">0</span></span>
+      <select id="pageSize" onchange="renderTable()" class="bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs"><option>50</option><option selected>100</option><option>250</option><option>500</option><option value="999999">Todos</option></select>
+    </div>
+  </section>
+</main>
+
+<div id="filterPopover" class="filter-pop">
+  <div class="flex items-center justify-between gap-2 mb-2"><b id="filterPopTitle" class="text-xs text-slate-700">Filtrar</b><button onclick="closeColFilter()" class="text-slate-400 hover:text-slate-700"><i data-lucide="x" class="w-4 h-4"></i></button></div>
+  <input id="filterPopSearch" oninput="renderColFilterOptions()" placeholder="Pesquisar..." class="control mb-2">
+  <button id="filterSelectAll" onclick="toggleAllColFilter()" class="w-full mb-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-[11px] font-black text-slate-700">Selecionar tudo</button>
+  <div id="filterPopOptions" class="max-h-64 overflow-y-auto custom-scroll"></div>
+</div>
+
+<script>
+const API='https://pstec.consultoriarf.net/faturamento_indicadores';
+const CACHE_KEY='pstec_faturamento_indicadores_v1';
+const HIDDEN_KEY='pstec_indicadores_hidden_cols_v1';
+const VIEW_KEY='pstec_indicadores_view_v1';
+
+let data=[], currentRows=[], charts={}, refreshing=false, cacheSavedAt=null, lastApiSync=0, timer=null, searchTimer=null;
+let viewMode=localStorage.getItem(VIEW_KEY)||'table';
+let sortState={key:null,asc:true};
+let dashboardFilter=null;
+let activeColFilter=null;
+const colSelections={};
+
+function pick(r){for(let i=1;i<arguments.length;i++){let k=arguments[i];if(r[k]!==undefined&&r[k]!==null)return r[k]}return ''}
+function n(v){if(v===null||v===undefined||v==='')return 0;if(typeof v==='number')return Number.isFinite(v)?v:0;let s=String(v).trim().replace(/\s/g,'');if(s.includes(',')&&s.includes('.'))s=s.replace(/\./g,'').replace(',','.');else if(s.includes(','))s=s.replace(',','.');let x=Number(s);return Number.isFinite(x)?x:0}
+function text(v){return String(v===null||v===undefined?'':v).trim()}
+function norm(v){return text(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase()}
+function isoDate(v){if(!v)return '';let s=String(v);let m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)return m[1]+'-'+m[2]+'-'+m[3];m=s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);if(m)return m[3]+'-'+m[2]+'-'+m[1];let d=new Date(v);if(Number.isNaN(d.getTime()))return '';return d.toISOString().slice(0,10)}
+function fmtDate(v){let s=isoDate(v);if(!s)return '-';let p=s.split('-');return p[2]+'/'+p[1]+'/'+p[0]}
+function brl(v){return n(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
+function num(v){return n(v).toLocaleString('pt-BR',{maximumFractionDigits:3})}
+function pct(v){return n(v).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%'}
+function esc(v){return text(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;')}
+
+function normalizeRow(r){
+ return {
+  Empresa:pick(r,'Empresa','empresa'),
+  Cliente:pick(r,'Cliente','cliente'),
+  Pedido:pick(r,'Pedido','pedido','Nº Pedido','n_pedido'),
+  'Item Pedido':pick(r,'Item Pedido','item_pedido','n_pedido_item'),
+  'Orçamento':pick(r,'Orçamento','orcamento','Orcamento'),
+  NF:pick(r,'NF','nf'),
+  'Cód. Interno':pick(r,'Cód. Interno','Cod. Interno','cod_interno','codigo_interno'),
+  Item:pick(r,'Item','item','produto'),
+  'Qtde Pedido':n(pick(r,'Qtde Pedido','qtde_pedido')),
+  'Qtde NF':n(pick(r,'Qtde NF','qtde_nf','Qtde','qtde')),
+  'Qtde Faturada':n(pick(r,'Qtde Faturada','qtde_faturada','Qtde Faturada Acumulada','qtde_faturada_acumulada')),
+  Saldo:n(pick(r,'Saldo','saldo')),
+  Valor:n(pick(r,'Valor','valor','Valor Total','vl_total')),
+  'Emissão':pick(r,'Emissão','Emissao','emissao','dt_emissao'),
+  'Previsão Entrega':pick(r,'Previsão Entrega','Previsao Entrega','previsao_entrega','dt_previsao_entrega'),
+  'Status Entrega':pick(r,'Status Entrega','status_entrega'),
+  'Status Prazo':pick(r,'Status Prazo','status_prazo'),
+  'Dias Prazo':pick(r,'Dias Prazo','dias_prazo')
+ };
+}
+
+const columns=[
+ {id:'Empresa',label:'Empresa',type:'text',show:false},
+ {id:'Cliente',label:'Cliente',type:'text',show:true},
+ {id:'Pedido',label:'Pedido',type:'text',show:true},
+ {id:'Item Pedido',label:'Item Pedido',type:'text',show:true},
+ {id:'Orçamento',label:'Orçamento',type:'text',show:true},
+ {id:'NF',label:'NF',type:'text',show:true},
+ {id:'Cód. Interno',label:'Cód. Interno',type:'text',show:true},
+ {id:'Item',label:'Item',type:'text',show:true},
+ {id:'Qtde Pedido',label:'Qtde Pedido',type:'num',show:true,tot:true},
+ {id:'Qtde NF',label:'Qtde NF',type:'num',show:true,tot:true},
+ {id:'Qtde Faturada',label:'Qtde Faturada',type:'num',show:true},
+ {id:'Saldo',label:'Saldo',type:'num',show:true},
+ {id:'Valor',label:'Valor',type:'brl',show:true,tot:true},
+ {id:'Emissão',label:'Emissão',type:'date',show:true},
+ {id:'Previsão Entrega',label:'Previsão Entrega',type:'date',show:true},
+ {id:'Status Entrega',label:'Status Entrega',type:'badge',show:true},
+ {id:'Status Prazo',label:'Status Prazo',type:'badge',show:true},
+ {id:'Dias Prazo',label:'Dias Prazo',type:'num',show:true}
+];
+let hiddenCols=new Set();
+
+function loadColumns(){
+ try{let x=JSON.parse(localStorage.getItem(HIDDEN_KEY)||'null');hiddenCols=x?new Set(x):new Set(columns.filter(c=>!c.show).map(c=>c.id))}catch{hiddenCols=new Set(columns.filter(c=>!c.show).map(c=>c.id))}
+}
+function saveColumns(){localStorage.setItem(HIDDEN_KEY,JSON.stringify([...hiddenCols]))}
+function visibleCols(){return columns.filter(c=>!hiddenCols.has(c.id))}
+function renderColumnsMenu(){document.getElementById('columnsChecks').innerHTML=columns.map(c=>'<label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer"><input type="checkbox" '+(hiddenCols.has(c.id)?'':'checked')+' onchange="toggleColumn(\''+esc(c.id)+'\',this.checked)" class="rounded text-pstec-700"><span>'+esc(c.label)+'</span></label>').join('')}
+function toggleColumnsMenu(){let e=document.getElementById('columnsMenu');e.classList.toggle('hidden');if(!e.classList.contains('hidden'))renderColumnsMenu()}
+function toggleColumn(id,show){if(show)hiddenCols.delete(id);else hiddenCols.add(id);if(hiddenCols.size>=columns.length)hiddenCols.delete(id);saveColumns();renderTable()}
+function restoreColumns(){hiddenCols=new Set(columns.filter(c=>!c.show).map(c=>c.id));saveColumns();renderColumnsMenu();renderTable()}
+
+function statusBadge(v){
+ let s=text(v)||'-',u=norm(s),cl='bg-slate-100 text-slate-700';
+ if(u==='DENTRO DO PRAZO'||u==='TOTAL')cl='bg-emerald-100 text-emerald-800';
+ else if(u==='FORA DO PRAZO'||u.includes('ATRASO'))cl='bg-red-100 text-red-800';
+ else if(u.includes('PARCIAL'))cl='bg-amber-100 text-amber-800';
+ else if(u.includes('SEM PREV'))cl='bg-slate-200 text-slate-700';
+ return '<span class="badge '+cl+'">'+esc(s)+'</span>';
+}
+function cell(r,c){
+ let v=r[c.id];
+ if(c.type==='date')return fmtDate(v);
+ if(c.type==='brl')return '<span class="font-mono font-bold">'+brl(v)+'</span>';
+ if(c.type==='num')return '<span class="font-mono">'+num(v)+'</span>';
+ if(c.type==='badge')return statusBadge(v);
+ return '<span title="'+esc(v)+'">'+esc(v||'-')+'</span>';
+}
+
+function fillSelect(id,vals,label){
+ let el=document.getElementById(id),old=el.value;
+ let arr=[...new Set(vals.map(text).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR',{numeric:true}));
+ el.innerHTML='<option value="">'+label+'</option>'+arr.map(v=>'<option value="'+esc(v)+'">'+esc(v)+'</option>').join('');
+ if(arr.includes(old))el.value=old;
+}
+function populateFilters(){
+ fillSelect('fEmpresa',data.map(r=>r.Empresa),'Todas');
+ fillSelect('fCliente',data.map(r=>r.Cliente),'Todos');
+ fillSelect('fPedido',data.map(r=>r.Pedido),'Todos');
+ fillSelect('fNF',data.map(r=>r.NF),'Todas');
+ fillSelect('fOrcamento',data.map(r=>r['Orçamento']),'Todos');
+ fillSelect('fEntrega',data.map(r=>r['Status Entrega']),'Todos');
+ fillSelect('fPrazo',data.map(r=>r['Status Prazo']),'Todos');
+ fillSelect('fAno',data.map(r=>isoDate(r['Emissão']).slice(0,4)).filter(Boolean),'Todos');
+ let meses=['01','02','03','04','05','06','07','08','09','10','11','12'];
+ let nomes=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+ let el=document.getElementById('fMes'),old=el.value;
+ el.innerHTML='<option value="">Todos</option>'+meses.map((m,i)=>'<option value="'+m+'">'+nomes[i]+'</option>').join('');
+ el.value=old;
+}
+
+function matchGlobal(r,q){
+ if(!q)return true;
+ let all=norm(Object.values(r).join(' '));
+ let groups=q.split(/[;,|]+/).map(x=>x.trim()).filter(Boolean);
+ return groups.some(g=>{
+   let terms=g.split(/\s+|%+/).map(x=>x.trim()).filter(Boolean),pos=terms.filter(x=>!/^[-!]/.test(x)).map(norm),neg=terms.filter(x=>/^[-!]/.test(x)).map(x=>norm(x.slice(1)));
+   return pos.every(x=>all.includes(x))&&neg.every(x=>!all.includes(x));
+ });
+}
+function getBaseFilteredRows(){
+ let q=document.getElementById('searchInput').value.trim();
+ let emp=document.getElementById('fEmpresa').value,cli=document.getElementById('fCliente').value,ped=document.getElementById('fPedido').value,nf=document.getElementById('fNF').value,orc=document.getElementById('fOrcamento').value,ent=document.getElementById('fEntrega').value,pra=document.getElementById('fPrazo').value,ano=document.getElementById('fAno').value,mes=document.getElementById('fMes').value,de=document.getElementById('fDe').value,ate=document.getElementById('fAte').value;
+ return data.filter(r=>{
+  let d=isoDate(r['Emissão']);
+  if(q&&!matchGlobal(r,q))return false;
+  if(emp&&text(r.Empresa)!==emp)return false;
+  if(cli&&text(r.Cliente)!==cli)return false;
+  if(ped&&text(r.Pedido)!==ped)return false;
+  if(nf&&text(r.NF)!==nf)return false;
+  if(orc&&text(r['Orçamento'])!==orc)return false;
+  if(ent&&text(r['Status Entrega'])!==ent)return false;
+  if(pra&&text(r['Status Prazo'])!==pra)return false;
+  if(ano&&d.slice(0,4)!==ano)return false;
+  if(mes&&d.slice(5,7)!==mes)return false;
+  if(de&&(!d||d<de))return false;
+  if(ate&&(!d||d>ate))return false;
+  if(dashboardFilter){
+    if(dashboardFilter.type==='cliente'&&text(r.Cliente)!==dashboardFilter.value)return false;
+    if(dashboardFilter.type==='prazo'&&text(r['Status Prazo'])!==dashboardFilter.value)return false;
+    if(dashboardFilter.type==='mes'&&d.slice(0,7)!==dashboardFilter.value)return false;
+  }
+  for(let c of columns){
+    let set=colSelections[c.id];
+    if(set&&set.size&& !set.has(formatFilterValue(r,c)))return false;
+  }
+  return true;
+ });
+}
+function formatFilterValue(r,c){
+ let v=r[c.id];
+ if(c.type==='date')return fmtDate(v);
+ if(c.type==='brl')return brl(v);
+ if(c.type==='num')return num(v);
+ return text(v)||'(Vazio)';
+}
+function debounceRender(){clearTimeout(searchTimer);searchTimer=setTimeout(render,180)}
+
+function itemKey(r){return [r.Empresa,r.Pedido,r['Item Pedido'],r['Orçamento'],r['Cód. Interno']].map(text).join('|')}
+function itemSummaries(rows){
+ let map=new Map();
+ rows.forEach(r=>{let k=itemKey(r);if(!map.has(k))map.set(k,[]);map.get(k).push(r)});
+ let out=[];
+ map.forEach(arr=>{
+  arr.sort((a,b)=>(isoDate(a['Emissão'])+text(a.NF)).localeCompare(isoDate(b['Emissão'])+text(b.NF),undefined,{numeric:true}));
+  let complete=arr.find(r=>norm(r['Status Entrega'])==='TOTAL');
+  let ref=complete||arr[arr.length-1];
+  out.push({key:itemKey(ref),Empresa:ref.Empresa,Cliente:ref.Cliente,Pedido:ref.Pedido,itemPedido:ref['Item Pedido'],statusEntrega:ref['Status Entrega'],statusPrazo:ref['Status Prazo'],dias:n(ref['Dias Prazo']),emissao:isoDate(ref['Emissão']),valor:arr.reduce((a,r)=>a+n(r.Valor),0)});
+ });
+ return out;
+}
+
+function renderKPIs(rows){
+ let items=itemSummaries(rows),completed=items.filter(x=>norm(x.statusEntrega)==='TOTAL'),eligible=completed.filter(x=>['DENTRO DO PRAZO','FORA DO PRAZO'].includes(norm(x.statusPrazo))),inside=eligible.filter(x=>norm(x.statusPrazo)==='DENTRO DO PRAZO'),outside=eligible.filter(x=>norm(x.statusPrazo)==='FORA DO PRAZO'),partialLate=items.filter(x=>norm(x.statusEntrega)!=='TOTAL'&&norm(x.statusPrazo).includes('ATRASO')),lateDays=outside.map(x=>Math.max(0,x.dias)).filter(x=>x>0),avg=lateDays.length?lateDays.reduce((a,b)=>a+b,0)/lateDays.length:0,total=rows.reduce((a,r)=>a+n(r.Valor),0),rate=eligible.length?inside.length/eligible.length*100:0;
+ let cards=[
+  ['Faturamento',brl(total),'receipt-text','text-pstec-700'],
+  ['Pontualidade',pct(rate),inside.length+' de '+eligible.length+' concluídos com previsão','text-emerald-700'],
+  ['Dentro do prazo',inside.length.toLocaleString('pt-BR'),'circle-check','text-emerald-700'],
+  ['Fora do prazo',outside.length.toLocaleString('pt-BR'),'circle-x','text-red-700'],
+  ['Parcial em atraso',partialLate.length.toLocaleString('pt-BR'),'clock-alert','text-amber-700'],
+  ['Atraso médio',num(avg)+' dias','calendar-clock','text-red-700']
+ ];
+ document.getElementById('kpiGrid').innerHTML=cards.map(c=>'<div class="kpi rounded-2xl p-3"><div class="flex items-center justify-between gap-2"><span class="text-[9px] uppercase tracking-wide font-black text-slate-500">'+esc(c[0])+'</span><i data-lucide="'+esc(c[2])+'" class="w-4 h-4 '+esc(c[3])+'"></i></div><div class="text-xl font-black text-slate-900 mt-1">'+esc(c[1])+'</div>'+(c[0]==='Pontualidade'?'<div class="text-[9px] text-slate-400 font-bold mt-1">'+esc(c[2])+'</div>':'')+'</div>').join('');
+ lucide.createIcons();
+}
+
+function applySort(rows){
+ if(!sortState.key)return [...rows].sort((a,b)=>(isoDate(b['Emissão'])+text(b.NF)).localeCompare(isoDate(a['Emissão'])+text(a.NF),undefined,{numeric:true}));
+ let c=columns.find(x=>x.id===sortState.key),dir=sortState.asc?1:-1;
+ return [...rows].sort((a,b)=>{let va=a[c.id],vb=b[c.id];if(['num','brl'].includes(c.type))return(n(va)-n(vb))*dir;if(c.type==='date')return isoDate(va).localeCompare(isoDate(vb))*dir;return text(va).localeCompare(text(vb),'pt-BR',{numeric:true})*dir});
+}
+function sortBy(id){if(sortState.key===id)sortState.asc=!sortState.asc;else sortState={key:id,asc:true};renderTable()}
+function resetSort(){sortState={key:null,asc:true};renderTable()}
+
+function renderTable(){
+ let rows=applySort(currentRows),cols=visibleCols(),limit=Number(document.getElementById('pageSize').value)||100,show=rows.slice(0,limit);
+ document.getElementById('tableHead').innerHTML='<tr>'+cols.map(c=>{
+  let active=(colSelections[c.id]&&colSelections[c.id].size);
+  let arrow=sortState.key===c.id?(sortState.asc?'↑':'↓'):'';
+  return '<th class="px-2 py-2 border-r border-white/10"><div class="flex items-center gap-1"><button onclick="sortBy(\''+esc(c.id)+'\')" class="font-black hover:text-pstecgreen-500">'+esc(c.label)+' '+arrow+'</button><button id="fb_'+esc(c.id)+'" onclick="openColFilter(event,\''+esc(c.id)+'\')" class="ml-auto p-0.5 rounded '+(active?'bg-pstecgreen-500 text-slate-950':'hover:bg-white/10')+'" title="Filtrar coluna"><i data-lucide="filter" class="w-3 h-3"></i></button></div></th>';
+ }).join('')+'</tr>';
+ document.getElementById('tableBody').innerHTML=show.map(r=>'<tr class="hover:bg-pstec-50/60">'+cols.map(c=>'<td class="px-2 py-1.5 border-r border-slate-100">'+cell(r,c)+'</td>').join('')+'</tr>').join('');
+ document.getElementById('tableFoot').innerHTML='<tr>'+cols.map((c,i)=>'<td class="px-2 py-1.5 border-r border-slate-300">'+(i===0?'TOTAL / FILTRADO':(c.tot?(c.type==='brl'?brl(rows.reduce((a,r)=>a+n(r[c.id]),0)):num(rows.reduce((a,r)=>a+n(r[c.id]),0))):''))+'</td>').join('')+'</tr>';
+ document.getElementById('shownCount').textContent=Math.min(rows.length,limit).toLocaleString('pt-BR');
+ document.getElementById('totalCount').textContent=rows.length.toLocaleString('pt-BR');
+ document.getElementById('btnResetSort').disabled=!sortState.key;
+ let count=Object.values(colSelections).filter(s=>s&&s.size).length;
+ document.getElementById('columnFilterCount').textContent=count+' filtros de coluna';
+ lucide.createIcons();
+}
+
+function openColFilter(ev,id){
+ ev.stopPropagation();activeColFilter=id;
+ let pop=document.getElementById('filterPopover'),btn=ev.currentTarget,r=btn.getBoundingClientRect(),w=300;
+ document.getElementById('filterPopTitle').textContent='Filtrar — '+id;document.getElementById('filterPopSearch').value='';
+ let left=Math.min(window.innerWidth-w-8,Math.max(8,r.left)),top=Math.min(window.innerHeight-390,Math.max(8,r.bottom+5));
+ pop.style.left=left+'px';pop.style.top=top+'px';pop.classList.add('active');renderColFilterOptions();lucide.createIcons();
+}
+function closeColFilter(){document.getElementById('filterPopover').classList.remove('active');activeColFilter=null}
+function renderColFilterOptions(){
+ if(!activeColFilter)return;
+ let c=columns.find(x=>x.id===activeColFilter),q=norm(document.getElementById('filterPopSearch').value),vals=[...new Set(data.map(r=>formatFilterValue(r,c)))].sort((a,b)=>a.localeCompare(b,'pt-BR',{numeric:true})).filter(v=>!q||norm(v).includes(q)),set=colSelections[activeColFilter]||new Set();
+ document.getElementById('filterPopOptions').innerHTML=vals.map(v=>'<label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs"><input type="checkbox" '+(set.has(v)?'checked':'')+' onchange="toggleColValue(\''+esc(v)+'\',this.checked)" class="rounded text-pstec-700"><span class="truncate" title="'+esc(v)+'">'+esc(v)+'</span></label>').join('');
+ document.getElementById('filterSelectAll').textContent=(set.size&&set.size===vals.length)?'Desmarcar tudo':'Selecionar tudo';
+}
+function toggleColValue(v,on){if(!colSelections[activeColFilter])colSelections[activeColFilter]=new Set();if(on)colSelections[activeColFilter].add(v);else colSelections[activeColFilter].delete(v);render();renderColFilterOptions()}
+function toggleAllColFilter(){
+ if(!activeColFilter)return;let c=columns.find(x=>x.id===activeColFilter),q=norm(document.getElementById('filterPopSearch').value),vals=[...new Set(data.map(r=>formatFilterValue(r,c)))].filter(v=>!q||norm(v).includes(q));if(!colSelections[activeColFilter])colSelections[activeColFilter]=new Set();let set=colSelections[activeColFilter],all=vals.length&&vals.every(v=>set.has(v));vals.forEach(v=>all?set.delete(v):set.add(v));render();renderColFilterOptions()
+}
+
+function clearFilters(){
+ ['searchInput','fEmpresa','fCliente','fPedido','fNF','fOrcamento','fEntrega','fPrazo','fAno','fMes','fDe','fAte'].forEach(id=>{let e=document.getElementById(id);if(e)e.value=''});
+ Object.keys(colSelections).forEach(k=>delete colSelections[k]);dashboardFilter=null;render()
+}
+function toggleFilters(){let e=document.getElementById('filtersBody'),hide=!e.classList.contains('hidden');e.classList.toggle('hidden',hide);document.getElementById('filterChevron').setAttribute('data-lucide',hide?'chevron-down':'chevron-up');lucide.createIcons()}
+function updateDashChip(){
+ let e=document.getElementById('dashboardFilterChip');
+ if(!dashboardFilter){e.classList.add('hidden');e.innerHTML='';return}
+ e.classList.remove('hidden');e.innerHTML='Filtro do gráfico: '+esc(dashboardFilter.label)+' <button onclick="dashboardFilter=null;render()" class="ml-2 text-red-600 underline">remover</button>';
+}
+
+function destroyCharts(){Object.values(charts).forEach(c=>{try{c.destroy()}catch{}});charts={}}
+function chart(id,type,labels,values,opts){
+ opts=opts||{};let el=document.getElementById(id);if(!el)return;
+ charts[id]=new Chart(el,{type:type,data:{labels:labels,datasets:[{label:opts.label||'Valor',data:values,backgroundColor:opts.colors||undefined,borderColor:opts.borderColor||undefined,borderWidth:type==='line'?2:0,tension:.25,fill:false}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:opts.horizontal?'y':'x',layout:{padding:{top:18,right:10}},plugins:{legend:{display:type==='doughnut'||type==='pie'},tooltip:{callbacks:{label:function(ctx){let v=ctx.raw;return (opts.money?brl(v):opts.percent?pct(v):num(v))}}},datalabels:window.ChartDataLabels?{display:function(ctx){return n(ctx.dataset.data[ctx.dataIndex])!==0},formatter:function(v){return opts.money?new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1,style:'currency',currency:'BRL'}).format(v):opts.percent?pct(v):num(v)},anchor:type==='doughnut'?'center':'end',align:type==='doughnut'?'center':'top',clip:false,clamp:true,font:{size:9,weight:'700'}}:false},scales:type==='doughnut'?{}:{y:{beginAtZero:true,ticks:{callback:function(v){return opts.money?new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1}).format(v):v}}},x:{ticks:{autoSkip:true,maxRotation:0}}},onClick:function(evt,els){if(!els.length||!opts.click)return;opts.click(labels[els[0].index],els[0].index)}}});
+}
+function renderDashboard(rows){
+ if(viewMode!=='dashboard')return;destroyCharts();let items=itemSummaries(rows);
+ let stat={};items.forEach(x=>{let k=text(x.statusPrazo)||'SEM PREVISÃO';stat[k]=(stat[k]||0)+1});let sEntries=Object.entries(stat);
+ chart('ch1','doughnut',sEntries.map(x=>x[0]),sEntries.map(x=>x[1]),{label:'Itens',click:function(v){toggleDashboardFilter('prazo',v,'Prazo: '+v)}});
+ let months={};items.filter(x=>norm(x.statusEntrega)==='TOTAL'&&['DENTRO DO PRAZO','FORA DO PRAZO'].includes(norm(x.statusPrazo))).forEach(x=>{let m=x.emissao.slice(0,7);if(!m)return;if(!months[m])months[m]={ok:0,total:0};months[m].total++;if(norm(x.statusPrazo)==='DENTRO DO PRAZO')months[m].ok++});let mkeys=Object.keys(months).sort();
+ chart('ch2','line',mkeys.map(monthLabel),mkeys.map(k=>months[k].total?months[k].ok/months[k].total*100:0),{label:'Pontualidade',percent:true,borderColor:'#0047cc'});
+ let fat={};rows.forEach(r=>{let m=isoDate(r['Emissão']).slice(0,7);if(m)fat[m]=(fat[m]||0)+n(r.Valor)});let fkeys=Object.keys(fat).sort();
+ chart('ch3','bar',fkeys.map(monthLabel),fkeys.map(k=>fat[k]),{label:'Faturamento',money:true,click:function(v,i){toggleDashboardFilter('mes',fkeys[i],'Mês: '+v)}});
+ let vp={};rows.forEach(r=>{let k=text(r['Status Prazo'])||'SEM PREVISÃO';vp[k]=(vp[k]||0)+n(r.Valor)});let vpE=Object.entries(vp);
+ chart('ch4','bar',vpE.map(x=>x[0]),vpE.map(x=>x[1]),{label:'Valor',money:true,click:function(v){toggleDashboardFilter('prazo',v,'Prazo: '+v)}});
+ let cli={};rows.forEach(r=>{let k=text(r.Cliente)||'(Vazio)';cli[k]=(cli[k]||0)+n(r.Valor)});let ce=Object.entries(cli).sort((a,b)=>b[1]-a[1]).slice(0,10);
+ chart('ch5','bar',ce.map(x=>x[0]),ce.map(x=>x[1]),{label:'Faturamento',money:true,horizontal:true,click:function(v){toggleDashboardFilter('cliente',v,'Cliente: '+v)}});
+ let late={};items.filter(x=>norm(x.statusPrazo)==='FORA DO PRAZO'&&x.dias>0).forEach(x=>{let k=text(x.Cliente)||'(Vazio)';if(!late[k])late[k]=[];late[k].push(x.dias)});let le=Object.entries(late).map(x=>[x[0],x[1].reduce((a,b)=>a+b,0)/x[1].length]).sort((a,b)=>b[1]-a[1]).slice(0,10);
+ chart('ch6','bar',le.map(x=>x[0]),le.map(x=>x[1]),{label:'Dias',horizontal:true});
+}
+function monthLabel(k){if(!k)return '';let p=k.split('-'),names=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];return names[Number(p[1])-1]+'/'+p[0].slice(2)}
+function toggleDashboardFilter(type,value,label){if(dashboardFilter&&dashboardFilter.type===type&&dashboardFilter.value===value)dashboardFilter=null;else dashboardFilter={type:type,value:value,label:label};render()}
+
+function render(){
+ currentRows=getBaseFilteredRows();renderKPIs(currentRows);updateDashChip();renderTable();renderDashboard(currentRows)
+}
+function setView(v){
+ viewMode=v;localStorage.setItem(VIEW_KEY,v);document.getElementById('tableView').classList.toggle('hidden',v!=='table');document.getElementById('dashboardView').classList.toggle('hidden',v!=='dashboard');
+ document.getElementById('btnTable').className=(v==='table'?'bg-pstec-700 text-white ':'text-slate-600 ')+'px-2.5 py-1 rounded-md text-[11px] font-extrabold flex items-center gap-1';
+ document.getElementById('btnDash').className=(v==='dashboard'?'bg-pstec-700 text-white ':'text-slate-600 ')+'px-2.5 py-1 rounded-md text-[11px] font-extrabold flex items-center gap-1';
+ if(v==='dashboard')renderDashboard(currentRows);lucide.createIcons()
+}
+
+function openExportModal(){
+ if(!currentRows.length){alert('Não há dados filtrados para exportar.');return}
+ document.getElementById('exportCount').textContent=currentRows.length.toLocaleString('pt-BR');
+ document.getElementById('exportCols').innerHTML=columns.map(c=>'<label class="flex items-center gap-2 p-1.5 hover:bg-white rounded-lg cursor-pointer font-semibold text-slate-700"><input type="checkbox" value="'+esc(c.id)+'" '+(hiddenCols.has(c.id)?'':'checked')+' class="export-col rounded text-emerald-600"><span>'+esc(c.label)+'</span></label>').join('');
+ let m=document.getElementById('exportModal');m.classList.remove('hidden');m.classList.add('flex');lucide.createIcons()
+}
+function closeExportModal(){let m=document.getElementById('exportModal');m.classList.add('hidden');m.classList.remove('flex')}
+function applyExportPreset(p){document.querySelectorAll('.export-col').forEach(cb=>cb.checked=p==='all'||!hiddenCols.has(cb.value))}
+function setExportCols(v){document.querySelectorAll('.export-col').forEach(cb=>cb.checked=v)}
+function executeExcelExport(){
+ let ids=[...document.querySelectorAll('.export-col:checked')].map(x=>x.value);if(!ids.length){alert('Selecione pelo menos uma coluna.');return}
+ let cols=ids.map(id=>columns.find(c=>c.id===id)).filter(Boolean);
+ let rows=currentRows.map(r=>Object.fromEntries(cols.map(c=>{let v=r[c.id];if(c.type==='date')v=fmtDate(v)==='-'?'':fmtDate(v);else if(['num','brl'].includes(c.type))v=n(v);return[c.label,v]})));
+ let ws=XLSX.utils.json_to_sheet(rows);ws['!cols']=cols.map(c=>({wch:Math.min(42,Math.max(12,c.label.length+4))}));let wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'INDICADORES');XLSX.writeFile(wb,'PSTEC_INDICADORES_FATURAMENTO_'+new Date().toISOString().slice(0,10)+'.xlsx');closeExportModal()
+}
+
+function logout(){['pstec_token','pstec_usuario_nome','pstec_perm_faturamento','pstec_perm_finalizacao'].forEach(k=>localStorage.removeItem(k));window.location.href='login-pstec.html'}
+function updateLast(){let dt=PstecCache.formatDateTime(cacheSavedAt);document.getElementById('lastUpdate').textContent=cacheSavedAt?'Dados: '+(dt||'-'):'Aguardando dados...'}
+function applyDataset(raw,source,savedAt){
+ data=(Array.isArray(raw)?raw:[]).map(normalizeRow);cacheSavedAt=savedAt||cacheSavedAt;populateFilters();render();updateLast();PstecCache.updateStatus(source==='cache'?'cache':'api',cacheSavedAt)
+}
+async function fetchData(manual){
+ if(refreshing)return;refreshing=true;let icon=document.getElementById('refreshIcon'),btn=document.getElementById('btnRefresh');if(manual){icon.classList.add('animate-spin');btn.disabled=true}else if(data.length)PstecCache.updateStatus('updating',cacheSavedAt);
+ try{
+  let res=await fetch(API+'?_t='+Date.now(),{cache:'no-store',headers:{'Cache-Control':'no-cache'}});
+  if(!res.ok)throw new Error('HTTP '+res.status);
+  let raw=await res.json();if(!Array.isArray(raw))throw new Error('Formato inválido da API');
+  let savedAt=new Date().toISOString();lastApiSync=Date.now();applyDataset(raw,'api',savedAt);
+  try{await PstecCache.write(CACHE_KEY,raw,savedAt);cacheSavedAt=savedAt}catch(e){console.warn('Falha no cache:',e)}
+ }catch(e){
+  console.error(e);if(data.length){PstecCache.updateStatus('cache',cacheSavedAt,'API indisponível. Mantendo cache local.');if(manual)alert('A API não respondeu. Mantendo os dados salvos no computador.')}else{PstecCache.updateStatus('error',null,e.message);alert('Não foi possível carregar faturamento_indicadores.')}
+ }finally{refreshing=false;if(manual){icon.classList.remove('animate-spin');btn.disabled=false}lucide.createIcons()}
+}
+async function initialLoad(){
+ PstecCache.updateStatus('loading');let cached=null;try{cached=await PstecCache.read(CACHE_KEY)}catch(e){}
+ if(cached&&Array.isArray(cached.data)&&cached.data.length){cacheSavedAt=cached.savedAt||null;lastApiSync=cacheSavedAt?(new Date(cacheSavedAt).getTime()||0):0;applyDataset(cached.data,'cache',cacheSavedAt);fetchData(false)}else await fetchData(false)
+}
+function startAuto(){timer=setInterval(()=>{if(document.visibilityState==='visible'&&!refreshing&&Date.now()-lastApiSync>=PstecCache.AUTO_REFRESH_INTERVAL_MS)fetchData(false)},30000)}
+
+document.addEventListener('click',e=>{if(!e.target.closest('#columnsMenu')&&!e.target.closest('button[onclick="toggleColumnsMenu()"]'))document.getElementById('columnsMenu').classList.add('hidden');if(!e.target.closest('#filterPopover')&&!e.target.closest('[id^="fb_"]'))closeColFilter()});
+document.addEventListener('DOMContentLoaded',()=>{loadColumns();document.getElementById('userDisplayName').textContent=localStorage.getItem('pstec_usuario_nome')||'Usuário';setView(viewMode);lucide.createIcons();initialLoad();startAuto()});
+</script>
+</body>
+</html>
