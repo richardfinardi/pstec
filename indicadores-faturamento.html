@@ -170,6 +170,7 @@ const VIEW_KEY='pstec_indicadores_view_v1';
 
 let data=[], currentRows=[], charts={}, refreshing=false, cacheSavedAt=null, lastApiSync=0, timer=null, searchTimer=null;
 let viewMode=localStorage.getItem(VIEW_KEY)||'table';
+if(window.ChartDataLabels)Chart.register(ChartDataLabels);
 let sortState={key:null,asc:true};
 let dashboardFilter=null;
 let activeColFilter=null;
@@ -344,14 +345,14 @@ function itemSummaries(rows){
 function renderKPIs(rows){
  let items=itemSummaries(rows),completed=items.filter(x=>norm(x.statusEntrega)==='TOTAL'),eligible=completed.filter(x=>['DENTRO DO PRAZO','FORA DO PRAZO'].includes(norm(x.statusPrazo))),inside=eligible.filter(x=>norm(x.statusPrazo)==='DENTRO DO PRAZO'),outside=eligible.filter(x=>norm(x.statusPrazo)==='FORA DO PRAZO'),partialLate=items.filter(x=>norm(x.statusEntrega)!=='TOTAL'&&norm(x.statusPrazo).includes('ATRASO')),lateDays=outside.map(x=>Math.max(0,x.dias)).filter(x=>x>0),avg=lateDays.length?lateDays.reduce((a,b)=>a+b,0)/lateDays.length:0,total=rows.reduce((a,r)=>a+n(r.Valor),0),rate=eligible.length?inside.length/eligible.length*100:0;
  let cards=[
-  ['Faturamento',brl(total),'receipt-text','text-pstec-700'],
-  ['Pontualidade',pct(rate),inside.length+' de '+eligible.length+' concluídos com previsão','text-emerald-700'],
-  ['Dentro do prazo',inside.length.toLocaleString('pt-BR'),'circle-check','text-emerald-700'],
-  ['Fora do prazo',outside.length.toLocaleString('pt-BR'),'circle-x','text-red-700'],
-  ['Parcial em atraso',partialLate.length.toLocaleString('pt-BR'),'clock-alert','text-amber-700'],
-  ['Atraso médio',num(avg)+' dias','calendar-clock','text-red-700']
+  ['Faturamento',brl(total),'receipt-text','text-pstec-700',''],
+  ['Pontualidade',pct(rate),'gauge','text-emerald-700',inside.length+' de '+eligible.length+' concluídos com previsão'],
+  ['Dentro do prazo',inside.length.toLocaleString('pt-BR'),'circle-check','text-emerald-700',''],
+  ['Fora do prazo',outside.length.toLocaleString('pt-BR'),'circle-x','text-red-700',''],
+  ['Parcial em atraso',partialLate.length.toLocaleString('pt-BR'),'clock-alert','text-amber-700',''],
+  ['Atraso médio',num(avg)+' dias','calendar-clock','text-red-700','']
  ];
- document.getElementById('kpiGrid').innerHTML=cards.map(c=>'<div class="kpi rounded-2xl p-3"><div class="flex items-center justify-between gap-2"><span class="text-[9px] uppercase tracking-wide font-black text-slate-500">'+esc(c[0])+'</span><i data-lucide="'+esc(c[2])+'" class="w-4 h-4 '+esc(c[3])+'"></i></div><div class="text-xl font-black text-slate-900 mt-1">'+esc(c[1])+'</div>'+(c[0]==='Pontualidade'?'<div class="text-[9px] text-slate-400 font-bold mt-1">'+esc(c[2])+'</div>':'')+'</div>').join('');
+ document.getElementById('kpiGrid').innerHTML=cards.map(c=>'<div class="kpi rounded-2xl p-3"><div class="flex items-center justify-between gap-2"><span class="text-[9px] uppercase tracking-wide font-black text-slate-500">'+esc(c[0])+'</span><i data-lucide="'+esc(c[2])+'" class="w-4 h-4 '+esc(c[3])+'"></i></div><div class="text-xl font-black text-slate-900 mt-1">'+esc(c[1])+'</div>'+(c[4]?'<div class="text-[9px] text-slate-400 font-bold mt-1">'+esc(c[4])+'</div>':'')+'</div>').join('');
  lucide.createIcons();
 }
 
@@ -391,7 +392,7 @@ function closeColFilter(){document.getElementById('filterPopover').classList.rem
 function renderColFilterOptions(){
  if(!activeColFilter)return;
  let c=columns.find(x=>x.id===activeColFilter),q=norm(document.getElementById('filterPopSearch').value),vals=[...new Set(data.map(r=>formatFilterValue(r,c)))].sort((a,b)=>a.localeCompare(b,'pt-BR',{numeric:true})).filter(v=>!q||norm(v).includes(q)),set=colSelections[activeColFilter]||new Set();
- document.getElementById('filterPopOptions').innerHTML=vals.map(v=>'<label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs"><input type="checkbox" '+(set.has(v)?'checked':'')+' onchange="toggleColValue(\''+esc(v)+'\',this.checked)" class="rounded text-pstec-700"><span class="truncate" title="'+esc(v)+'">'+esc(v)+'</span></label>').join('');
+ document.getElementById('filterPopOptions').innerHTML=vals.map(v=>'<label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs"><input type="checkbox" '+(set.has(v)?'checked':'')+' data-filter-value="'+esc(encodeURIComponent(v))+'" onchange="toggleColValue(decodeURIComponent(this.dataset.filterValue),this.checked)" class="rounded text-pstec-700"><span class="truncate" title="'+esc(v)+'">'+esc(v)+'</span></label>').join('');
  document.getElementById('filterSelectAll').textContent=(set.size&&set.size===vals.length)?'Desmarcar tudo':'Selecionar tudo';
 }
 function toggleColValue(v,on){if(!colSelections[activeColFilter])colSelections[activeColFilter]=new Set();if(on)colSelections[activeColFilter].add(v);else colSelections[activeColFilter].delete(v);render();renderColFilterOptions()}
