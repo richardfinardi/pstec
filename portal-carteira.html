@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Portal da Carteira | PSTEC</title>
+<link rel="icon" type="image/png" href="LOGO MINIMALISTA.png">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{colors:{pstec:{50:'#f0f5ff',100:'#e0ebff',600:'#0047cc',700:'#003B96',800:'#002b70',900:'#001b4a'},pstecgreen:{500:'#7CBD20',600:'#68a318'}}}}}</script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f1f5f9;color:#0f172a}.custom-scroll::-webkit-scrollbar{width:6px;height:6px}.custom-scroll::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:5px}.sticky-head th{position:sticky;top:0;z-index:10}.badge{display:inline-flex;align-items:center;justify-content:center;min-width:44px;padding:.15rem .45rem;border-radius:.5rem;font-size:10px;font-weight:900}
+</style>
+</head>
+<body class="min-h-screen flex flex-col">
+<header class="bg-pstec-700 text-white shadow-md">
+  <div class="max-w-[96%] mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3">
+    <div class="flex items-center gap-3"><div class="bg-white rounded-xl p-2"><img src="./logo.png" class="h-8 w-auto" alt="PSTEC"></div><div><h1 class="text-lg font-black">GRUPO PSTEC</h1><p class="text-[11px] text-pstec-100">Portal da Carteira</p></div></div>
+    <div class="flex gap-2"><button id="btnExcel" onclick="exportExcel()" class="hidden px-3 py-2 bg-emerald-600 rounded-xl text-xs font-bold flex items-center gap-1.5"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i>Excel</button><button onclick="loadPortal()" class="px-3 py-2 bg-pstecgreen-500 text-slate-950 rounded-xl text-xs font-black flex items-center gap-1.5"><i id="refreshIcon" data-lucide="refresh-cw" class="w-4 h-4"></i>Atualizar</button></div>
+  </div>
+</header>
+<main class="max-w-[96%] w-full mx-auto p-4 flex-1 space-y-4">
+  <section id="loading" class="bg-white border rounded-3xl p-14 text-center shadow-sm"><i data-lucide="loader-circle" class="w-9 h-9 animate-spin mx-auto text-pstec-700"></i><p class="mt-3 text-sm font-bold text-slate-600">Carregando portal...</p></section>
+  <section id="error" class="hidden bg-white border border-red-200 rounded-3xl p-12 text-center shadow-sm"><i data-lucide="circle-alert" class="w-10 h-10 mx-auto text-red-600"></i><h2 class="mt-3 text-lg font-black text-red-700">Portal indisponível</h2><p id="errorText" class="mt-1 text-sm text-slate-500"></p></section>
+  <div id="content" class="hidden space-y-4">
+    <section class="bg-white rounded-3xl border shadow-sm p-4 flex flex-wrap justify-between items-start gap-3"><div><p class="text-[10px] uppercase tracking-widest font-black text-pstec-600">Acompanhamento compartilhado</p><h2 id="portalTitle" class="text-2xl font-black text-slate-900 mt-1">Carteira</h2><p id="portalMeta" class="text-[11px] text-slate-500 mt-1"></p></div><div class="text-right"><span id="portalStatus" class="inline-flex px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black">ATIVO</span><p id="updatedAt" class="text-[10px] text-slate-400 mt-2"></p></div></section>
+    <section id="kpis" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2.5"></section>
+    <section class="bg-white rounded-3xl border shadow-sm overflow-hidden">
+      <div class="p-3 border-b bg-slate-50 flex flex-wrap gap-3 items-center justify-between"><div class="flex-1 min-w-[220px] flex items-center gap-2 bg-white border rounded-xl px-3 py-2"><i data-lucide="search" class="w-4 h-4 text-slate-400"></i><input id="search" oninput="renderTable()" class="w-full outline-none text-xs font-semibold" placeholder="Pesquisar nos itens deste portal..."></div><span id="count" class="text-xs font-black text-pstec-700"></span></div>
+      <div class="overflow-auto custom-scroll max-h-[68vh]"><table class="w-max min-w-full text-left text-[11px] whitespace-nowrap"><thead id="thead" class="sticky-head bg-pstec-700 text-white uppercase text-[9px]"></thead><tbody id="tbody" class="divide-y divide-slate-100"></tbody><tfoot id="tfoot" class="sticky bottom-0 bg-slate-200 font-black"></tfoot></table></div>
+    </section>
+  </div>
+</main>
+<footer class="bg-white border-t py-3 text-center text-[10px] text-slate-400">© 2026 PSTEC Brasil — Portal de acompanhamento da Carteira</footer>
+<script>
+const API='https://pstec.consultoriarf.net/carteira/portal';
+const MONEY=new Set(['Vl. Unitário','Vl. Total','Vl. a faturar','Vl. Liberado','Valor fat. disp.','Vl. Lucro','Valor falta comprar']);
+const NUM=new Set(['Qtde. Total','Qtde. Entregue','Saldo a entregar','Capacidade disponivel']);
+const DATES=new Set(['Dt. aprovação','Prev. entrega(original)','Dt. Negociada','Dt. Pesquisa']);
+const LABELS={'Nº Orçamento':'Orçamento','Código':'Código','Item':'Item','Nº Pedido':'Nº Pedido','Nº OS':'Nº OS','Status OS':'Status OS','Dt. aprovação':'Dt. Aprovação','Prev. entrega(original)':'Prev. Entrega','Dt. Negociada':'Dt. Negociada','Dt. Pesquisa':'Dt. Pesquisa','Qtde. Total':'Qtde Total','Qtde. Entregue':'Entregue','Saldo a entregar':'Saldo Entregar','Vl. Unitário':'Vl. Unitário','Vl. Total':'Vl. Total','Vl. a faturar':'Vl. a Faturar','Vl. Liberado':'Vl. Liberado','Valor fat. disp.':'Valor Fat. Disp.','Vl. Lucro':'Vl. Lucro','Margem Lucro':'Margem Lucro','Valor falta comprar':'Vl. Falta Comprar','Disponibilidade Material':'Disp. Material','Análise critica industrial':'Análise Crítica Industrial','Análise critica estrutura':'Análise Crítica Estrutura','Análise critica plano controle':'Análise Crítica Plano Controle'};
+let portal=null,rows=[],filtered=[],sortKey=null,sortAsc=true;
+const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const num=v=>{if(typeof v==='number')return v||0;let s=String(v??'').replace(/R\$/g,'').replace(/%/g,'').replace(/\s/g,'');if(s.includes(',')&&s.includes('.'))s=s.replace(/\./g,'').replace(',','.');else if(s.includes(','))s=s.replace(',','.');return Number(s)||0};
+const brl=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(num(v));
+const fmtDate=v=>{if(!v)return '-';const s=String(v).slice(0,10);const p=s.split('-');return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:esc(v)};
+function badge(v){const n=String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();if(n==='SIM')return '<span class="badge bg-emerald-100 text-emerald-800">SIM</span>';if(n==='NAO')return '<span class="badge bg-red-100 text-red-700">NÃO</span>';return '<span class="badge bg-slate-100 text-slate-500">-</span>'}
+function statusBadge(v){const s=String(v||'-');let c='bg-slate-100 text-slate-700';if(/APROVADO|CONCLU|TOTAL DISP/i.test(s))c='bg-emerald-100 text-emerald-800';else if(/PEND|SEM|PARCIAL|ATRAS/i.test(s))c='bg-amber-100 text-amber-800';return `<span class="badge ${c}">${esc(s)}</span>`}
+function formatCell(k,v){if(MONEY.has(k))return `<span class="font-mono font-bold">${brl(v)}</span>`;if(k==='Margem Lucro')return `<span class="font-mono">${num(v).toLocaleString('pt-BR',{maximumFractionDigits:2})}%</span>`;if(NUM.has(k))return `<span class="font-mono">${num(v).toLocaleString('pt-BR',{maximumFractionDigits:3})}</span>`;if(DATES.has(k))return fmtDate(v);if(k.startsWith('Análise critica'))return badge(v);if(k==='Status OS'||k==='Disponibilidade Material')return statusBadge(v);return `<span title="${esc(v)}">${esc(v||'-')}</span>`}
+function sortBy(k){if(sortKey===k)sortAsc=!sortAsc;else{sortKey=k;sortAsc=true}renderTable()}
+function renderKpis(){const saldo=rows.reduce((a,r)=>a+num(r['Saldo a entregar']),0),total=rows.reduce((a,r)=>a+num(r['Qtde. Total']),0),ent=rows.reduce((a,r)=>a+num(r['Qtde. Entregue']),0);const cards=[['Itens',rows.length.toLocaleString('pt-BR')],['Qtde Total',total.toLocaleString('pt-BR')],['Entregue',ent.toLocaleString('pt-BR')],['Saldo',saldo.toLocaleString('pt-BR')]];if(portal?.mostrar_valores){cards.push(['Vl. Total',brl(rows.reduce((a,r)=>a+num(r['Vl. Total']),0))],['Vl. a Faturar',brl(rows.reduce((a,r)=>a+num(r['Vl. a faturar']),0))])}document.getElementById('kpis').innerHTML=cards.map(c=>`<div class="bg-white border rounded-2xl p-3 shadow-sm"><span class="text-[9px] uppercase font-black text-slate-400 block">${c[0]}</span><strong class="text-lg text-pstec-700">${c[1]}</strong></div>`).join('')}
+function renderTable(){const q=(document.getElementById('search')?.value||'').toLowerCase().trim(),cols=portal?.colunas||[];filtered=rows.filter(r=>!q||cols.some(k=>String(r[k]??'').toLowerCase().includes(q)));if(sortKey){filtered.sort((a,b)=>{let x=a[sortKey],y=b[sortKey];if(MONEY.has(sortKey)||NUM.has(sortKey)||sortKey==='Margem Lucro'){x=num(x);y=num(y);return sortAsc?x-y:y-x}const c=String(x??'').localeCompare(String(y??''),'pt-BR',{numeric:true,sensitivity:'base'});return sortAsc?c:-c})}document.getElementById('count').textContent=`${filtered.length.toLocaleString('pt-BR')} itens`;document.getElementById('thead').innerHTML='<tr>'+cols.map(k=>`<th onclick="sortBy('${esc(k)}')" class="p-3 cursor-pointer hover:bg-pstec-800">${esc(LABELS[k]||k)}${sortKey===k?(sortAsc?' ▲':' ▼'):''}</th>`).join('')+'</tr>';document.getElementById('tbody').innerHTML=filtered.map((r,i)=>'<tr class="'+(i%2?'bg-slate-50/60':'bg-white')+'">'+cols.map(k=>`<td class="p-3">${formatCell(k,r[k])}</td>`).join('')+'</tr>').join('')||`<tr><td colspan="${cols.length}" class="p-10 text-center text-slate-400">Nenhum item encontrado.</td></tr>`;document.getElementById('tfoot').innerHTML='<tr>'+cols.map((k,i)=>MONEY.has(k)?`<td class="p-3 text-right font-mono">${brl(filtered.reduce((a,r)=>a+num(r[k]),0))}</td>`:(i===0?'<td class="p-3">TOTAL FILTRADO</td>':'<td></td>')).join('')+'</tr>'}
+function exportExcel(){if(!portal?.permitir_excel)return;const cols=portal.colunas||[];const data=filtered.map(r=>Object.fromEntries(cols.map(k=>[LABELS[k]||k,r[k]??''])));const ws=XLSX.utils.json_to_sheet(data),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'CARTEIRA');XLSX.writeFile(wb,`PSTEC_${String(portal.nome||'PORTAL').replace(/[^A-Za-z0-9_-]+/g,'_')}.xlsx`)}
+async function loadPortal(){const p=new URLSearchParams(location.search),id=p.get('id'),token=p.get('token'),icon=document.getElementById('refreshIcon');if(!id||!token)return showError('Link incompleto ou inválido.');icon?.classList.add('animate-spin');try{const r=await fetch(`${API}/${encodeURIComponent(id)}/dados?token=${encodeURIComponent(token)}&_t=${Date.now()}`,{cache:'no-store'});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.detail||`HTTP ${r.status}`);portal=d.portal||{};rows=Array.isArray(d.dados)?d.dados:[];document.getElementById('portalTitle').textContent=portal.nome||'Carteira';document.getElementById('portalMeta').textContent=portal.validade_ate?`Disponível até ${dt(portal.validade_ate)}`:'Sem vencimento';document.getElementById('updatedAt').textContent=`Atualizado ${dt(d.atualizado_em)}`;document.getElementById('btnExcel').classList.toggle('hidden',!portal.permitir_excel);document.getElementById('loading').classList.add('hidden');document.getElementById('error').classList.add('hidden');document.getElementById('content').classList.remove('hidden');renderKpis();renderTable();lucide.createIcons()}catch(e){showError(e.message||'Não foi possível carregar o portal.')}finally{icon?.classList.remove('animate-spin')}}
+function dt(v){if(!v)return '-';const d=new Date(v);return Number.isNaN(d.getTime())?'-':d.toLocaleString('pt-BR')}
+function showError(msg){document.getElementById('loading').classList.add('hidden');document.getElementById('content').classList.add('hidden');document.getElementById('error').classList.remove('hidden');document.getElementById('errorText').textContent=msg;lucide.createIcons()}
+document.addEventListener('DOMContentLoaded',()=>{lucide.createIcons();loadPortal()});
+</script>
+</body>
+</html>
