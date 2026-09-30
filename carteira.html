@@ -78,7 +78,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-extrabold tracking-wide text-white">GRUPO PSTEC</h1>
-                    <p class="text-xs text-pstec-100">Carteira de Produção V3.0 Pro</p>
+                    <p class="text-xs text-pstec-100">Carteira de Produção V3.0.1 Pro</p>
                 </div>
             </div>
 
@@ -640,6 +640,88 @@
         };
 
         const colFilterState = {};
+        const colFilterDraftState = {};
+        const CARTEIRA_FILTERS_STATE_VERSION = 1;
+
+        function carteiraFiltersStorageKey() {
+            const user = (localStorage.getItem('pstec_usuario_nome') || 'anon')
+                .trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '_');
+            return `pstec_carteira_filters_v3_${user || 'anon'}`;
+        }
+
+        function saveCarteiraFiltersState() {
+            if (carteiraFiltersRestoring) return;
+            try {
+                const filters = {};
+                Object.entries(filterState).forEach(([k,set]) => filters[k] = [...set]);
+                const columnFilters = {};
+                Object.entries(colFilterState).forEach(([k,set]) => {
+                    if (set instanceof Set && set.size) columnFilters[k] = [...set];
+                });
+                localStorage.setItem(carteiraFiltersStorageKey(), JSON.stringify({
+                    version: CARTEIRA_FILTERS_STATE_VERSION,
+                    search: document.getElementById('searchInput')?.value || '',
+                    dateFrom: document.getElementById('dateFrom')?.value || '',
+                    dateTo: document.getElementById('dateTo')?.value || '',
+                    filters,
+                    columnFilters,
+                    sortColumn,
+                    sortAsc
+                }));
+            } catch (e) {
+                console.warn('Não foi possível salvar os filtros da Carteira:', e);
+            }
+        }
+
+        let carteiraFiltersRestoring = false;
+        function restoreCarteiraFiltersState() {
+            const raw = localStorage.getItem(carteiraFiltersStorageKey());
+            if (!raw) return;
+            carteiraFiltersRestoring = true;
+            try {
+                const state = JSON.parse(raw);
+                if (!state || typeof state !== 'object') return;
+
+                if (state.filters && typeof state.filters === 'object') {
+                    Object.keys(filterState).forEach(k => {
+                        filterState[k].clear();
+                        (Array.isArray(state.filters[k]) ? state.filters[k] : []).forEach(v => filterState[k].add(String(v)));
+                    });
+                }
+
+                Object.keys(colFilterState).forEach(k => delete colFilterState[k]);
+                if (state.columnFilters && typeof state.columnFilters === 'object') {
+                    Object.entries(state.columnFilters).forEach(([k,arr]) => {
+                        if (Array.isArray(arr) && arr.length) colFilterState[k] = new Set(arr.map(String));
+                    });
+                }
+
+                const search = document.getElementById('searchInput');
+                const d1 = document.getElementById('dateFrom');
+                const d2 = document.getElementById('dateTo');
+                if (search) search.value = state.search || '';
+                if (d1) d1.value = state.dateFrom || '';
+                if (d2) d2.value = state.dateTo || '';
+                if (typeof state.sortColumn === 'string' && state.sortColumn) sortColumn = state.sortColumn;
+                if (typeof state.sortAsc === 'boolean') sortAsc = state.sortAsc;
+            } catch (e) {
+                console.warn('Não foi possível restaurar os filtros da Carteira:', e);
+            } finally {
+                carteiraFiltersRestoring = false;
+            }
+        }
+
+        function ensureColFilterDraft(key) {
+            if (Object.prototype.hasOwnProperty.call(colFilterDraftState, key)) return colFilterDraftState[key];
+            const allVals = isCarteiraDateColumn(key)
+                ? allCarteiraDateValues(key)
+                : new Set(getAvailableColFilterValues(key));
+            const active = colFilterState[key];
+            if (!active || active.size === 0) colFilterDraftState[key] = new Set(allVals);
+            else if (active.has(PSTEC_NONE_SENTINEL)) colFilterDraftState[key] = new Set();
+            else colFilterDraftState[key] = new Set(active);
+            return colFilterDraftState[key];
+        }
 
         const tableColumnsConfig = [
             { key: 'Nº Orçamento', label: 'Orçamento', align: 'left', sortable: true },
@@ -744,6 +826,8 @@
                 document.getElementById('userDisplayName').textContent = nomeUser;
             }
 
+            restoreCarteiraFiltersState();
+
             // Restaura colunas ocultas da tabela do localStorage
             const savedHiddenCols = localStorage.getItem('pstec_carteira_hidden_table_cols');
             if (savedHiddenCols) {
@@ -765,7 +849,10 @@
                 if (!e.target.closest('.custom-dd-container') && !e.target.closest('.col-filter-popover')) {
                     const hadOpenColFilter = [...document.querySelectorAll('.col-filter-popover')].some(m => !m.classList.contains('hidden'));
                     document.querySelectorAll('.custom-dd-menu, .col-filter-popover').forEach(m => m.classList.add('hidden'));
-                    if (hadOpenColFilter) renderTableHeader();
+                    if (hadOpenColFilter) {
+                        Object.keys(colFilterDraftState).forEach(k => delete colFilterDraftState[k]);
+                        renderTableHeader();
+                    }
                 }
             });
 
@@ -1026,6 +1113,11 @@
                             <div id="col_opts_${col.key}" class="max-h-48 overflow-y-auto custom-scroll space-y-0.5 text-left">
                                 ${renderColOptionsListHTML(col.key)}
                             </div>
+
+                            <div class="flex justify-end gap-1 pt-2 mt-2 border-t border-slate-100">
+                                <button onclick="clearColFilter('${col.key}')" class="px-2 py-1 bg-slate-100 rounded-lg text-[10px] font-bold text-slate-700">Limpar</button>
+                                <button onclick="applyColFilterDraft('${col.key}')" class="px-2 py-1 bg-pstec-700 text-white rounded-lg text-[10px] font-bold">Aplicar</button>
+                            </div>
                         </div>
                     </th>
                 `;
@@ -1055,7 +1147,7 @@
             return {year,month,day,iso,display:`${day}/${month}/${year}`,monthName:monthNames[Number(month)]||month};
         }
 
-        function renderCarteiraDateOptionsHTML(key, availableData, selectedSet) {
+        function renderCarteiraDateOptionsHTML(key, availableData, selectedSet, explicitMode = false) {
             const groups = new Map();
             let hasBlank = false;
             availableData.forEach(item => {
@@ -1067,8 +1159,8 @@
                 if (!months.has(p.month)) months.set(p.month,[]);
                 if (!months.get(p.month).some(x=>x.raw===String(raw).trim())) months.get(p.month).push({raw:String(raw).trim(),...p});
             });
-            const allMode = selectedSet.size === 0;
-            const noneMode = selectedSet.has(PSTEC_NONE_SENTINEL);
+            const allMode = !explicitMode && selectedSet.size === 0;
+            const noneMode = !explicitMode && selectedSet.has(PSTEC_NONE_SENTINEL);
             let html = [...groups.entries()].sort((a,b)=>b[0].localeCompare(a[0])).map(([year,months])=>{
                 const allYear=[...months.values()].flat();
                 const yearChecked=!noneMode && (allMode || allYear.every(x=>selectedSet.has(x.raw)));
@@ -1125,14 +1217,8 @@
         }
 
         function toggleCarteiraDateOption(key, value, checked) {
-            if (!colFilterState[key]) colFilterState[key] = new Set();
-            const sel = colFilterState[key];
-            const allVals = allCarteiraDateValues(key);
-            if (sel.size === 0) allVals.forEach(v=>sel.add(v));
-            if (sel.has(PSTEC_NONE_SENTINEL)) sel.clear();
+            const sel = ensureColFilterDraft(key);
             checked ? sel.add(value) : sel.delete(value);
-            normalizeCarteiraDateSelection(key);
-            renderCarteiraView();
         }
 
         function toggleCarteiraDateGroup(key, group, checked) {
@@ -1141,15 +1227,9 @@
             const container = pop.querySelector(`[data-date-group="${group}"]`);
             if (!container) return;
             const values=[...container.querySelectorAll('.date-leaf-check')].map(cb=>cb.value);
-            if (!colFilterState[key]) colFilterState[key] = new Set();
-            const sel = colFilterState[key];
-            const allVals=allCarteiraDateValues(key);
-            if (sel.size===0) allVals.forEach(v=>sel.add(v));
-            if (sel.has(PSTEC_NONE_SENTINEL)) sel.clear();
+            const sel = ensureColFilterDraft(key);
             values.forEach(v=>checked?sel.add(v):sel.delete(v));
             container.querySelectorAll('.date-leaf-check').forEach(cb=>cb.checked=checked);
-            normalizeCarteiraDateSelection(key);
-            renderCarteiraView();
         }
 
         function getAvailableColFilterValues(key) {
@@ -1160,12 +1240,13 @@
 
         function renderColOptionsListHTML(key) {
             const availableData = getFilteredCarteira(key);
-            const selectedSet = colFilterState[key] || new Set();
-            if (isCarteiraDateColumn(key)) return renderCarteiraDateOptionsHTML(key, availableData, selectedSet);
+            const usingDraft = Object.prototype.hasOwnProperty.call(colFilterDraftState, key);
+            const selectedSet = usingDraft ? colFilterDraftState[key] : (colFilterState[key] || new Set());
+            if (isCarteiraDateColumn(key)) return renderCarteiraDateOptionsHTML(key, availableData, selectedSet, usingDraft);
 
             const sorted = getAvailableColFilterValues(key);
-            const allMode = selectedSet.size === 0;
-            const noneMode = selectedSet.has(PSTEC_NONE_SENTINEL);
+            const allMode = !usingDraft && selectedSet.size === 0;
+            const noneMode = !usingDraft && selectedSet.has(PSTEC_NONE_SENTINEL);
             return sorted.map(val => {
                 const isChecked = !noneMode && (allMode || selectedSet.has(val));
                 return `
@@ -1180,17 +1261,24 @@
         function toggleColFilterPopover(e, key) {
             e.stopPropagation();
             const popoverId = `col_popover_${key}`;
-            
-            const container = document.getElementById(`col_opts_${key}`);
-            if (container) {
-                container.innerHTML = renderColOptionsListHTML(key);
-            }
+            const popover = document.getElementById(popoverId);
+            const opening = popover?.classList.contains('hidden');
 
             document.querySelectorAll('.col-filter-popover').forEach(p => {
                 if (p.id !== popoverId) p.classList.add('hidden');
             });
-            const popover = document.getElementById(popoverId);
-            if (popover) popover.classList.toggle('hidden');
+
+            if (!popover) return;
+            if (opening) {
+                delete colFilterDraftState[key];
+                ensureColFilterDraft(key);
+                const container = document.getElementById(`col_opts_${key}`);
+                if (container) container.innerHTML = renderColOptionsListHTML(key);
+                popover.classList.remove('hidden');
+            } else {
+                delete colFilterDraftState[key];
+                popover.classList.add('hidden');
+            }
         }
 
         function filterColOptionsUI(inputEl, key) {
@@ -1213,31 +1301,47 @@
         }
 
         function toggleColOption(key, val, checked) {
-            if (!colFilterState[key]) colFilterState[key] = new Set();
-            const set = colFilterState[key];
-            const allVals = new Set(getAvailableColFilterValues(key));
-            if (set.size === 0) allVals.forEach(v=>set.add(v));
-            if (set.has(PSTEC_NONE_SENTINEL)) set.clear();
+            const set = ensureColFilterDraft(key);
             if (checked) set.add(val); else set.delete(val);
-            if (allVals.size && set.size===allVals.size && [...allVals].every(v=>set.has(v))) set.clear();
-            else if (set.size===0) set.add(PSTEC_NONE_SENTINEL);
-            renderCarteiraView();
         }
 
         function setAllColFilter(key, enableAll) {
-            if (!colFilterState[key]) colFilterState[key] = new Set();
-            const set=colFilterState[key];
+            const set = ensureColFilterDraft(key);
             set.clear();
-            if (!enableAll) set.add(PSTEC_NONE_SENTINEL);
+            if (enableAll) {
+                const allVals = isCarteiraDateColumn(key)
+                    ? allCarteiraDateValues(key)
+                    : new Set(getAvailableColFilterValues(key));
+                allVals.forEach(v => set.add(v));
+            }
             const container=document.getElementById(`col_opts_${key}`);
             container?.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=enableAll);
+        }
+
+        function applyColFilterDraft(key) {
+            const allVals = isCarteiraDateColumn(key)
+                ? allCarteiraDateValues(key)
+                : new Set(getAvailableColFilterValues(key));
+            const draft = ensureColFilterDraft(key);
+
+            if (allVals.size && draft.size === allVals.size && [...allVals].every(v => draft.has(v))) {
+                delete colFilterState[key];
+            } else if (draft.size === 0) {
+                colFilterState[key] = new Set([PSTEC_NONE_SENTINEL]);
+            } else {
+                colFilterState[key] = new Set(draft);
+            }
+
+            delete colFilterDraftState[key];
+            document.querySelectorAll('.col-filter-popover').forEach(p => p.classList.add('hidden'));
+            renderTableHeader();
             renderCarteiraView();
         }
 
         function clearColFilter(key) {
-            if (colFilterState[key]) colFilterState[key].clear();
-            const container=document.getElementById(`col_opts_${key}`);
-            container?.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=true);
+            delete colFilterState[key];
+            delete colFilterDraftState[key];
+            renderTableHeader();
             renderCarteiraView();
         }
 
@@ -1622,6 +1726,7 @@
 
         function renderCarteiraView() {
             currentFilteredData = getFilteredCarteira();
+            saveCarteiraFiltersState();
             batchStep = parseInt(document.getElementById('selectBatchSize')?.value || 50);
             currentRenderLimit = batchStep;
             
