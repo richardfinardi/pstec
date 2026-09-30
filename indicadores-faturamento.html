@@ -490,7 +490,66 @@ function statusChartColor(v){
 function destroyCharts(){Object.values(charts).forEach(c=>{try{c.destroy()}catch{}});charts={}}
 function chart(id,type,labels,values,opts){
  opts=opts||{};let el=document.getElementById(id);if(!el)return;
- charts[id]=new Chart(el,{type:type,data:{labels:labels,datasets:[{label:opts.label||'Valor',data:values,backgroundColor:opts.colors||undefined,borderColor:opts.borderColor||undefined,borderWidth:type==='line'?2:0,tension:.25,fill:false}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:opts.horizontal?'y':'x',layout:{padding:{top:18,right:10}},plugins:{legend:{display:type==='doughnut'||type==='pie'},tooltip:{callbacks:{label:function(ctx){let v=ctx.raw;return (opts.money?brl(v):opts.percent?pct(v):num(v))}}},datalabels:window.ChartDataLabels?{display:function(ctx){return n(ctx.dataset.data[ctx.dataIndex])!==0},formatter:function(v){return opts.money?new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1,style:'currency',currency:'BRL'}).format(v):opts.percent?pct(v):num(v)},anchor:type==='doughnut'?'center':'end',align:type==='doughnut'?'center':'top',clip:false,clamp:true,font:{size:9,weight:'700'}}:false},scales:type==='doughnut'?{}:{y:{beginAtZero:true,ticks:{callback:function(v){return opts.money?new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1}).format(v):v}}},x:{ticks:{autoSkip:true,maxRotation:0}}},onClick:function(evt,els){if(!els.length||!opts.click)return;opts.click(labels[els[0].index],els[0].index)}}});
+ const externalPieLabels={
+   id:'externalPieLabels_'+id,
+   afterDatasetsDraw(chart){
+     if(!opts.externalLabels||!['doughnut','pie'].includes(type))return;
+     const meta=chart.getDatasetMeta(0),ctx=chart.ctx,total=values.reduce((a,v)=>a+n(v),0);
+     if(!total)return;
+     ctx.save();
+     ctx.strokeStyle='#64748b';
+     ctx.fillStyle='#475569';
+     ctx.lineWidth=1;
+     ctx.font='700 11px Segoe UI, sans-serif';
+     meta.data.forEach((arc,i)=>{
+       const value=n(values[i]);if(!value)return;
+       const angle=(arc.startAngle+arc.endAngle)/2;
+       const cos=Math.cos(angle),sin=Math.sin(angle),side=cos>=0?1:-1;
+       const x1=arc.x+cos*(arc.outerRadius+2);
+       const y1=arc.y+sin*(arc.outerRadius+2);
+       const x2=arc.x+cos*(arc.outerRadius+15);
+       const y2=arc.y+sin*(arc.outerRadius+15);
+       const x3=x2+(22*side);
+       const percent=value/total*100;
+       const label=percent.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'% · '+num(value);
+       ctx.beginPath();
+       ctx.moveTo(x1,y1);
+       ctx.lineTo(x2,y2);
+       ctx.lineTo(x3,y2);
+       ctx.stroke();
+       ctx.textAlign=side>0?'left':'right';
+       ctx.textBaseline='middle';
+       ctx.fillText(label,x3+(5*side),y2);
+     });
+     ctx.restore();
+   }
+ };
+ const pieLike=['doughnut','pie'].includes(type);
+ const layoutPadding=opts.externalLabels?{top:28,right:92,bottom:24,left:92}:{top:18,right:10};
+ charts[id]=new Chart(el,{
+   type:type,
+   data:{labels:labels,datasets:[{label:opts.label||'Valor',data:values,backgroundColor:opts.colors||undefined,borderColor:opts.borderColor||undefined,borderWidth:type==='line'?2:0,tension:.25,fill:false}]},
+   plugins:opts.externalLabels?[externalPieLabels]:[],
+   options:{
+     responsive:true,
+     maintainAspectRatio:false,
+     indexAxis:opts.horizontal?'y':'x',
+     layout:{padding:layoutPadding},
+     plugins:{
+       legend:{display:pieLike,position:'top'},
+       tooltip:{callbacks:{label:function(ctx){let v=ctx.raw;return (opts.money?brl(v):opts.percent?pct(v):num(v))}}},
+       datalabels:window.ChartDataLabels?{
+         display:function(ctx){return !opts.externalLabels&&n(ctx.dataset.data[ctx.dataIndex])!==0},
+         formatter:function(v){return opts.money?new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1,style:'currency',currency:'BRL'}).format(v):opts.percent?pct(v):num(v)},
+         anchor:pieLike?'center':'end',
+         align:pieLike?'center':'top',
+         clip:false,clamp:true,font:{size:9,weight:'700'}
+       }:false
+     },
+     scales:pieLike?{}:{y:{beginAtZero:true,ticks:{callback:function(v){return opts.money?new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1}).format(v):v}}},x:{ticks:{autoSkip:true,maxRotation:0}}},
+     onClick:function(evt,els){if(!els.length||!opts.click)return;opts.click(labels[els[0].index],els[0].index)}
+   }
+ });
 }
 function stackedMonthlyStatusChart(id,monthKeys,rows){
  let el=document.getElementById(id);if(!el)return;
@@ -550,7 +609,7 @@ function stackedMonthlyStatusChart(id,monthKeys,rows){
 function renderDashboard(rows){
  if(viewMode!=='dashboard')return;destroyCharts();let items=itemSummaries(rows);
  let stat={};rows.forEach(r=>{let k=prazoBucket(r['Status Prazo']);stat[k]=(stat[k]||0)+n(r['Qtde NF'])});let sEntries=Object.entries(stat);
- chart('ch1','doughnut',sEntries.map(x=>x[0]),sEntries.map(x=>x[1]),{label:'Qtde faturada',colors:sEntries.map(x=>statusChartColor(x[0])),click:function(v){toggleDashboardFilter('prazoBucket',v,'Prazo: '+v)}});
+ chart('ch1','doughnut',sEntries.map(x=>x[0]),sEntries.map(x=>x[1]),{label:'Qtde faturada',colors:sEntries.map(x=>statusChartColor(x[0])),externalLabels:true,click:function(v){toggleDashboardFilter('prazoBucket',v,'Prazo: '+v)}});
  let months={};rows.filter(r=>['DENTRO DO PRAZO','FORA DO PRAZO'].includes(prazoBucket(r['Status Prazo']))).forEach(r=>{let m=isoDate(r['Emissão']).slice(0,7);if(!m)return;if(!months[m])months[m]={ok:0,total:0};let q=n(r['Qtde NF']);months[m].total+=q;if(prazoBucket(r['Status Prazo'])==='DENTRO DO PRAZO')months[m].ok+=q});let mkeys=Object.keys(months).sort();
  chart('ch2','line',mkeys.map(monthLabel),mkeys.map(k=>months[k].total?months[k].ok/months[k].total*100:0),{label:'Pontualidade',percent:true,borderColor:'#0047cc'});
  let fat={};rows.forEach(r=>{let m=isoDate(r['Emissão']).slice(0,7);if(m)fat[m]=(fat[m]||0)+n(r.Valor)});let fkeys=Object.keys(fat).sort();
