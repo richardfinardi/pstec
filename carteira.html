@@ -14,7 +14,7 @@
     <meta property="og:image" content="https://consultoriarf.net/producao_pstec/LOGO MINIMALISTA.png">
     <meta property="og:type" content="website">
 
-    <title>Carteira de Produção - PSTEC V3.1 Pro</title>
+    <title>Carteira de Produção - PSTEC V3.2 Pro</title>
 
     <!-- Autenticação Token -->
     <script>
@@ -62,6 +62,17 @@
         .carteira-dashboard-card { background:#fff; border:1px solid #e2e8f0; border-radius:1rem; box-shadow:0 6px 20px rgba(15,23,42,.06); padding:.9rem; min-height:300px; display:flex; flex-direction:column; }
         .carteira-dashboard-card canvas { max-height:245px!important; }
         .carteira-dashboard-active { background:#003B96!important; color:#fff!important; border-color:#003B96!important; }
+        .carteira-filters-section{position:relative;z-index:80;overflow:visible}
+        .carteira-table-section{position:relative;z-index:1}
+        .carteira-filter-label{display:block;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.045em;color:#64748b;margin:0 0 3px 2px}
+        .carteira-filter-group{min-width:0}
+        .carteira-filter-control{width:100%;background:#f8fafc;border:1px solid #e2e8f0;border-radius:.75rem;padding:.5rem .65rem;font-size:.75rem;font-weight:700;color:#334155;outline:none;min-height:36px}
+        .carteira-filter-control:focus{border-color:#1a5ce6;box-shadow:0 0 0 2px rgba(26,92,230,.10)}
+        .carteira-table-scroll{max-height:calc(100vh - 350px);min-height:340px}
+        .col-filter-popover{z-index:99999!important}
+        .col-filter-popover:not(.hidden){position:fixed!important;left:auto!important;top:auto!important;z-index:99999!important;max-width:calc(100vw - 16px);box-shadow:0 22px 50px rgba(15,23,42,.28)!important}
+        @media(max-width:1023px){.carteira-table-scroll{max-height:62vh;min-height:300px}}
+        @media(max-width:639px){.carteira-table-scroll{max-height:58vh;min-height:260px}}
     </style>
 </head>
 <body class="min-h-screen flex flex-col bg-slate-100 text-slate-800">
@@ -78,7 +89,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-extrabold tracking-wide text-white">GRUPO PSTEC</h1>
-                    <p class="text-xs text-pstec-100">Carteira de Produção V3.1 Pro</p>
+                    <p class="text-xs text-pstec-100">Carteira de Produção V3.2 Pro</p>
                 </div>
             </div>
 
@@ -167,10 +178,10 @@
     </div>
 
     <!-- PAINEL DE CONTROLES E FILTROS COMPLETO -->
-    <main class="max-w-[96%] w-full mx-auto p-4 flex flex-col gap-4 flex-1">
+    <main class="max-w-[96%] w-full mx-auto p-3 flex flex-col gap-3 flex-1">
         
-        <div class="bg-white p-4 rounded-2xl border border-slate-200 flex flex-col gap-3 shadow-sm">
-            <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+        <div class="carteira-filters-section bg-white p-3 rounded-2xl border border-slate-200 flex flex-col gap-3 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
                 <div class="flex items-center gap-2">
                     <button onclick="toggleFiltros()" class="flex items-center gap-1.5 p-1 hover:bg-slate-100 rounded-lg transition text-pstec-700 font-bold text-xs" title="Recolher/Expandir Filtros">
                         <i data-lucide="filter" class="w-4 h-4"></i>
@@ -179,7 +190,7 @@
                     </button>
                 </div>
 
-                <div class="flex items-center gap-3">
+                <div class="flex flex-wrap items-center gap-2">
                     <div class="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5">
                         <button id="btnCarteiraTableView" onclick="setCarteiraView('table')" class="carteira-dashboard-active px-2.5 py-1 rounded-md text-[11px] font-extrabold flex items-center gap-1">
                             <i data-lucide="table-2" class="w-3.5 h-3.5"></i><span>Tabela</span>
@@ -214,7 +225,7 @@
             </div>
 
             <!-- ÁREA RECOLHÍVEL DOS FILTROS SUPERIORES -->
-            <div id="collapsibleFilterContent" class="flex flex-col gap-3 transition-all duration-300">
+            <div id="collapsibleFilterContent" class="flex flex-col gap-2.5 transition-all duration-300">
                 
                 <!-- Pesquisa Coringa Global -->
                 <div class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 flex items-center gap-2 text-xs">
@@ -227,23 +238,25 @@
                 </div>
 
                 <!-- DATES & CHECKBOX FILTERS GRID -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 text-xs" id="filterDropdownsGrid">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2 text-xs" id="filterDropdownsGrid">
                     
-                    <!-- Pesquisa por Data: a Carteira sempre usa Dt. Pesquisa -->
-                    <div class="bg-pstec-50 border border-pstec-100 rounded-xl px-2.5 py-1 flex items-center gap-1.5 md:col-span-2">
-                        <i data-lucide="calendar-search" class="w-3.5 h-3.5 text-pstec-700 shrink-0"></i>
-                        <span class="text-[10px] text-slate-500 font-bold whitespace-nowrap">Pesquisa por Data:</span>
-                        <span class="text-[10px] text-pstec-700 font-black whitespace-nowrap">Dt. Pesquisa</span>
+                    <!-- Pesquisa por Data: mesmo padrão visual do Capital -->
+                    <div class="carteira-filter-group sm:col-span-2">
+                        <label class="carteira-filter-label">Pesquisa por Data</label>
+                        <div class="carteira-filter-control bg-pstec-50 border-pstec-100 flex items-center gap-1.5">
+                            <i data-lucide="calendar-search" class="w-3.5 h-3.5 text-pstec-700 shrink-0"></i>
+                            <span class="text-pstec-700 font-black">Dt. Pesquisa</span>
+                        </div>
                     </div>
                     <div id="dd_Ano"></div>
                     <div id="dd_Mes"></div>
-                    <div class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 flex items-center gap-1.5">
-                        <span class="text-[10px] text-slate-400 font-bold whitespace-nowrap">Dt. Pesquisa — de:</span>
-                        <input type="date" id="dateFrom" onchange="renderCarteiraView()" class="bg-transparent w-full text-slate-800 focus:outline-none font-medium">
+                    <div class="carteira-filter-group">
+                        <label class="carteira-filter-label">Dt. Pesquisa — de</label>
+                        <input type="date" id="dateFrom" onchange="renderCarteiraView()" class="carteira-filter-control">
                     </div>
-                    <div class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 flex items-center gap-1.5">
-                        <span class="text-[10px] text-slate-400 font-bold whitespace-nowrap">Dt. Pesquisa — até:</span>
-                        <input type="date" id="dateTo" onchange="renderCarteiraView()" class="bg-transparent w-full text-slate-800 focus:outline-none font-medium">
+                    <div class="carteira-filter-group">
+                        <label class="carteira-filter-label">Dt. Pesquisa — até</label>
+                        <input type="date" id="dateTo" onchange="renderCarteiraView()" class="carteira-filter-control">
                     </div>
 
                     <!-- DROPDOWNS CUSTOMIZADOS DE MULTISSELEÇÃO -->
@@ -306,9 +319,18 @@
         </section>
 
         <!-- TABELA PRINCIPAL DE CARTEIRA (ALTURA DINÂMICA) -->
-        <div id="carteiraTableView" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-            <div id="tableScrollContainer" class="overflow-x-auto custom-scroll transition-all duration-300 max-h-[60vh]">
-                <table class="w-full text-left text-[11px] border-collapse whitespace-nowrap">
+        <div id="carteiraTableView" class="carteira-table-section bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+            <div class="px-3 py-2 bg-slate-50/95 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                <div class="text-xs font-extrabold text-slate-700">
+                    Tabela — Carteira
+                    <span id="carteiraTableFilterCount" class="ml-1 text-[10px] bg-pstec-100 text-pstec-700 px-2 py-0.5 rounded-full">0 filtros de coluna</span>
+                </div>
+                <button id="btnCarteiraResetSort" onclick="resetCarteiraSort()" class="px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-bold text-slate-600 hover:border-pstec-300 disabled:opacity-40">
+                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 inline mr-1"></i>Ordem padrão
+                </button>
+            </div>
+            <div id="tableScrollContainer" class="carteira-table-scroll overflow-auto custom-scroll transition-all duration-300">
+                <table class="w-max min-w-full text-left text-[11px] border-collapse whitespace-nowrap">
                     <thead id="mainTableHeader" class="sticky top-0 z-20 bg-pstec-700 text-white font-extrabold uppercase text-[10px] tracking-wider select-none">
                         <!-- Renderizado via JS -->
                     </thead>
@@ -320,7 +342,7 @@
             </div>
 
             <!-- BARRA DE PAGINAÇÃO EM LOTES / EXIBIR TODOS -->
-            <div class="bg-slate-50 border-t border-slate-200 px-4 py-3 flex flex-wrap justify-between items-center gap-3 text-xs font-bold">
+            <div class="bg-slate-50/95 border-t border-slate-200 px-3 py-2 flex flex-wrap justify-between items-center gap-3 text-xs font-bold">
                 <div class="text-slate-600">
                     Exibindo <span id="lblExibidosCount" class="text-pstec-700 font-extrabold">0</span> de <span id="lblTotalCount" class="text-slate-800 font-extrabold">0</span> registros
                 </div>
@@ -351,7 +373,7 @@
     <!-- FOOTER -->
     <footer class="bg-white border-t border-slate-200 py-3 mt-auto">
         <div class="max-w-[96%] mx-auto px-4 flex justify-between items-center text-xs text-slate-500">
-            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V3.1 Pro</span>
+            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V3.2 Pro</span>
             <span id="lastUpdateLabel">Atualizado: -</span>
         </div>
     </footer>
@@ -894,6 +916,9 @@
 
             restoreCarteiraFiltersState();
 
+            document.getElementById('tableScrollContainer')?.addEventListener('scroll', closeCarteiraColFilters, {passive:true});
+            window.addEventListener('resize', closeCarteiraColFilters);
+
             // Restaura colunas ocultas da tabela do localStorage
             const savedHiddenCols = localStorage.getItem('pstec_carteira_hidden_table_cols');
             if (savedHiddenCols) {
@@ -1324,6 +1349,25 @@
             }).join('');
         }
 
+        function positionCarteiraColFilter(key) {
+            const popover = document.getElementById(`col_popover_${key}`);
+            const btn = document.getElementById(`col_filter_btn_${safeCarteiraDomId(key)}`);
+            if (!popover || !btn || popover.classList.contains('hidden')) return;
+            const b = btn.getBoundingClientRect();
+            const p = popover.getBoundingClientRect();
+            const pad = 8;
+            let left = Math.min(b.left, window.innerWidth - p.width - pad);
+            left = Math.max(pad, left);
+            let top = b.bottom + 6;
+            if (top + p.height > window.innerHeight - pad) top = Math.max(pad, b.top - p.height - 6);
+            popover.style.left = `${left}px`;
+            popover.style.top = `${top}px`;
+        }
+
+        function closeCarteiraColFilters() {
+            document.querySelectorAll('.col-filter-popover').forEach(p => p.classList.add('hidden'));
+        }
+
         function toggleColFilterPopover(e, key) {
             e.stopPropagation();
             const popoverId = `col_popover_${key}`;
@@ -1341,10 +1385,17 @@
                 const container = document.getElementById(`col_opts_${key}`);
                 if (container) container.innerHTML = renderColOptionsListHTML(key);
                 popover.classList.remove('hidden');
+                requestAnimationFrame(() => positionCarteiraColFilter(key));
             } else {
                 delete colFilterDraftState[key];
                 popover.classList.add('hidden');
             }
+        }
+
+        function resetCarteiraSort() {
+            sortColumn = 'Dt. aprovação';
+            sortAsc = false;
+            renderCarteiraView();
         }
 
         function filterColOptionsUI(inputEl, key) {
@@ -1496,9 +1547,13 @@
                 const options = getMainDropdownOptions(conf);
                 const selectedSet = filterState[conf.key] || new Set();
                 const countSelected = selectedSet.has(PSTEC_NONE_SENTINEL) ? 0 : selectedSet.size;
-                const labelText = countSelected === 0 && !selectedSet.has(PSTEC_NONE_SENTINEL)
-                    ? `${conf.label} (Todos)`
-                    : `${conf.label} (${countSelected} sel.)`;
+                const labelText = selectedSet.has(PSTEC_NONE_SENTINEL)
+                    ? 'Nenhum'
+                    : (countSelected === 0
+                        ? 'Todos'
+                        : (countSelected === 1
+                            ? (options.find(o => String(o.v) === [...selectedSet][0])?.l || [...selectedSet][0])
+                            : `${countSelected} selecionados`));
 
                 let optsHTML = '';
                 options.forEach(opt => {
@@ -1514,13 +1569,15 @@
                 });
 
                 container.innerHTML = `
-                    <div class="relative custom-dd-container w-full">
-                        <button onclick="toggleDropdownMenu('${conf.id}_menu')" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 flex justify-between items-center transition">
-                            <span id="${conf.id}_label" class="truncate max-w-[140px]">${labelText}</span>
-                            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
-                        </button>
+                    <div class="carteira-filter-group">
+                        <label class="carteira-filter-label">${conf.label}</label>
+                        <div class="relative custom-dd-container w-full">
+                            <button onclick="toggleDropdownMenu('${conf.id}_menu')" class="carteira-filter-control hover:bg-slate-100 flex justify-between items-center transition">
+                                <span id="${conf.id}_label" class="truncate">${labelText}</span>
+                                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
+                            </button>
 
-                        <div id="${conf.id}_menu" class="hidden absolute left-0 top-full mt-1 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl z-30 p-2 text-xs custom-dd-menu">
+                            <div id="${conf.id}_menu" class="hidden absolute left-0 top-full mt-1 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl z-[200] p-2 text-xs custom-dd-menu">
                             <div class="flex justify-between items-center pb-2 border-b border-slate-100 mb-1">
                                 <button onclick="event.stopPropagation(); selectAllFilter('${conf.key}', true)" class="text-[10px] text-pstec-700 font-extrabold hover:underline">Marcar Todos</button>
                                 <button onclick="event.stopPropagation(); selectAllFilter('${conf.key}', false)" class="text-[10px] text-red-600 font-extrabold hover:underline">Desmarcar</button>
@@ -1532,6 +1589,7 @@
 
                             <div id="${conf.id}_opts" class="max-h-52 overflow-y-auto custom-scroll space-y-0.5">
                                 ${optsHTML}
+                            </div>
                             </div>
                         </div>
                     </div>
@@ -1813,6 +1871,11 @@
             const emptyState = document.getElementById('emptyState');
 
             updateSortIndicators();
+            const colFilterCount = Object.values(colFilterState).filter(v => v && v.size > 0).length;
+            const colCountEl = document.getElementById('carteiraTableFilterCount');
+            if (colCountEl) colCountEl.textContent = `${colFilterCount} filtros de coluna`;
+            const resetSortBtn = document.getElementById('btnCarteiraResetSort');
+            if (resetSortBtn) resetSortBtn.disabled = sortColumn === 'Dt. aprovação' && sortAsc === false;
 
             const totalItens = currentFilteredData.length;
             let saldoEntregar = 0, vlTotal = 0, vlAFaturar = 0, vlLiberado = 0, vlFatDispTotal = 0, vlLucroTotal = 0;
