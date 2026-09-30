@@ -346,7 +346,7 @@
     <!-- FOOTER -->
     <footer class="bg-white border-t border-slate-200 py-3 mt-auto">
         <div class="max-w-[96%] mx-auto px-4 flex justify-between items-center text-xs text-slate-500">
-            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V3.0 Pro</span>
+            <span>© 2026 PSTEC Brasil — Módulo Carteira de Produção V3.0.1 Pro</span>
             <span id="lastUpdateLabel">Atualizado: -</span>
         </div>
     </footer>
@@ -640,6 +640,60 @@
         };
 
         const colFilterState = {};
+        const FILTER_CACHE_KEY = 'pstec_carteira_filter_state_v1';
+
+        function carteiraSetMapToJson(obj) {
+            return Object.fromEntries(Object.entries(obj).map(([k,v]) => [k, [...(v || [])]]));
+        }
+
+        function saveCarteiraFilterCache() {
+            try {
+                localStorage.setItem(FILTER_CACHE_KEY, JSON.stringify({
+                    filterState: carteiraSetMapToJson(filterState),
+                    colFilterState: carteiraSetMapToJson(colFilterState),
+                    search: document.getElementById('searchInput')?.value || '',
+                    dateFrom: document.getElementById('dateFrom')?.value || '',
+                    dateTo: document.getElementById('dateTo')?.value || '',
+                    sortColumn,
+                    sortAsc
+                }));
+            } catch (e) {
+                console.warn('Falha ao salvar filtros da Carteira:', e);
+            }
+        }
+
+        function restoreCarteiraFilterCache() {
+            try {
+                const raw = localStorage.getItem(FILTER_CACHE_KEY);
+                if (!raw) return;
+                const saved = JSON.parse(raw);
+
+                Object.keys(filterState).forEach(k => {
+                    if (Array.isArray(saved.filterState?.[k])) {
+                        filterState[k] = new Set(saved.filterState[k]);
+                    }
+                });
+
+                Object.keys(saved.colFilterState || {}).forEach(k => {
+                    if (Array.isArray(saved.colFilterState[k])) {
+                        colFilterState[k] = new Set(saved.colFilterState[k]);
+                    }
+                });
+
+                const search = document.getElementById('searchInput');
+                const dateFrom = document.getElementById('dateFrom');
+                const dateTo = document.getElementById('dateTo');
+
+                if (search) search.value = saved.search || '';
+                if (dateFrom) dateFrom.value = saved.dateFrom || '';
+                if (dateTo) dateTo.value = saved.dateTo || '';
+
+                if (saved.sortColumn) sortColumn = saved.sortColumn;
+                if (typeof saved.sortAsc === 'boolean') sortAsc = saved.sortAsc;
+            } catch (e) {
+                console.warn('Falha ao restaurar filtros da Carteira:', e);
+            }
+        }
         const colFilterDraftState = {};
         const CARTEIRA_FILTERS_STATE_VERSION = 1;
 
@@ -821,6 +875,7 @@
         ];
 
         document.addEventListener('DOMContentLoaded', () => {
+            restoreCarteiraFilterCache();
             const nomeUser = localStorage.getItem('pstec_usuario_nome');
             if (nomeUser) {
                 document.getElementById('userDisplayName').textContent = nomeUser;
@@ -1725,6 +1780,7 @@
         }
 
         function renderCarteiraView() {
+            saveCarteiraFilterCache();
             currentFilteredData = getFilteredCarteira();
             saveCarteiraFiltersState();
             batchStep = parseInt(document.getElementById('selectBatchSize')?.value || 50);
@@ -2571,6 +2627,7 @@
         }
 
         function clearAllFilters() {
+            localStorage.removeItem(FILTER_CACHE_KEY);
             carteiraDashboardClickState = {};
             document.getElementById('searchInput').value = '';
             document.getElementById('dateFrom').value = '';
