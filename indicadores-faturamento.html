@@ -500,7 +500,7 @@ function chart(id,type,labels,values,opts){
      ctx.strokeStyle='#64748b';
      ctx.fillStyle='#475569';
      ctx.lineWidth=1;
-     ctx.font='700 11px Segoe UI, sans-serif';
+     ctx.font='700 12px Segoe UI, sans-serif';
      meta.data.forEach((arc,i)=>{
        const value=n(values[i]);if(!value)return;
        const angle=(arc.startAngle+arc.endAngle)/2;
@@ -536,17 +536,23 @@ function chart(id,type,labels,values,opts){
      indexAxis:opts.horizontal?'y':'x',
      layout:{padding:layoutPadding},
      plugins:{
-       legend:{display:pieLike,position:'top'},
+       legend:{display:pieLike,position:'top',labels:{font:{size:12,weight:'600'},padding:14}},
        tooltip:{callbacks:{label:function(ctx){let v=ctx.raw;return (opts.money?brl(v):opts.percent?pct(v):num(v))}}},
        datalabels:window.ChartDataLabels?{
          display:function(ctx){return !opts.externalLabels&&n(ctx.dataset.data[ctx.dataIndex])!==0},
          formatter:function(v){return opts.money?new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1,style:'currency',currency:'BRL'}).format(v):opts.percent?pct(v):num(v)},
          anchor:pieLike?'center':'end',
          align:pieLike?'center':'top',
-         clip:false,clamp:true,font:{size:9,weight:'700'}
+         clip:false,clamp:true,font:{size:11,weight:'700'}
        }:false
      },
-     scales:pieLike?{}:{y:{beginAtZero:true,ticks:{callback:function(v){return opts.money?new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1}).format(v):v}}},x:{ticks:{autoSkip:true,maxRotation:0}}},
+     scales:pieLike?{}:(opts.horizontal?{
+       x:{beginAtZero:true,ticks:{font:{size:11},callback:function(v){return opts.money?new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',notation:'compact',maximumFractionDigits:1}).format(v):v}}},
+       y:{type:'category',ticks:{autoSkip:false,font:{size:11}}}
+     }:{
+       y:{beginAtZero:true,ticks:{font:{size:11},callback:function(v){return opts.money?new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',notation:'compact',maximumFractionDigits:1}).format(v):v}}},
+       x:{ticks:{autoSkip:true,maxRotation:0,font:{size:11}}}
+     }),
      onClick:function(evt,els){if(!els.length||!opts.click)return;opts.click(labels[els[0].index],els[0].index)}
    }
  });
@@ -567,7 +573,7 @@ function stackedMonthlyStatusChart(id,monthKeys,rows){
    id:'stackedTotalLabels',
    afterDatasetsDraw(chart){
      const ctx=chart.ctx,meta=chart.getDatasetMeta(0),y=chart.scales.y;
-     ctx.save();ctx.fillStyle='#475569';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.font='700 9px Segoe UI, sans-serif';
+     ctx.save();ctx.fillStyle='#475569';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.font='700 11px Segoe UI, sans-serif';
      totals.forEach((total,i)=>{
        const bar=meta.data[i];if(!bar||!total)return;
        const label=new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1,style:'currency',currency:'BRL'}).format(total);
@@ -593,15 +599,104 @@ function stackedMonthlyStatusChart(id,monthKeys,rows){
      responsive:true,maintainAspectRatio:false,
      layout:{padding:{top:24,right:10}},
      plugins:{
-       legend:{display:true,position:'top',labels:{usePointStyle:true,pointStyle:'rectRounded',boxWidth:10,boxHeight:10,font:{size:10,weight:'600'}}},
+       legend:{display:true,position:'top',labels:{usePointStyle:true,pointStyle:'rectRounded',boxWidth:11,boxHeight:11,font:{size:12,weight:'600'},padding:14}},
        tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+brl(ctx.raw)}},
        datalabels:false
      },
      scales:{
-       x:{stacked:true,ticks:{autoSkip:true,maxRotation:0}},
-       y:{stacked:true,beginAtZero:true,ticks:{callback:v=>new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1}).format(v)}}
+       x:{stacked:true,ticks:{autoSkip:true,maxRotation:0,font:{size:11}}},
+       y:{stacked:true,beginAtZero:true,ticks:{font:{size:11},callback:v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',notation:'compact',maximumFractionDigits:1}).format(v)}}
      },
      onClick:(evt,els)=>{if(!els.length)return;const i=els[0].index;toggleDashboardFilter('mes',monthKeys[i],'Mês: '+monthLabel(monthKeys[i]))}
+   }
+ });
+}
+
+
+function clientRevenueStackedChart(id,rows){
+ let el=document.getElementById(id);if(!el)return;
+ const statuses=['DENTRO DO PRAZO','FORA DO PRAZO','SEM PREVISÃO'];
+ const agg={};
+ rows.forEach(r=>{
+   const cliente=text(r.Cliente)||'(Vazio)';
+   if(!agg[cliente])agg[cliente]={total:0,by:{}};
+   const bucket=statuses.includes(prazoBucket(r['Status Prazo']))?prazoBucket(r['Status Prazo']):'SEM PREVISÃO';
+   agg[cliente].total+=n(r.Valor);
+   agg[cliente].by[bucket]=(agg[cliente].by[bucket]||0)+n(r.Valor);
+ });
+ const top=Object.entries(agg).sort((a,b)=>b[1].total-a[1].total).slice(0,10);
+ const labels=top.map(x=>x[0]),totals=top.map(x=>x[1].total);
+ const endLabels={
+   id:'clientRevenueEndLabels',
+   afterDatasetsDraw(chart){
+     const ctx=chart.ctx,x=chart.scales.x,y=chart.scales.y;
+     ctx.save();ctx.fillStyle='#475569';ctx.textAlign='left';ctx.textBaseline='middle';ctx.font='700 11px Segoe UI, sans-serif';
+     totals.forEach((total,i)=>{
+       if(!total)return;
+       ctx.fillText(brl(total),x.getPixelForValue(total)+8,y.getPixelForValue(i));
+     });
+     ctx.restore();
+   }
+ };
+ charts[id]=new Chart(el,{
+   type:'bar',
+   data:{
+     labels,
+     datasets:statuses.map(s=>({
+       label:s,
+       data:top.map(x=>n(x[1].by[s])),
+       backgroundColor:statusChartColor(s),
+       borderWidth:0,
+       stack:'prazo'
+     }))
+   },
+   plugins:[endLabels],
+   options:{
+     responsive:true,maintainAspectRatio:false,indexAxis:'y',
+     layout:{padding:{top:8,right:135,bottom:4,left:4}},
+     plugins:{
+       legend:{display:true,position:'top',labels:{usePointStyle:true,pointStyle:'rectRounded',boxWidth:11,boxHeight:11,font:{size:12,weight:'600'},padding:14}},
+       tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+brl(ctx.raw)}},
+       datalabels:false
+     },
+     scales:{
+       x:{stacked:true,beginAtZero:true,ticks:{font:{size:11},callback:v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',notation:'compact',maximumFractionDigits:1}).format(v)}},
+       y:{stacked:true,type:'category',ticks:{autoSkip:false,font:{size:12,weight:'600'},color:'#475569'}}
+     },
+     onClick:(evt,els)=>{if(!els.length)return;const cliente=labels[els[0].index];toggleDashboardFilter('cliente',cliente,'Cliente: '+cliente)}
+   }
+ });
+}
+
+function clientDelayChart(id,entries){
+ let el=document.getElementById(id);if(!el)return;
+ const labels=entries.map(x=>x[0]),values=entries.map(x=>x[1]);
+ const endLabels={
+   id:'clientDelayEndLabels',
+   afterDatasetsDraw(chart){
+     const ctx=chart.ctx,x=chart.scales.x,y=chart.scales.y;
+     ctx.save();ctx.fillStyle='#475569';ctx.textAlign='left';ctx.textBaseline='middle';ctx.font='700 11px Segoe UI, sans-serif';
+     values.forEach((value,i)=>{
+       if(!value)return;
+       const label=value.toLocaleString('pt-BR',{maximumFractionDigits:1})+' dias';
+       ctx.fillText(label,x.getPixelForValue(value)+8,y.getPixelForValue(i));
+     });
+     ctx.restore();
+   }
+ };
+ charts[id]=new Chart(el,{
+   type:'bar',
+   data:{labels,datasets:[{label:'Atraso médio',data:values,backgroundColor:'#1a5ce6',borderWidth:0}]},
+   plugins:[endLabels],
+   options:{
+     responsive:true,maintainAspectRatio:false,indexAxis:'y',
+     layout:{padding:{top:8,right:70,bottom:4,left:4}},
+     plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>n(ctx.raw).toLocaleString('pt-BR',{maximumFractionDigits:1})+' dias'}},datalabels:false},
+     scales:{
+       x:{beginAtZero:true,ticks:{font:{size:11}}},
+       y:{type:'category',ticks:{autoSkip:false,font:{size:12,weight:'600'},color:'#475569'}}
+     },
+     onClick:(evt,els)=>{if(!els.length)return;const cliente=labels[els[0].index];toggleDashboardFilter('cliente',cliente,'Cliente: '+cliente)}
    }
  });
 }
@@ -616,10 +711,9 @@ function renderDashboard(rows){
  stackedMonthlyStatusChart('ch3',fkeys,rows);
  let vp={};rows.forEach(r=>{let k=prazoBucket(r['Status Prazo']);vp[k]=(vp[k]||0)+n(r.Valor)});let vpE=Object.entries(vp);
  chart('ch4','bar',vpE.map(x=>x[0]),vpE.map(x=>x[1]),{label:'Valor',money:true,colors:vpE.map(x=>statusChartColor(x[0])),click:function(v){toggleDashboardFilter('prazoBucket',v,'Prazo: '+v)}});
- let cli={};rows.forEach(r=>{let k=text(r.Cliente)||'(Vazio)';cli[k]=(cli[k]||0)+n(r.Valor)});let ce=Object.entries(cli).sort((a,b)=>b[1]-a[1]).slice(0,10);
- chart('ch5','bar',ce.map(x=>x[0]),ce.map(x=>x[1]),{label:'Faturamento',money:true,horizontal:true,click:function(v){toggleDashboardFilter('cliente',v,'Cliente: '+v)}});
+ clientRevenueStackedChart('ch5',rows);
  let late={};rows.filter(r=>prazoBucket(r['Status Prazo'])==='FORA DO PRAZO'&&n(r['Dias Prazo'])>0).forEach(r=>{let k=text(r.Cliente)||'(Vazio)';if(!late[k])late[k]=[];late[k].push(n(r['Dias Prazo']))});let le=Object.entries(late).map(x=>[x[0],x[1].reduce((a,b)=>a+b,0)/x[1].length]).sort((a,b)=>b[1]-a[1]).slice(0,10);
- chart('ch6','bar',le.map(x=>x[0]),le.map(x=>x[1]),{label:'Dias',horizontal:true});
+ clientDelayChart('ch6',le);
 }
 function monthLabel(k){if(!k)return '';let p=k.split('-'),names=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];return names[Number(p[1])-1]+'/'+p[0].slice(2)}
 function toggleDashboardFilter(type,value,label){if(dashboardFilter&&dashboardFilter.type===type&&dashboardFilter.value===value)dashboardFilter=null;else dashboardFilter={type:type,value:value,label:label};render()}
