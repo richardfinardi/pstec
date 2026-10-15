@@ -132,9 +132,9 @@ const MONTHS=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov',
 const SALES=['VENDA DE PRODUTOS','VENDA DE SERVIÇOS','VENDA DE BENEFICIAMENTO','VENDA DE SUCATA'];
 const FIELDS={
  date:['data_emissao','dt_emissao','data_emissao_nf','dt_emissao_nf','emissao','data_emissão','data emissão','data_faturamento','dt_faturamento','data_nf','dt_nf','data_nota','data','data_fat'],
- value:['valor_total','vl_total','valor total','valor_faturamento','vl_faturamento','vl_faturado','faturamento','valor','valor_nf','vl_total_item','total_nf','vl_nf','total','valorliquido','valor_liquido'],
+ value:['valor_total','vl_total','valor total','valor_faturamento','vl_faturamento','vl_faturado','faturamento','valor','valor_nf','vl_total_item','total_nf','vl_nf','total','valorliquido','valor_liquido','valor_total_nota','vl_total_nota','vl_total_produto'],
  client:['cliente_fornecedor','cliente/fornecedor','cliente','nome_cliente','cliente_nome','razao_social','nome_fantasia','fornecedor','nome_do_cliente','nomecliente'],
- plan:['plano_de_contas','plano_de_conta','plano_contas','plano_conta','plano de contas','conta_contabil','nome_plano_contas','descricao_plano_contas','plano','tipo_faturamento','conta'],
+ plan:['plano_de_contas','plano_de_conta','plano_contas','plano_conta','plano de contas','conta_contabil','nome_plano_contas','descricao_plano_contas','plano','tipo_faturamento','conta','nome_plano','nome_conta','descricao_conta'],
  nf:['numero_nf','numero_nota','numero_nfe','nota_fiscal','n_nf','nf','nfe','num_nf','numero','nota'],
  item:['produto','descricao_produto','descricao_item','produto_descricao','item','descricao','titulo'],
  quantity:['qtde','quantidade','qtd','qtde_faturada']
@@ -146,7 +146,7 @@ const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const money=x=>nfBR.format(x||0);
 const num=x=>numberBR.format(x||0);
 const today=new Date();
-let all=[],visible=[],compareRows=[],mapping={},keys=[],charts={},activeTab='overview',page=0,sortKey='date',sortDesc=true,hasData=false,fetching=false,lastSync=null,allPlans=[],selectedPlans=new Set(),startUp=true,searchTimer=null;
+let all=[],visible=[],compareRows=[],mapping={},keys=[],charts={},activeTab='overview',page=0,sortKey='date',sortDesc=true,hasData=false,fetching=false,lastSync=null,allPlans=[],selectedPlans=new Set(),plansInitialized=false,startUp=true,searchTimer=null;
 let filters={year:String(today.getFullYear()),month:'',client:'',search:'',dateStart:'',dateEnd:''};
 
 function parseValue(input){
@@ -161,7 +161,7 @@ function parseValue(input){
 function parseDate(v){
  if(v===null||v===undefined||v==='')return null;
  if(v instanceof Date)return Number.isNaN(v.getTime())?null:v;
- if(typeof v==='number'){if(v>100000000000)return new Date(v);if(v>1000000000)return new Date(v*1000);if(v>20000&&v<90000)return new Date(Date.UTC(1899,11,30)+v*86400000);return null;}
+ if(typeof v==='number'){if(v>100000000000)return new Date(v);if(v>1000000000)return new Date(v*1000);if(v>20000&&v<90000){const d=new Date(1899,11,30);d.setDate(d.getDate()+Math.floor(v));return d;}return null;}
  const s=String(v).trim();
  let m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
  if(m)return validDate(+m[1],+m[2],+m[3]);
@@ -213,7 +213,7 @@ function normalizeDataset(raw){
  return parsed;
 }
 function loadFilterState(){
- try{const x=JSON.parse(localStorage.getItem(FILTER_KEY)||'null');if(x&&typeof x==='object'){for(const k of Object.keys(filters))if(typeof x[k]==='string')filters[k]=x[k];if(Array.isArray(x.plans))selectedPlans=new Set(x.plans);}}catch(e){console.warn('Filtros:',e);}
+ try{const x=JSON.parse(localStorage.getItem(FILTER_KEY)||'null');if(x&&typeof x==='object'){for(const k of Object.keys(filters))if(typeof x[k]==='string')filters[k]=x[k];if(Array.isArray(x.plans)){selectedPlans=new Set(x.plans);plansInitialized=true;}}}catch(e){console.warn('Filtros:',e);}
 }
 function saveFilterState(){try{localStorage.setItem(FILTER_KEY,JSON.stringify({...filters,plans:[...selectedPlans]}));}catch(e){}}
 function setError(msg){const el=document.getElementById('errorBanner');el.hidden=!msg;if(msg)el.textContent=msg;}
@@ -232,21 +232,21 @@ function updateFilterControls(initial=false){
  ce.value=filters.client?String(clients.indexOf(filters.client)):'';
  for(const k of ['search','dateStart','dateEnd'])document.getElementById(k==='search'?'searchFilter':k).value=filters[k];
  allPlans=[...new Set(all.map(r=>r.plan))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
- if(startUp&&selectedPlans.size===0){
+ if(startUp&&!plansInitialized){
   const salePlans=allPlans.filter(s=>SALES.some(name=>normalize(name)===normalize(s)));
   selectedPlans=new Set(salePlans.length?salePlans:allPlans);
  }else{
   selectedPlans=new Set([...selectedPlans].filter(p=>allPlans.includes(p)));
-  if(!selectedPlans.size&&allPlans.length)selectedPlans=new Set(allPlans);
+
  }
  renderPlanOptions();
 }
 function renderPlanOptions(){
  document.getElementById('planOptions').innerHTML=allPlans.map((p,i)=>'<label class="flex gap-2 items-center rounded-lg hover:bg-blue-50 p-1.5 text-xs font-semibold cursor-pointer"><input data-idx="'+i+'" type="checkbox" '+(selectedPlans.has(p)?'checked':'')+' onchange="setPlan(this)"><span>'+esc(p)+'</span></label>').join('');
- document.getElementById('plansLabel').textContent=selectedPlans.size===allPlans.length?'Todos os planos':selectedPlans.size===1?[...selectedPlans][0]:selectedPlans.size+' planos selecionados';
+ document.getElementById('plansLabel').textContent=!selectedPlans.size?'Nenhum plano selecionado':selectedPlans.size===allPlans.length?'Todos os planos':selectedPlans.size===1?[...selectedPlans][0]:selectedPlans.size+' planos selecionados';
 }
-function setPlan(cb){const p=allPlans[+cb.dataset.idx];if(cb.checked)selectedPlans.add(p);else selectedPlans.delete(p);renderPlanOptions();applyFilters();}
-function toggleAllPlans(){selectedPlans=selectedPlans.size===allPlans.length?new Set():new Set(allPlans);renderPlanOptions();applyFilters();}
+function setPlan(cb){const p=allPlans[+cb.dataset.idx];plansInitialized=true;if(cb.checked)selectedPlans.add(p);else selectedPlans.delete(p);renderPlanOptions();applyFilters();}
+function toggleAllPlans(){plansInitialized=true;selectedPlans=selectedPlans.size===allPlans.length?new Set():new Set(allPlans);renderPlanOptions();applyFilters();}
 function togglePlanMenu(e){e.stopPropagation();const menu=document.getElementById('plansMenu');menu.hidden=!menu.hidden;}
 document.addEventListener('click',e=>{if(!e.target.closest('#plansMenu')&&!e.target.closest('[onclick^="togglePlanMenu"]'))document.getElementById('plansMenu').hidden=true;});
 function toggleFilters(){const el=document.getElementById('filterBody');el.hidden=!el.hidden;el.style.display=el.hidden?'none':'';localStorage.setItem('pstec_faturamento_filters_collapsed',el.hidden?'1':'0');document.getElementById('toggleFiltersBtn').textContent=el.hidden?'Expandir':'Recolher';}
@@ -261,7 +261,7 @@ function onFilterChange(){
 function onSearchInput(){clearTimeout(searchTimer);searchTimer=setTimeout(()=>{filters.search=document.getElementById('searchFilter').value.trim();applyFilters();},200);}
 function resetFilters(){
  filters={year:'',month:'',client:'',search:'',dateStart:'',dateEnd:''};
- selectedPlans=new Set(allPlans);updateFilterControls(false);applyFilters();
+ plansInitialized=true;selectedPlans=new Set(allPlans);updateFilterControls(false);applyFilters();
 }
 function matches(r,ignoreYear=false,ignoreDates=false){
  if(!ignoreYear&&filters.year&&r.year!==+filters.year)return false;
@@ -314,7 +314,7 @@ function createChart(id,config){
 }
 const chartPlugins=(stacked=false)=>({
  legend:{display:false},
- tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+money(ctx.parsed.y??ctx.parsed.x??ctx.raw)}},
+ tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+money(ctx.chart.options.indexAxis==='y'?ctx.parsed.x:ctx.parsed.y)}},
  datalabels:{display:false}
 });
 function renderCurrentTab(){
