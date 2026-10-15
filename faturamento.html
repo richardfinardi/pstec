@@ -103,7 +103,7 @@ td{font-size:12px}tr:hover td{background:#f6f9ff}
   </div>
  </section>
  <section id="pane-daily" class="tab-pane space-y-4" hidden>
-  <div class="card p-4"><div class="flex justify-between items-center gap-2 mb-3"><h3 class="font-extrabold text-sm">Evolução diária do faturamento</h3><span class="text-xs text-slate-500">Valores conforme data de emissão da NF</span></div><div class="chart-wrap tall"><canvas id="dailyChart"></canvas></div></div>
+  <div class="card p-4"><div class="flex justify-between items-center gap-2 mb-3"><h3 class="font-extrabold text-sm">Evolução diária do faturamento</h3><span class="text-xs text-slate-500" id="dailyChartNote">Valores conforme data de emissão da NF</span></div><div class="chart-wrap tall"><canvas id="dailyChart"></canvas></div></div>
   <div class="card p-4"><h3 class="font-extrabold text-sm mb-2">Totais por dia</h3><div class="table-wrap"><table class="w-full"><thead><tr><th>Data de emissão</th><th class="num">Documentos / itens</th><th class="num">Faturamento</th></tr></thead><tbody id="dailySummary"></tbody></table></div></div>
  </section>
  <section id="pane-comparison" class="tab-pane space-y-4" hidden>
@@ -263,9 +263,9 @@ function resetFilters(){
  filters={year:'',month:'',client:'',search:'',dateStart:'',dateEnd:''};
  plansInitialized=true;selectedPlans=new Set(allPlans);updateFilterControls(false);applyFilters();
 }
-function matches(r,ignoreYear=false,ignoreDates=false){
+function matches(r,ignoreYear=false,ignoreDates=false,ignoreMonth=false){
  if(!ignoreYear&&filters.year&&r.year!==+filters.year)return false;
- if(filters.month&&r.month!==+filters.month)return false;
+ if(!ignoreMonth&&filters.month&&r.month!==+filters.month)return false;
  if(filters.client&&r.client!==filters.client)return false;
  if(!selectedPlans.has(r.plan))return false;
  if(!ignoreDates&&filters.dateStart&&r.date<filters.dateStart)return false;
@@ -288,7 +288,7 @@ function applyFilters(){
 }
 function renderKPIs(){
  const total=sum(visible),months=new Set(visible.map(r=>r.year+'-'+r.month));
- const base=all.filter(r=>matches(r,true,true));const current=localISO(today),thisMonth=base.filter(r=>r.year===today.getFullYear()&&r.month===today.getMonth()+1);
+ const base=all.filter(r=>matches(r,true,true,true));const current=localISO(today),thisMonth=base.filter(r=>r.year===today.getFullYear()&&r.month===today.getMonth()+1);
  const day=base.filter(r=>r.date===current);
  document.getElementById('kpiTotal').textContent=money(total);
  document.getElementById('kpiTotalSub').textContent=num(visible.length)+' itens faturados';
@@ -349,8 +349,9 @@ function totalOrZeroPercent(v,total){return total?(v/total*100).toLocaleString('
 function renderDaily(){
  const groups=new Map();
  for(const r of visible){let a=groups.get(r.date);if(!a){a={value:0,count:0};groups.set(r.date,a);}a.value+=r.value;a.count++;}
- const dates=[...groups.keys()].sort(),values=dates.map(d=>groups.get(d).value);
- createChart('dailyChart',{type:'bar',data:{labels:dates.map(fmtDate),datasets:[{label:'Faturamento',data:values,backgroundColor:'#003B96',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:chartPlugins(),scales:{x:{ticks:{maxTicksLimit:20},grid:{display:false}},y:{beginAtZero:true,ticks:{callback:v=>(v/1000).toLocaleString('pt-BR')+' mil'}}}}});
+ const dates=[...groups.keys()].sort(),chartDates=filters.month?dates:dates.slice(-62),values=chartDates.map(d=>groups.get(d).value);
+ document.getElementById('dailyChartNote').textContent=filters.month?'Dias do mês selecionado':'Gráfico: últimos 62 dias com movimento • tabela: período completo';
+ createChart('dailyChart',{type:'bar',data:{labels:chartDates.map(fmtDate),datasets:[{label:'Faturamento',data:values,backgroundColor:'#003B96',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:chartPlugins(),scales:{x:{ticks:{maxTicksLimit:20},grid:{display:false}},y:{beginAtZero:true,ticks:{callback:v=>(v/1000).toLocaleString('pt-BR')+' mil'}}}}});
  document.getElementById('dailySummary').innerHTML=dates.length?dates.slice().reverse().map(d=>'<tr><td>'+fmtDate(d)+'</td><td class="num">'+num(groups.get(d).count)+'</td><td class="num font-bold">'+money(groups.get(d).value)+'</td></tr>').join(''):'<tr><td colspan="3" class="empty">Nenhuma data no período.</td></tr>';
 }
 function renderComparison(){
