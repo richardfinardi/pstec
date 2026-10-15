@@ -69,7 +69,7 @@ td{font-size:12px}tr:hover td{background:#f6f9ff}
    <label><span class="field-label">Mês</span><select class="control" id="monthFilter" onchange="onFilterChange()"><option value="">Todos os meses</option></select></label>
    <label><span class="field-label">Cliente</span><select class="control" id="clientFilter" onchange="onFilterChange()"><option value="">Todos os clientes</option></select></label>
    <div class="relative"><span class="field-label">Plano de contas</span><button type="button" class="control text-left flex justify-between items-center" onclick="togglePlanMenu(event)"><span id="plansLabel" class="truncate">Vendas (Power BI)</span><span>▾</span></button>
-    <div id="plansMenu" hidden class="filter-menu"><div class="flex items-center justify-between mb-2"><b class="text-xs">Plano de contas</b><button class="text-xs font-bold text-pstec-600" onclick="toggleAllPlans()">Selecionar tudo</button></div><div id="planOptions" class="space-y-1"></div></div>
+    <div id="plansMenu" hidden class="filter-menu"><div class="flex items-center justify-between mb-2"><b class="text-xs">Plano de contas</b><button id="allPlansButton" type="button" class="text-xs font-bold text-pstec-600" onclick="toggleAllPlans()">Selecionar tudo</button></div><div id="planOptions" class="space-y-1"></div><button id="otherPlansButton" type="button" hidden onclick="toggleOtherPlans()" class="w-full mt-2 pt-2 border-t border-slate-200 flex items-center justify-between text-xs font-extrabold text-pstec-700 hover:text-pstec-900"><span id="otherPlansLabel">Exibir outros</span><span id="otherPlansArrow">▼</span></button><div id="otherPlanOptions" class="space-y-1 mt-2" hidden></div></div>
    </div>
    <label class="lg:col-span-2"><span class="field-label">Pesquisar em todos os campos</span><input id="searchFilter" class="control" placeholder="NF, cliente, produto, descrição..." oninput="onSearchInput()"></label>
    <label><span class="field-label">Emissão a partir de</span><input id="dateStart" type="date" class="control" onchange="onFilterChange()"></label>
@@ -130,7 +130,7 @@ const API='https://pstec.consultoriarf.net/faturamento';
 const CACHE_KEY='pstec_faturamento_bi_v1';
 const FILTER_KEY='pstec_faturamento_filters_v1';
 const MONTHS=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-const SALES=['VENDA DE PRODUTOS','VENDA DE SERVIÇOS','VENDA DE BENEFICIAMENTO','VENDA DE SUCATA'];
+const SALES=['VENDA DE PRODUTOS','VENDA DE SERVIÇOS','VENDA DE SUCATA'];
 const FIELDS={
  date:['data_emissao','dt_emissao','data_emissao_nf','dt_emissao_nf','emissao','data_emissão','data emissão','data_faturamento','dt_faturamento','data_nf','dt_nf','data_nota','data','data_fat'],
  value:['valor_total','vl_total','valor total','valor_faturamento','vl_faturamento','vl_faturado','faturamento','valor','valor_nf','vl_total_item','total_nf','vl_nf','total','valorliquido','valor_liquido','valor_total_nota','vl_total_nota','vl_total_produto'],
@@ -147,7 +147,7 @@ const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const money=x=>nfBR.format(x||0);
 const num=x=>numberBR.format(x||0);
 const today=new Date();
-let all=[],visible=[],compareRows=[],mapping={},keys=[],charts={},activeTab='overview',page=0,sortKey='date',sortDesc=true,hasData=false,fetching=false,lastSync=null,allPlans=[],selectedPlans=new Set(),plansInitialized=false,startUp=true,searchTimer=null;
+let all=[],visible=[],compareRows=[],mapping={},keys=[],charts={},activeTab='overview',page=0,sortKey='date',sortDesc=true,hasData=false,fetching=false,lastSync=null,allPlans=[],selectedPlans=new Set(),plansInitialized=false,showOtherPlans=false,startUp=true,searchTimer=null;
 let filters={year:String(today.getFullYear()),month:'',client:'',search:'',dateStart:'',dateEnd:''};
 
 function parseValue(input){
@@ -242,12 +242,38 @@ function updateFilterControls(initial=false){
  }
  renderPlanOptions();
 }
-function renderPlanOptions(){
- document.getElementById('planOptions').innerHTML=allPlans.map((p,i)=>'<label class="flex gap-2 items-center rounded-lg hover:bg-blue-50 p-1.5 text-xs font-semibold cursor-pointer"><input data-idx="'+i+'" type="checkbox" '+(selectedPlans.has(p)?'checked':'')+' onchange="setPlan(this)"><span>'+esc(p)+'</span></label>').join('');
- document.getElementById('plansLabel').textContent=!selectedPlans.size?'Nenhum plano selecionado':selectedPlans.size===allPlans.length?'Todos os planos':selectedPlans.size===1?[...selectedPlans][0]:selectedPlans.size+' planos selecionados';
+// Três contas operacionais sempre aparecem no primeiro nível.
+// Contas adicionais permanecem disponíveis exclusivamente em "Exibir outros".
+function mainPlanList(){return SALES.map(name=>allPlans.find(p=>normalize(p)===normalize(name))).filter(Boolean);}
+function otherPlanList(){const fixed=new Set(mainPlanList());return allPlans.filter(p=>!fixed.has(p));}
+function planOptionHTML(p){
+ const i=allPlans.indexOf(p);
+ return '<label class="flex gap-2 items-center rounded-lg hover:bg-blue-50 p-1.5 text-xs font-semibold cursor-pointer"><input data-idx="'+i+'" type="checkbox" '+(selectedPlans.has(p)?'checked':'')+' onchange="setPlan(this)"><span>'+esc(p)+'</span></label>';
 }
-function setPlan(cb){const p=allPlans[+cb.dataset.idx];plansInitialized=true;if(cb.checked)selectedPlans.add(p);else selectedPlans.delete(p);renderPlanOptions();applyFilters();}
-function toggleAllPlans(){plansInitialized=true;selectedPlans=selectedPlans.size===allPlans.length?new Set():new Set(allPlans);renderPlanOptions();applyFilters();}
+function renderPlanOptions(){
+ const main=mainPlanList(),others=otherPlanList();
+ document.getElementById('planOptions').innerHTML=main.map(planOptionHTML).join('');
+ const otherBtn=document.getElementById('otherPlansButton'),otherBox=document.getElementById('otherPlanOptions');
+ otherBtn.hidden=others.length===0;
+ otherBox.hidden=!showOtherPlans||!others.length;
+ otherBox.innerHTML=showOtherPlans?others.map(planOptionHTML).join(''):'';
+ document.getElementById('otherPlansLabel').textContent=showOtherPlans?'Ocultar outros':'Exibir outros';
+ document.getElementById('otherPlansArrow').textContent=showOtherPlans?'▲':'▼';
+ const available=showOtherPlans?allPlans:main;
+ const allVisible=available.length>0&&available.every(p=>selectedPlans.has(p));
+ document.getElementById('allPlansButton').textContent=allVisible?'Desmarcar tudo':'Selecionar tudo';
+ const count=selectedPlans.size;
+ document.getElementById('plansLabel').textContent=!count?'Nenhum plano selecionado':count===allPlans.length?'Todos os planos':count===1?[...selectedPlans][0]:count+' planos selecionados';
+}
+function setPlan(cb){const p=allPlans[+cb.dataset.idx];if(!p)return;plansInitialized=true;if(cb.checked)selectedPlans.add(p);else selectedPlans.delete(p);renderPlanOptions();applyFilters();}
+function toggleOtherPlans(){showOtherPlans=!showOtherPlans;renderPlanOptions();}
+function toggleAllPlans(){
+ const choices=showOtherPlans?allPlans:mainPlanList();
+ const allSelected=choices.length>0&&choices.every(p=>selectedPlans.has(p));
+ plansInitialized=true;
+ for(const p of choices){if(allSelected)selectedPlans.delete(p);else selectedPlans.add(p);}
+ renderPlanOptions();applyFilters();
+}
 function togglePlanMenu(e){e.stopPropagation();const menu=document.getElementById('plansMenu');menu.hidden=!menu.hidden;}
 document.addEventListener('click',e=>{if(!e.target.closest('#plansMenu')&&!e.target.closest('[onclick^="togglePlanMenu"]'))document.getElementById('plansMenu').hidden=true;});
 function toggleFilters(){const el=document.getElementById('filterBody');el.hidden=!el.hidden;el.style.display=el.hidden?'none':'';localStorage.setItem('pstec_faturamento_filters_collapsed',el.hidden?'1':'0');document.getElementById('toggleFiltersBtn').textContent=el.hidden?'Expandir':'Recolher';}
@@ -308,15 +334,26 @@ function renderKPIs(){
   document.getElementById('kpiYoYSub').textContent=yr+' x '+(yr-1)+' (mesmos filtros, sem datas)';
  }else{document.getElementById('kpiYoY').textContent='—';document.getElementById('kpiYoYSub').textContent='Selecione um ano';}
 }
+if(window.Chart&&window.ChartDataLabels)Chart.register(ChartDataLabels);
+function compactBRL(value){
+ const abs=Math.abs(Number(value)||0),sign=value<0?'-':'';
+ if(abs>=1000000)return sign+'R$ '+(abs/1000000).toLocaleString('pt-BR',{maximumFractionDigits:2})+' mi';
+ if(abs>=1000)return sign+'R$ '+(abs/1000).toLocaleString('pt-BR',{maximumFractionDigits:1})+' mil';
+ return money(value);
+}
+function barDataLabels(horizontal=false){
+ return {display:ctx=>Number(ctx.dataset.data[ctx.dataIndex])!==0,formatter:compactBRL,
+   color:'#15325b',font:{size:11,weight:'bold'},anchor:'end',align:'end',offset:4,clamp:true,clip:false};
+}
 function createChart(id,config){
  if(charts[id]){charts[id].destroy();delete charts[id];}
  const el=document.getElementById(id);if(!el||!window.Chart)return;
  charts[id]=new Chart(el,config);
 }
-const chartPlugins=(stacked=false)=>({
+const chartPlugins=()=>({
  legend:{display:false},
  tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+money(ctx.chart.options.indexAxis==='y'?ctx.parsed.x:ctx.parsed.y)}},
- datalabels:{display:false}
+ datalabels:barDataLabels()
 });
 function renderCurrentTab(){
  if(!hasData)return;
@@ -337,29 +374,29 @@ function renderOverview(){
  const monthly=group(visible,r=>r.year+'-'+String(r.month).padStart(2,'0'));
  const labels=year?MONTHS.map((_,i)=>year+'-'+String(i+1).padStart(2,'0')):[...monthly.keys()].sort();
  const values=labels.map(k=>monthly.get(k)||0);
- createChart('monthlyChart',{type:'bar',data:{labels:labels.map(k=>MONTHS[+k.slice(5)-1]+'/'+k.slice(2,4)),datasets:[{label:'Faturamento',data:values,backgroundColor:'#0955bc',hoverBackgroundColor:'#6ca0ea',borderRadius:5,maxBarThickness:45}]},options:{responsive:true,maintainAspectRatio:false,plugins:chartPlugins(),scales:{y:{beginAtZero:true,ticks:{callback:v=>(v/1000).toLocaleString('pt-BR')+' mil'}},x:{grid:{display:false}}}}});
+ createChart('monthlyChart',{type:'bar',data:{labels:labels.map(k=>MONTHS[+k.slice(5)-1]+'/'+k.slice(2,4)),datasets:[{label:'Faturamento',data:values,backgroundColor:'#0955bc',hoverBackgroundColor:'#6ca0ea',borderRadius:5,maxBarThickness:45}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:25}},plugins:chartPlugins(),scales:{y:{beginAtZero:true,suggestedMax:Math.max(...values,0)*1.14,ticks:{callback:v=>(v/1000).toLocaleString('pt-BR')+' mil'}},x:{grid:{display:false}}}}});
  const clients=[...group(visible,r=>r.client)].sort((a,b)=>b[1]-a[1]);
  const top=clients.slice(0,10),other=clients.slice(10).reduce((a,kv)=>a+kv[1],0);
  const barNames=top.map(x=>x[0]);const barVals=top.map(x=>x[1]);if(other){barNames.push('OUTROS');barVals.push(other);}
- createChart('clientsChart',{type:'bar',data:{labels:barNames,datasets:[{label:'Faturamento',data:barVals,backgroundColor:'#087c9f',borderRadius:4,maxBarThickness:26}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:chartPlugins(),scales:{x:{beginAtZero:true,ticks:{callback:v=>(v/1000).toLocaleString('pt-BR')+' mil'}},y:{ticks:{autoSkip:false,callback:function(v){const t=this.getLabelForValue(v);return t.length>26?t.slice(0,26)+'…':t;}}}}}});
+ createChart('clientsChart',{type:'bar',data:{labels:barNames,datasets:[{label:'Faturamento',data:barVals,backgroundColor:'#087c9f',borderRadius:4,maxBarThickness:26}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,layout:{padding:{right:12}},plugins:chartPlugins(),scales:{x:{beginAtZero:true,suggestedMax:Math.max(...barVals,0)*1.33,ticks:{callback:v=>(v/1000).toLocaleString('pt-BR')+' mil'}},y:{ticks:{autoSkip:false,callback:function(v){const t=this.getLabelForValue(v);return t.length>26?t.slice(0,26)+'…':t;}}}}}});
  const plans=[...group(visible,r=>r.plan)].sort((a,b)=>b[1]-a[1]),colors=['#003B96','#0686ae','#08916e','#f59e0b','#7c3aed','#ec4899','#64748b','#a3a3a3'];
- createChart('plansChart',{type:'doughnut',data:{labels:plans.map(x=>x[0]),datasets:[{label:'Faturamento',data:plans.map(x=>x[1]),backgroundColor:colors,borderColor:'#fff',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}},tooltip:{callbacks:{label:ctx=>ctx.label+': '+money(ctx.raw)}}}}});
+ createChart('plansChart',{type:'doughnut',data:{labels:plans.map(x=>x[0]),datasets:[{label:'Faturamento',data:plans.map(x=>x[1]),backgroundColor:colors,borderColor:'#fff',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,cutout:'53%',plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}},tooltip:{callbacks:{label:ctx=>ctx.label+': '+money(ctx.raw)+' ('+totalOrZeroPercent(ctx.raw,sum(visible))+')'}},datalabels:{display:ctx=>{const vals=ctx.dataset.data,all=vals.reduce((acc,x)=>acc+x,0);return all>0&&Number(ctx.dataset.data[ctx.dataIndex])/all>=0.035;},formatter:(v,ctx)=>{const total=ctx.dataset.data.reduce((a,b)=>a+b,0);return [compactBRL(v),totalOrZeroPercent(v,total)];},color:'#fff',font:{weight:'bold',size:10},textAlign:'center',anchor:'center',align:'center',clamp:true,clip:false}}}});
  document.getElementById('clientSummary').innerHTML=clients.length?clients.slice(0,30).map(([name,v])=>'<tr><td>'+esc(name)+'</td><td class="num font-bold">'+money(v)+'</td><td class="num">'+(totalOrZeroPercent(v,sum(visible)))+'</td></tr>').join(''):'<tr><td colspan="3" class="empty">Nenhum faturamento com estes filtros.</td></tr>';
 }
 function totalOrZeroPercent(v,total){return total?(v/total*100).toLocaleString('pt-BR',{maximumFractionDigits:1,minimumFractionDigits:1})+'%':'0,0%';}
 function renderDaily(){
  const groups=new Map();
  for(const r of visible){let a=groups.get(r.date);if(!a){a={value:0,count:0};groups.set(r.date,a);}a.value+=r.value;a.count++;}
- const dates=[...groups.keys()].sort(),chartDates=filters.month?dates:dates.slice(-62),values=chartDates.map(d=>groups.get(d).value);
- document.getElementById('dailyChartNote').textContent=filters.month?'Dias do mês selecionado':'Gráfico: últimos 62 dias com movimento • tabela: período completo';
- createChart('dailyChart',{type:'bar',data:{labels:chartDates.map(fmtDate),datasets:[{label:'Faturamento',data:values,backgroundColor:'#003B96',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:chartPlugins(),scales:{x:{ticks:{maxTicksLimit:20},grid:{display:false}},y:{beginAtZero:true,ticks:{callback:v=>(v/1000).toLocaleString('pt-BR')+' mil'}}}}});
+ const dates=[...groups.keys()].sort(),chartDates=dates.slice(-31),values=chartDates.map(d=>groups.get(d).value);
+ document.getElementById('dailyChartNote').textContent=dates.length>31?'Gráfico: últimos 31 dias com movimento • tabela: período completo':'Valores conforme emissão da NF';
+ createChart('dailyChart',{type:'bar',data:{labels:chartDates.map(fmtDate),datasets:[{label:'Faturamento',data:values,backgroundColor:'#003B96',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:28}},plugins:{...chartPlugins(),datalabels:{...barDataLabels(),display:'auto',font:{size:10,weight:'bold'},rotation:chartDates.length>16?-45:0}},scales:{x:{ticks:{maxTicksLimit:20},grid:{display:false}},y:{beginAtZero:true,suggestedMax:Math.max(...values,0)*1.17,ticks:{callback:v=>(v/1000).toLocaleString('pt-BR')+' mil'}}}}});
  document.getElementById('dailySummary').innerHTML=dates.length?dates.slice().reverse().map(d=>'<tr><td>'+fmtDate(d)+'</td><td class="num">'+num(groups.get(d).count)+'</td><td class="num font-bold">'+money(groups.get(d).value)+'</td></tr>').join(''):'<tr><td colspan="3" class="empty">Nenhuma data no período.</td></tr>';
 }
 function renderComparison(){
  const years=[...new Set(compareRows.map(r=>r.year))].sort((a,b)=>a-b),ys=years.slice(-6),monthmap=new Map();
  for(const r of compareRows){const k=r.year+'-'+r.month;monthmap.set(k,(monthmap.get(k)||0)+r.value);}
  const colors=['#94a3b8','#08916e','#7c3aed','#f59e0b','#0a88ad','#003b96'];
- createChart('comparisonChart',{type:'line',data:{labels:MONTHS,datasets:ys.map((y,i)=>({label:String(y),data:MONTHS.map((_,j)=>monthmap.get(y+'-'+(j+1))||0),borderColor:colors[i%colors.length],backgroundColor:colors[i%colors.length],tension:.18,pointRadius:4,borderWidth:3,spanGaps:false}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom'},tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+money(ctx.parsed.y)}},datalabels:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:v=>(v/1000).toLocaleString('pt-BR')+' mil'}},x:{grid:{display:false}}}}});
+ createChart('comparisonChart',{type:'line',data:{labels:MONTHS,datasets:ys.map((y,i)=>({label:String(y),data:MONTHS.map((_,j)=>monthmap.get(y+'-'+(j+1))||0),borderColor:colors[i%colors.length],backgroundColor:colors[i%colors.length],tension:.18,pointRadius:4,borderWidth:3,spanGaps:false}))},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:28}},plugins:{legend:{display:true,position:'bottom'},tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+money(ctx.parsed.y)}},datalabels:{display:'auto',formatter:value=>Number(value)===0?'':compactBRL(value),color:ctx=>colors[ctx.datasetIndex%colors.length],font:{size:10,weight:'bold'},anchor:'end',align:ctx=>ctx.datasetIndex%2?'bottom':'top',offset:5,clamp:true,clip:false}},scales:{y:{beginAtZero:true,suggestedMax:Math.max(...[...monthmap.values()],0)*1.18,ticks:{callback:v=>(v/1000).toLocaleString('pt-BR')+' mil'}},x:{grid:{display:false}}}}});
  document.getElementById('compareHead').innerHTML='<tr><th>Mês</th>'+ys.map(y=>'<th class="num">'+y+'</th>').join('')+'</tr>';
  document.getElementById('compareBody').innerHTML=MONTHS.map((m,i)=>'<tr><td>'+m+'</td>'+ys.map(y=>'<td class="num">'+money(monthmap.get(y+'-'+(i+1))||0)+'</td>').join('')+'</tr>').join('');
  document.getElementById('compareFoot').innerHTML='<tr class="bg-blue-50 font-extrabold"><td>Total</td>'+ys.map(y=>'<td class="num">'+money(MONTHS.reduce((acc,_,i)=>acc+(monthmap.get(y+'-'+(i+1))||0),0))+'</td>').join('')+'</tr>';
