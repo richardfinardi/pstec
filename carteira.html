@@ -379,7 +379,7 @@
     </footer>
 
     <!-- MODAL DE CONFIGURAÇÃO DE EXPORTAÇÃO PARA EXCEL -->
-    <div id="exportModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[80]">
+    <div id="exportModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[100001]">
         <div class="bg-white text-slate-800 rounded-3xl shadow-2xl max-w-xl w-full flex flex-col overflow-hidden border border-slate-200">
             <div class="bg-pstec-700 px-6 py-4 flex justify-between items-center text-white">
                 <div class="flex items-center gap-2 font-extrabold text-sm">
@@ -434,7 +434,7 @@
     </div>
 
     <!-- MODAL DE AJUDA / GUIA DO PESQUISAR -->
-    <div id="searchHelpModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[70]">
+    <div id="searchHelpModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[100001]">
         <div class="bg-white text-slate-800 rounded-3xl shadow-2xl max-w-lg w-full p-6 space-y-4 border border-slate-200 relative">
             <div class="flex justify-between items-center border-b pb-3">
                 <div class="flex items-center gap-2 text-pstec-700 font-extrabold text-sm">
@@ -479,7 +479,7 @@
 
 
     <!-- MODAL DE ANEXOS DO ORÇAMENTO -->
-    <div id="attachmentsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[100000]">
+    <div id="attachmentsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[100002]">
         <div class="bg-white text-slate-800 rounded-3xl shadow-2xl max-w-2xl w-full flex flex-col max-h-[82vh] overflow-hidden border border-slate-200">
             <div class="bg-pstec-700 px-5 py-4 flex justify-between items-center gap-4 text-white shrink-0">
                 <div class="min-w-0">
@@ -509,7 +509,7 @@
     </div>
 
     <!-- MODAL DE DETALHES COMPLETO -->
-    <div id="detailsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div id="detailsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[100001]">
         <div class="bg-white text-slate-800 rounded-3xl shadow-2xl max-w-4xl w-full flex flex-col max-h-[90vh] overflow-hidden border border-slate-200">
             <div class="bg-pstec-700 px-6 py-4 flex justify-between items-center text-white shrink-0">
                 <div class="space-y-1">
@@ -2475,6 +2475,8 @@
             setSafeText('mPrata', item.Prata);
             setSafeText('mVlFatDisp', fmtBRL(parseNum(item['Valor fat. disp.'])));
 
+            closeCarteiraColFilters();
+            document.querySelectorAll('.custom-dd-menu').forEach(menu => menu.classList.add('hidden'));
             const modal = document.getElementById('detailsModal');
             if (modal) {
                 modal.classList.remove('hidden');
@@ -2764,7 +2766,7 @@
 
 
     <!-- MODAL: AJUDA DO DASHBOARD DA CARTEIRA -->
-    <div id="carteiraDashboardHelpModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[120]">
+    <div id="carteiraDashboardHelpModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[100001]">
         <div class="bg-white w-full max-w-3xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
             <div class="bg-pstec-700 text-white px-5 py-4 flex items-center justify-between gap-3">
                 <div class="flex items-center gap-2">
