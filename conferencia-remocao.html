@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/png" href="LOGO MINIMALISTA.png">
+  <title>Conferência de Remoção | PSTEC</title>
+  <script>
+    if (!localStorage.getItem('pstec_token')) location.replace('login-pstec.html');
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{colors:{pstec:{50:'#f0f5ff',100:'#e0ebff',600:'#0047cc',700:'#003B96',800:'#002b70'}}}}};</script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif}
+    .grid-scroll::-webkit-scrollbar{height:8px}
+    .grid-scroll::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:8px}
+    th{white-space:nowrap}
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800">
+  <header class="bg-pstec-700 text-white shadow-md">
+    <div class="max-w-[1500px] mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="bg-white/15 hover:bg-white/25 rounded-xl p-2" title="Voltar ao menu" aria-label="Voltar ao menu"><i data-lucide="arrow-left" class="w-5 h-5"></i></a>
+        <div class="bg-white rounded-lg p-1.5"><img src="logo.png" alt="PSTEC" class="h-8 w-auto"></div>
+        <div><h1 class="text-base sm:text-xl font-extrabold">Conferência de Remoção</h1><p class="text-xs text-blue-100">Materiais gerados pela remoção de reserva</p></div>
+      </div>
+      <button id="refreshBtn" class="inline-flex items-center gap-2 rounded-xl bg-white text-pstec-700 px-3 py-2 text-xs sm:text-sm font-bold hover:bg-blue-50">
+        <i data-lucide="refresh-cw" class="w-4 h-4"></i><span>Atualizar</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-[1500px] mx-auto px-4 sm:px-6 py-6 space-y-4">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div class="bg-white border border-slate-200 rounded-2xl p-4"><p class="text-xs uppercase font-bold tracking-wider text-slate-500">Total de linhas</p><p id="kpiTotal" class="text-3xl font-black mt-1">–</p></div>
+      <div class="bg-white border border-slate-200 rounded-2xl p-4"><p class="text-xs uppercase font-bold tracking-wider text-slate-500">Não processados</p><p id="kpiPendentes" class="text-3xl font-black mt-1 text-amber-600">–</p></div>
+      <div class="bg-white border border-slate-200 rounded-2xl p-4"><p class="text-xs uppercase font-bold tracking-wider text-slate-500">Processados</p><p id="kpiProcessados" class="text-3xl font-black mt-1 text-emerald-600">–</p></div>
+    </div>
+
+    <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center gap-3">
+        <label class="flex-1 flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 focus-within:border-pstec-600">
+          <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+          <input id="searchInput" type="search" class="bg-transparent w-full outline-none text-sm" placeholder="Buscar empresa, OS, código ou produto">
+        </label>
+        <select id="statusFilter" aria-label="Filtrar por processamento" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold">
+          <option value="todos">Todos os status</option>
+          <option value="nao">Não processados</option>
+          <option value="sim">Processados</option>
+        </select>
+        <span id="counter" class="text-xs text-slate-500 font-semibold whitespace-nowrap"></span>
+      </div>
+      <div id="notice" role="status" class="hidden mx-4 mt-4 px-4 py-3 rounded-xl border text-sm"></div>
+      <div class="overflow-x-auto grid-scroll">
+        <table class="w-full text-sm text-left">
+          <thead class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wide">
+            <tr>
+              <th class="p-3 pl-5">Empresa</th>
+              <th class="p-3">OS</th>
+              <th class="p-3">OS Completa</th>
+              <th class="p-3">Cód. Interno</th>
+              <th class="p-3 min-w-[280px]">Produto</th>
+              <th class="p-3 text-center">Processado</th>
+              <th class="p-3 pr-5 text-right">Ação</th>
+            </tr>
+          </thead>
+          <tbody id="rows" class="divide-y divide-slate-100"></tbody>
+        </table>
+      </div>
+      <div id="emptyState" class="hidden py-14 px-4 text-center text-slate-400">
+        <i data-lucide="clipboard-check" class="w-9 h-9 mx-auto mb-2"></i><p class="font-bold text-sm">Nenhuma linha encontrada.</p>
+      </div>
+    </section>
+    <p class="text-xs text-slate-500">O botão <strong>Excluir</strong> aparece somente para materiais não processados. A exclusão remove o registro diretamente do banco após confirmação e validação pela API.</p>
+  </main>
+
+<script>
+'use strict';
+const LIST_URL = 'https://pstec.consultoriarf.net/remocao';
+const DELETE_URL = 'https://pstec.consultoriarf.net/producao/remocao/excluir';
+let registros = [], carregando = false, excluindo = false;
+const el = id => document.getElementById(id);
+function campo(obj, ...nomes) {
+  for (const n of nomes) {
+    const k = Object.keys(obj).find(x => x.toLowerCase() === n.toLowerCase());
+    if (k && obj[k] !== null && obj[k] !== undefined) return String(obj[k]);
+  }
+  return '';
+}
+function normalizar(r) {
+  const raw = campo(r, 'PROCESSADO', 'processado').trim().toUpperCase();
+  return {
+    nome: campo(r, 'nome'), n_os: campo(r, 'n_os'),
+    cod_os_completo: campo(r, 'cod_os_completo'),
+    cod_interno: campo(r, 'cod_interno'), produto: campo(r, 'produto'),
+    // A consulta existente devolve SIM/NAO; o backend valida processado = 0 outra vez.
+    status: ['0','NAO','NÃO'].includes(raw) ? 'nao' : ['1','SIM'].includes(raw) ? 'sim' : 'outro'
+  };
+}
+function aviso(mensagem, erro = false) {
+  const box = el('notice');
+  if (!mensagem) { box.classList.add('hidden'); return; }
+  box.textContent = mensagem;
+  box.className = 'mx-4 mt-4 px-4 py-3 rounded-xl border text-sm ' +
+    (erro ? 'bg-red-50 border-red-200 text-red-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800');
+}
+function celula(tr, valor, classes = '') {
+  const td = document.createElement('td');
+  td.className = 'p-3 ' + classes;
+  td.textContent = valor || '—';
+  tr.appendChild(td); return td;
+}
+function render() {
+  const busca = el('searchInput').value.trim().toLocaleLowerCase('pt-BR');
+  const status = el('statusFilter').value;
+  const filtrados = registros.filter(r => {
+    if (status !== 'todos' && r.status !== status) return false;
+    return !busca || [r.nome,r.n_os,r.cod_os_completo,r.cod_interno,r.produto].join(' ').toLocaleLowerCase('pt-BR').includes(busca);
+  });
+  el('kpiTotal').textContent = registros.length.toLocaleString('pt-BR');
+  el('kpiPendentes').textContent = registros.filter(r => r.status === 'nao').length.toLocaleString('pt-BR');
+  el('kpiProcessados').textContent = registros.filter(r => r.status === 'sim').length.toLocaleString('pt-BR');
+  el('counter').textContent = filtrados.length.toLocaleString('pt-BR') + ' linha(s)';
+  const tbody = el('rows'); tbody.replaceChildren();
+  el('emptyState').classList.toggle('hidden', filtrados.length !== 0);
+  const frag = document.createDocumentFragment();
+  filtrados.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.className = 'hover:bg-slate-50';
+    celula(tr, r.nome, 'pl-5 font-semibold');
+    celula(tr, r.n_os, 'font-bold text-pstec-700');
+    celula(tr, r.cod_os_completo);
+    celula(tr, r.cod_interno, 'font-mono text-xs');
+    celula(tr, r.produto);
+    const tdStatus = document.createElement('td'); tdStatus.className = 'p-3 text-center';
+    const badge = document.createElement('span');
+    badge.className = 'inline-flex rounded-full px-2.5 py-1 font-bold text-xs ' +
+      (r.status === 'nao' ? 'bg-amber-100 text-amber-800' : r.status === 'sim' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600');
+    badge.textContent = r.status === 'nao' ? 'NÃO' : r.status === 'sim' ? 'SIM' : 'INDEFINIDO';
+    tdStatus.appendChild(badge); tr.appendChild(tdStatus);
+    const tdAction = document.createElement('td'); tdAction.className = 'p-3 pr-5 text-right';
+    if (r.status === 'nao') {
+      const btn = document.createElement('button');
+      btn.type = 'button'; btn.textContent = 'Excluir';
+      btn.className = 'rounded-lg bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 px-3 py-1.5 text-xs font-extrabold disabled:opacity-50';
+      btn.disabled = excluindo;
+      btn.addEventListener('click', () => excluir(r, btn));
+      tdAction.appendChild(btn);
+    } else {
+      tdAction.textContent = '—'; tdAction.classList.add('text-slate-400');
+    }
+    tr.appendChild(tdAction); frag.appendChild(tr);
+  });
+  tbody.appendChild(frag);
+}
+async function atualizar() {
+  if (carregando || excluindo) return;
+  carregando = true;
+  el('refreshBtn').disabled = true;
+  aviso('');
+  try {
+    const res = await fetch(LIST_URL, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } });
+    if (!res.ok) throw new Error('Falha ao consultar endpoint de remoção (HTTP ' + res.status + ').');
+    const json = await res.json();
+    const dados = Array.isArray(json) ? json : (json.dados || json.data || json.items);
+    if (!Array.isArray(dados)) throw new Error('O endpoint não retornou uma lista de registros.');
+    registros = dados.map(normalizar);
+    render();
+  } catch (e) { aviso(e.message || 'Erro ao carregar dados.', true); }
+  finally { carregando = false; el('refreshBtn').disabled = false; }
+}
+async function excluir(r, btn) {
+  if (excluindo || r.status !== 'nao') return;
+  const msg = 'Excluir definitivamente este material do banco de dados?\n\n' +
+    'OS: ' + r.n_os + '\nProduto: ' + r.produto + '\n\nEssa ação não pode ser desfeita.';
+  if (!confirm(msg)) return;
+  excluindo = true; btn.disabled = true; btn.textContent = 'Excluindo…'; aviso('');
+  try {
+    const token = localStorage.getItem('pstec_token');
+    if (!token) { location.replace('login-pstec.html'); return; }
+    const res = await fetch(DELETE_URL, {
+      method: 'DELETE',
+      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer ' + token },
+      body: JSON.stringify({ nome:r.nome, n_os:r.n_os, cod_os_completo:r.cod_os_completo, cod_interno:r.cod_interno, produto:r.produto })
+    });
+    const retorno = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(retorno.detail || ('Exclusão não realizada (HTTP ' + res.status + ').'));
+    registros = registros.filter(item => item !== r);
+    render();
+    aviso('Material excluído com sucesso da OS ' + r.n_os + '.');
+    // Busca novamente no banco, sem reaproveitar dados anteriores.
+    const checagem = await fetch(LIST_URL, { cache:'no-store' });
+    if (checagem.ok) {
+      const json = await checagem.json();
+      const dados = Array.isArray(json) ? json : (json.dados || json.data || json.items);
+      if (Array.isArray(dados)) { registros = dados.map(normalizar); render(); }
+    }
+  } catch (e) { aviso(e.message || 'Não foi possível excluir.', true); }
+  finally { excluindo = false; render(); }
+}
+el('searchInput').addEventListener('input', render);
+el('statusFilter').addEventListener('change', render);
+el('refreshBtn').addEventListener('click', atualizar);
+lucide.createIcons();
+atualizar();
+</script>
+</body>
+</html>
