@@ -938,7 +938,35 @@ async function answerWithLiveData(env, question, history, carteiraCtx) {
       });
     }
   }
-  const answer = await askModel(env,
+  const standardMetrics=output.filter((o,i)=>plan[i]?.standard);
+  const isSimplePendingCount=/(?:quantos? pedidos|quantidade de pedidos|numero de pedidos)/i.test(normalize(question));
+  const std=label=>standardMetrics.find(o=>o.label===label);
+  const pendingReport=isSimplePendingCount && ids.includes("carteira") &&
+    std("Pedidos distintos pendentes") && std("Itens da carteira pendentes") &&
+    std("Saldo de pecas a entregar") && std("Valor a faturar pendente");
+  const brCount=x=>Number(x||0).toLocaleString("pt-BR",{maximumFractionDigits:2});
+  const brMoney=x=>Number(x||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+  // Resposta reproduzivel, sem alucinacao de contagens nem terceira chamada de IA.
+  const fixedAnswer=pendingReport ? [
+    "**Carteira PSTEC — pedidos pendentes (dados reais)**",
+    "**Pedidos distintos:** "+brCount(std("Pedidos distintos pendentes").value),
+    "**Itens pendentes:** "+brCount(std("Itens da carteira pendentes").value),
+    "**Saldo de pecas a entregar:** "+brCount(std("Saldo de pecas a entregar").value),
+    "**Valor a faturar pendente:** "+brMoney(std("Valor a faturar pendente").value),
+    "",
+    "**Filtros aplicados da tela Carteira:**",
+    ...describeCarteiraFilters(carteiraCtx).map(x=>"- "+x),
+    "**Filtros aplicados da pergunta:**",
+    ...[...new Set(describePlanFilters(plan.find(q=>q.standard)||
+      plan.find(q=>q.dataset==="carteira")))].map(x=>"- "+x),
+    "",
+    "**Conferencia:** /CARTEIRA — "+brCount(datasets.find(d=>d.id==="carteira").rowsCount)+
+      " linhas lidas; "+brCount(datasets.find(d=>d.id==="carteira").uiMatched)+
+      " linhas apos filtros da tela; "+brCount(std("Itens da carteira pendentes").matchingRows)+
+      " linhas atendem a pergunta.",
+    ...standardMetrics.map(x=>x.warning).filter(Boolean).map(w=>"**Atencao:** "+w)
+  ].join("\n") : null;
+  const answer = fixedAnswer || await askModel(env,
     "Voce e um analista de negocio PSTEC. Responda com clareza em portugues brasileiro, " +
     "com valores e quantidades somente dos resultados calculados no Worker. " +
     "Nunca invente dados, totais, fontes, meses ou indicadores. " +
