@@ -303,13 +303,12 @@ function joinDatasets(ds){
       const dtProcessamento=processado?(solByMaterial.get(k)||oc?.dt_solicitacao_oc||null):null;
       // Vinculo direto por GUID da linha de cotacao. Caso a OC nao traga o GUID,
       // so calcular cotacao->OC quando houver uma cotacao unica e inequivoca.
-      const cotGuid=String(oc?.guid_item_cotacao_referenciado||oc?.guid_cotacao||'');
-      const cotNumero=oc?.cod_cotacao_referenciada??oc?.cod_cotacao;
-      const cotVinculada=cotGuid
-        ? cotRows.find(c=>String(c.guid_item_cotacao||'')===cotGuid)
-        : cotNumero!=null
-          ? cotRows.find(c=>String(c.cod_cotacao)===String(cotNumero))
-          : (cotComData.length===1?cotComData[0]:null);
+      const cotGuid=String(oc?.guid_item_cotacao_referenciado||oc?.guid_cotacao||'').trim();
+      const cotNumeroBruto=oc?.cod_cotacao_referenciada??oc?.cod_cotacao;
+      const cotNumero=cotNumeroBruto!=null&&String(cotNumeroBruto)!=='0'?String(cotNumeroBruto):null;
+      const cotVinculada=(cotGuid?cotRows.find(c=>String(c.guid_item_cotacao||'')===cotGuid):null)
+        ||(cotNumero?cotRows.find(c=>String(c.cod_cotacao)===cotNumero):null)
+        ||(cotComData.length===1?cotComData[0]:null);
       const statusCompra=!oc?(processado?'SEM_OC':'AGUARDANDO_PROCESSAMENTO'):!entrada?'OC_SEM_ENTRADA':Number(entrada.qtde_recebida)+0.0001<Number(oc.qtde_oc||0)?'ENTRADA_PARCIAL':'RECEBIDO';
       const statusPagamento=!oc?'SEM_OC':!fin?'SEM_TITULO_IDENTIFICADO':fin.saldo_pagar_oc<.01?'PAGA':fin.valor_pago_oc>0?'PARCIAL':'EM_ABERTO';
       result.push({...m,...dadosOrc,...(oc||{}),cliente:clienteDoOrc,cotacoes:[...cotIds].join(', '),status_cotacao_material:statusCotacao,qtd_cotacoes:cotIds.size,dt_primeira_cotacao:primeiraCot?.dt_cotacao||null,dt_cotacao_vinculada_oc:cotVinculada?.dt_cotacao||null,dt_solicitacao_material:solByMaterial.get(k)||null,dt_processamento_referencia:dtProcessamento,
