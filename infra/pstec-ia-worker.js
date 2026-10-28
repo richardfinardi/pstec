@@ -53,7 +53,7 @@ function normalize(v) {
 }
 function words(v) {
   return [...new Set((normalize(v).match(/[a-z0-9_]{3,}/g) || [])
-    .filter(w => !STOP.has(w)).slice(0, 30))];
+    .filter(w => !STOP.has(w)).slice(0, 16))];
 }
 function createChunks(file) {
   const result = [];
@@ -119,8 +119,13 @@ function findContext(snapshot, question, history) {
     const path = normalize(c.path);
     let score = 0;
     for (const term of terms) {
-      const count = c.search.split(term).length - 1;
-      score += Math.min(count, 14) * (term.length > 5 ? 1.3 : 1);
+      // indexOf evita varias alocacoes e reduz CPU no plano gratuito.
+      let count = 0, at = 0;
+      while (count < 6 && (at = c.search.indexOf(term, at)) !== -1) {
+        count++;
+        at += term.length;
+      }
+      score += count * (term.length > 5 ? 1.3 : 1);
       if (path.includes(term)) score += 12;
     }
     if (/\/sql\//.test(path) && /sql|query|consulta|join|tabela/i.test(question)) score += 6;
