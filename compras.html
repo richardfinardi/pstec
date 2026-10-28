@@ -194,7 +194,7 @@ function apply(changed=''){
  filtered=searchRows.filter(r=>matchesSelection(r,accepted));
  save();render();
 }
-function avg(a){const b=a.filter(v=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v))).map(Number);return b.length? (b.reduce((s,n)=>s+n,0)/b.length).toLocaleString('pt-BR',{maximumFractionDigits:1})+' d':'—';}
+function avg(a){const b=a.filter(v=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v))&&Number(v)>=0).map(Number);return b.length? (b.reduce((s,n)=>s+n,0)/b.length).toLocaleString('pt-BR',{maximumFractionDigits:1})+' d':'—';}
 function render(){
 let mats=new Map(filtered.map(r=>[keyMaterial(r),r]));const ocMap=new Map(filtered.filter(r=>r.cod_oc!=null).map(r=>[keyOC(r),r]));
 const faltam=[...mats.values()].filter(r=>Number(r.falta_comprar)===1).length;
@@ -207,9 +207,21 @@ $('k_ocs').textContent=ocMap.size.toLocaleString('pt-BR');
 $('k_pendentes').textContent=pendentes.toLocaleString('pt-BR');
 $('k_nao_proc').textContent=naoProc.toLocaleString('pt-BR');$('k_falta').textContent=faltam.toLocaleString('pt-BR');$('k_sem_entrada').textContent=semEntrada.toLocaleString('pt-BR');$('k_pagas').textContent=pagas.toLocaleString('pt-BR');
 $('k_lt_os').textContent=avg([...mats.values()].map(r=>r.lead_time_os_processamento_dias).filter(v=>v!==null));
-$('k_lt_cot').textContent=avg([...mats.values()].map(r=>r.lead_time_processamento_cotacao_dias));
-$('k_lt_cot_oc').textContent=avg([...new Map(filtered.filter(r=>r.cod_oc!=null).map(r=>[[keyMaterial(r),keyOC(r)].join('|'),r.lead_time_cotacao_oc_dias])).values()]);
-$('k_lt_lista').textContent=avg([...new Map(filtered.filter(r=>r.cod_oc!=null).map(r=>[[keyMaterial(r),keyOC(r)].join('|'),r.lead_time_compras_dias])).values()]);
+// Mesma amostra nas tres etapas. Isso garante PROC->COT + COT->OC = PROC->OC.
+const chainByItem=new Map();
+for(const r of filtered){
+ if(r.cadeia_compras_valida!==true)continue;
+ const k=[keyMaterial(r),keyOC(r),r.guid_item_oc||''].join('|');
+ if(!chainByItem.has(k))chainByItem.set(k,r);
+}
+const chain=[...chainByItem.values()];
+$('k_lt_cot').textContent=avg(chain.map(r=>r.lead_time_processamento_cotacao_dias));
+$('k_lt_cot_oc').textContent=avg(chain.map(r=>r.lead_time_cotacao_oc_dias));
+$('k_lt_lista').textContent=avg(chain.map(r=>r.lead_time_compras_dias));
+const amostra=chain.length?chain.length+' itens com sequência completa':'sem sequência completa';
+$('k_cohort_cot').textContent=amostra;
+$('k_cohort_cot_oc').textContent=amostra;
+$('k_cohort_compras').textContent=amostra;
 $('k_lt_entrada').textContent=avg([...new Map(filtered.filter(r=>r.cod_oc!=null).map(r=>[[keyMaterial(r),keyOC(r)].join('|'),r.lead_time_oc_primeira_entrada_dias])).values()]);
 $('k_lt_supr').textContent=avg([...new Map(filtered.filter(r=>r.cod_oc!=null).map(r=>[[keyMaterial(r),keyOC(r)].join('|'),r.lead_time_suprimentos_dias])).values()]);
 $('count').textContent=filtered.length.toLocaleString('pt-BR')+' linhas • '+mats.size.toLocaleString('pt-BR')+' materiais • '+ocMap.size.toLocaleString('pt-BR')+' OCs';
@@ -236,6 +248,7 @@ if(n<filtered.length)body.innerHTML+='<tr><td colspan="27" class="empty">Exibind
 }
 function dateMs(v){const s=String(v||'').slice(0,10);return /^\d{4}-\d{2}-\d{2}$/.test(s)?Date.parse(s+'T12:00:00Z'):NaN;}
 function dayDiff(a,b){const x=dateMs(a),y=dateMs(b);return Number.isFinite(x)&&Number.isFinite(y)?Math.round((y-x)/86400000):null;}
+function positiveDiff(a,b){const diff=dayDiff(a,b);return diff!==null&&diff>=0?diff:null;}
 function joinDatasets(ds){
   const [orcamentos,materiais,solicitacoes,ocs,entradas,financeiro,cotacoes]=ds;
   // Um pedido/OS pode conter mais de um item e mais de um orcamento.
@@ -321,6 +334,15 @@ function joinDatasets(ds){
       const cotVinculada=(cotGuid?cotRows.find(c=>String(c.guid_item_cotacao||'')===cotGuid):null)
         ||(cotNumero?cotRows.find(c=>String(c.cod_cotacao)===cotNumero):null)
         ||(cotComData.length===1?cotComData[0]:null);
+      // Para uma OC, considerar a cotacao que originou essa OC,
+      // nao a primeira cotacao historica do material.
+      const dataCotParaOc=cotVinculada?.dt_cotacao||null;
+      const dataCotParaMaterial=oc?dataCotParaOc:primeiraCot?.dt_cotacao||null;
+      const diasProcCot=positiveDiff(dtProcessamento,dataCotParaMaterial);
+      const diasCotOc=positiveDiff(dataCotParaOc,oc?.dt_oc);
+      const diasProcOc=positiveDiff(dtProcessamento,oc?.dt_oc);
+      const cadeiaValida=Boolean(oc&&dataCotParaOc&&diasProcCot!==null
+        &&diasCotOc!==null&&diasProcOc!==null&&diasProcCot+diasCotOc===diasProcOc);
       const statusCompra=!oc?(processado?'SEM_OC':'AGUARDANDO_PROCESSAMENTO'):!entrada?'OC_SEM_ENTRADA':Number(entrada.qtde_recebida)+0.0001<Number(oc.qtde_oc||0)?'ENTRADA_PARCIAL':'RECEBIDO';
       const statusPagamento=!oc?'SEM_OC':!fin?'SEM_TITULO_IDENTIFICADO':fin.saldo_pagar_oc<.01?'PAGA':fin.valor_pago_oc>0?'PARCIAL':'EM_ABERTO';
       result.push({...m,...dadosOrc,...(oc||{}),cliente:clienteDoOrc,cotacoes:[...cotIds].join(', '),status_cotacao_material:statusCotacao,qtd_cotacoes:cotIds.size,dt_primeira_cotacao:primeiraCot?.dt_cotacao||null,dt_cotacao_vinculada_oc:cotVinculada?.dt_cotacao||null,dt_solicitacao_material:solByMaterial.get(k)||null,dt_processamento_referencia:dtProcessamento,
@@ -330,15 +352,16 @@ function joinDatasets(ds){
         nfs_entrada:entrada?[...entrada.nfs].join(', '):'',
         ...(fin||{qtd_titulos_oc:0,valor_titulos_oc:0,valor_pago_oc:0,saldo_pagar_oc:0}),
         dias_ate_entrega_cliente:dayDiff(new Date().toISOString().slice(0,10),dadosOrc.previsao_entrega_cliente),
-        lead_time_os_processamento_dias:dayDiff(m.dt_entrada_os,dtProcessamento),
+        lead_time_os_processamento_dias:positiveDiff(m.dt_entrada_os,dtProcessamento),
         dias_aguardando_processamento:processado?null:dayDiff(m.dt_entrada_os,new Date().toISOString().slice(0,10)),
-        lead_time_solicitacao_oc_dias:dayDiff(dtSolic,oc?.dt_oc),
-        lead_time_processamento_cotacao_dias:dayDiff(dtProcessamento,primeiraCot?.dt_cotacao),
-        lead_time_cotacao_oc_dias:dayDiff(cotVinculada?.dt_cotacao,oc?.dt_oc),
-        lead_time_compras_dias:dayDiff(dtProcessamento,oc?.dt_oc),
-        lead_time_suprimentos_dias:dayDiff(dtProcessamento,entrada?.dt_primeira_entrada),
-        lead_time_oc_primeira_entrada_dias:dayDiff(oc?.dt_oc,entrada?.dt_primeira_entrada),
-        lead_time_oc_ultima_entrada_dias:dayDiff(oc?.dt_oc,entrada?.dt_ultima_entrada),
+        lead_time_solicitacao_oc_dias:positiveDiff(dtSolic,oc?.dt_oc),
+        lead_time_processamento_cotacao_dias:diasProcCot,
+        lead_time_cotacao_oc_dias:diasCotOc,
+        lead_time_compras_dias:diasProcOc,
+        cadeia_compras_valida:cadeiaValida,
+        lead_time_suprimentos_dias:positiveDiff(dtProcessamento,entrada?.dt_primeira_entrada),
+        lead_time_oc_primeira_entrada_dias:positiveDiff(oc?.dt_oc,entrada?.dt_primeira_entrada),
+        lead_time_oc_ultima_entrada_dias:positiveDiff(oc?.dt_oc,entrada?.dt_ultima_entrada),
         status_compra:statusCompra,status_pagamento_oc:statusPagamento,
         falta_comprar:processado&&Number(m.qtde_solicitada)>0&&!oc?1:0
       });
@@ -362,7 +385,7 @@ const a=joinDatasets(respostas);all=a;companies();apply();setStatus((cotacoesDis
 try{await window.PstecCache?.write(CACHE,a)}catch{}
 }catch(e){console.warn('Atualização de compras indisponível:',e);setStatus('Atualização indisponível','bad');if(!all.length)$('rows').innerHTML='<tr><td colspan="27" class="empty">Não foi possível carregar os dados. Tente atualizar novamente.</td></tr>';}
 finally{updating=false;$('refresh').disabled=false;}}
-function exportCsv(){const keys=['cod_empresa','n_os','orcamentos','qtd_orcamentos','cliente','cotacoes','status_cotacao_material','dt_primeira_cotacao','dt_cotacao_vinculada_oc','dt_prevista_os','dt_entrada_os','dt_processamento_referencia','lead_time_os_processamento_dias','origem_previsao','titulo_os','produto','cod_interno','cod_os_aux','qtde_lista','qtde_a_comprar_cps','cod_oc','qtde_oc','fornecedor','dt_oc','dt_primeira_entrada','dt_ultima_entrada','nfs_entrada','previsao_entrega_cliente','dias_ate_entrega_cliente','lead_time_solicitacao_oc_dias','lead_time_processamento_cotacao_dias','lead_time_cotacao_oc_dias','lead_time_compras_dias','lead_time_suprimentos_dias','lead_time_oc_primeira_entrada_dias','lead_time_oc_ultima_entrada_dias','status_compra','status_pagamento_oc','saldo_pagar_oc'];const csv=[keys.join(';'),...filtered.map(r=>keys.map(k=>'"'+String(r[k]??'').replaceAll('"','""')+'"').join(';'))].join('\r\n');let a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));a.download='pstec_compras_'+new Date().toISOString().slice(0,10)+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),3000);}
+function exportCsv(){const keys=['cod_empresa','n_os','orcamentos','qtd_orcamentos','cliente','cotacoes','status_cotacao_material','dt_primeira_cotacao','dt_cotacao_vinculada_oc','dt_prevista_os','dt_entrada_os','dt_processamento_referencia','lead_time_os_processamento_dias','origem_previsao','titulo_os','produto','cod_interno','cod_os_aux','qtde_lista','qtde_a_comprar_cps','cod_oc','qtde_oc','fornecedor','dt_oc','dt_primeira_entrada','dt_ultima_entrada','nfs_entrada','previsao_entrega_cliente','dias_ate_entrega_cliente','lead_time_solicitacao_oc_dias','lead_time_processamento_cotacao_dias','lead_time_cotacao_oc_dias','lead_time_compras_dias','cadeia_compras_valida','lead_time_suprimentos_dias','lead_time_oc_primeira_entrada_dias','lead_time_oc_ultima_entrada_dias','status_compra','status_pagamento_oc','saldo_pagar_oc'];const csv=[keys.join(';'),...filtered.map(r=>keys.map(k=>'"'+String(r[k]??'').replaceAll('"','""')+'"').join(';'))].join('\r\n');let a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));a.download='pstec_compras_'+new Date().toISOString().slice(0,10)+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),3000);}
 restore();$('search').addEventListener('input',()=>apply('search'));$('refresh').addEventListener('click',load);$('export').addEventListener('click',exportCsv);$('reset').addEventListener('click',()=>{$('search').value='';for(const id of multiIds){$(id).querySelectorAll('.multi-opt input').forEach(c=>c.checked=false);multiLabel(id);}apply();});
 (async()=>{try{const v=await window.PstecCache?.read(CACHE);if(Array.isArray(v?.data)){all=v.data;companies();apply();setStatus('CACHE LOCAL • atualizando…','warn');}}catch{}await load();})();
 })();
