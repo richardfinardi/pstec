@@ -866,8 +866,8 @@ async function answerWithLiveData(env, question, history, carteiraCtx) {
   const plan = safePlan(blueprint, datasets);
   // Quatro indicadores complementares padronizados pelo mesmo saldo de entrega.
   // Somente quando a pergunta e sobre pedidos/itens a entregar na Carteira.
-  const saldoQuestion = /(pedid|entreg|pendent|carteir)/i.test(normalize(question)) &&
-    /(pedid|entreg|saldo|pendent)/i.test(normalize(question));
+  const saldoQuestion = /\b(pedid|entreg|pendent|carteir)/i.test(normalize(question)) &&
+    /\b(pedid|entreg|saldo|pendent)/i.test(normalize(question));
   const carteiraDS = datasets.find(d=>d.id==="carteira");
   if (saldoQuestion && carteiraDS) {
     const fields=new Set(carteiraDS.fields.map(f=>f.field));
@@ -879,7 +879,7 @@ async function answerWithLiveData(env, question, history, carteiraCtx) {
     ];
     const baseFilters=base?.filters?.filter(f=>f.field!=="Saldo a entregar") || [];
     // Evita que a IA suprima o cliente explicitamente solicitado na pergunta.
-    const clientMatch=question.match(/clientes+(?:do|da|de|para|pro|pra)?s*([a-zA-ZÀ-ÿ0-9][wÀ-ÿ.-]{2,})/i);
+    const clientMatch=question.match(/cliente\s+(?:do|da|de|para|pro|pra)?\s*([a-zA-ZÀ-ÿ0-9][\wÀ-ÿ.-]{2,})/i);
     if (fields.has("Cliente") && clientMatch && !baseFilters.some(f=>f.field==="Cliente")) {
       baseFilters.push({field:"Cliente",op:"contains",value:clientMatch[1]});
     }
