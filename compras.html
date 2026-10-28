@@ -84,11 +84,55 @@ function pill(s){const names={SEM_DADOS_COTACAO:'Cotação indisponível',COTADO
 function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function setStatus(t,mode='warn'){$('dataStatus').className='status '+mode;$('dataStatus').textContent=t;}
 function unpack(json){if(Array.isArray(json))return json;for(const k of ['dados','data','registros','rows','items','results','resultado']){if(Array.isArray(json?.[k]))return json[k];if(Array.isArray(json?.[k]?.dados))return json[k].dados;}return [];}
-function restore(){try{const x=JSON.parse(localStorage.getItem(PREF)||'{}');for(const id of campos)if(id!=='company')$(id).value=x[id]||'';}catch{}}
-function save(){const x={};for(const id of campos)x[id]=$(id).value;localStorage.setItem(PREF,JSON.stringify(x));}
-function companies(){let selected='';try{selected=JSON.parse(localStorage.getItem(PREF)||'{}').company||'';}catch{}let options=[...new Set(all.map(x=>String(x.cod_empresa)).filter(Boolean))].sort((a,b)=>Number(a)-Number(b));$('company').innerHTML='<option value="">Todas</option>'+options.map(v=>'<option value="'+escapeHtml(v)+'">Empresa '+escapeHtml(v)+'</option>').join('');$('company').value=options.includes(selected)?selected:'';}
-function apply(){save();let s=norm($('search').value),co=$('company').value,b=$('buy').value,proc=$('processing').value,p=$('pay').value,d=$('deadline').value;
-filtered=all.filter(r=>{let nd=val(r.dias_ate_entrega_cliente);return (!co||String(r.cod_empresa)===co)&&(!b||r.status_compra===b)&&(!proc||r.status_processamento===proc)&&(!p||r.status_pagamento_oc===p)&&(!d||(d==='missing'&&nd===null)||(d==='overdue'&&nd!==null&&nd<0)||(d==='soon'&&nd!==null&&nd>=0&&nd<=15)||(d==='later'&&nd!==null&&nd>15))&&(!s||norm([r.n_os,r.titulo_os,r.cliente,r.produto,r.cod_interno,r.cod_oc,r.fornecedor,r.nfs_entrada,r.n_orcamento].join(' ')).includes(s));});render();}
+function selectedOf(id){return [...$(id).querySelectorAll('.multi-opt input:checked')].map(x=>x.value);}
+function multiLabel(id){
+ const chosen=selectedOf(id),opts=[...$(id).querySelectorAll('.multi-opt input')];
+ let label='Todas';
+ if(chosen.length===1){const item=opts.find(o=>o.value===chosen[0]);label=item?.closest('label')?.textContent||chosen[0];}
+ else if(chosen.length>1)label=chosen.length+' selecionados';
+ $(id).querySelector('.multi-btn b').textContent=label;
+}
+function setMultiOptions(id,options,preserve=true){
+ const el=$(id),prior=preserve?selectedOf(id):[];
+ const last=savedFilters[id],previous=Array.isArray(last)?last:(last?[String(last)]:[]);
+ const chosen=new Set(preserve?prior:previous);
+ const menu=el.querySelector('.multi-menu');
+ menu.innerHTML='<div class="multi-actions"><button type="button" data-action="all">Marcar todas</button><button type="button" data-action="none">Limpar seleção</button></div>'
+  +options.map(o=>'<label class="multi-opt"><input type="checkbox" value="'+escapeHtml(o.value)+'"'+(chosen.has(o.value)?' checked':'')+'><span>'+escapeHtml(o.label)+'</span></label>').join('');
+ multiLabel(id);
+}
+function restore(){
+ try{savedFilters=JSON.parse(localStorage.getItem(PREF)||'{}')||{}}catch{savedFilters={}}
+ $('search').value=savedFilters.search||'';
+ for(const id of multiIds){
+  const sel=$(id),opts=[...sel.options].filter(o=>o.value).map(o=>({value:o.value,label:o.textContent}));
+  const div=document.createElement('div');div.className='multi';div.id=id;
+  div.innerHTML='<button class="multi-btn" type="button" aria-expanded="false"><b>Todas</b><span>▾</span></button><div class="multi-menu"></div>';
+  sel.replaceWith(div);setMultiOptions(id,opts,false);
+  const btn=div.querySelector('.multi-btn'),menu=div.querySelector('.multi-menu');
+  btn.addEventListener('click',()=>{
+   const opening=!div.classList.contains('open');
+   document.querySelectorAll('.multi.open').forEach(n=>{n.classList.remove('open');n.querySelector('.multi-btn').classList.remove('open');n.querySelector('.multi-btn').setAttribute('aria-expanded','false')});
+   div.classList.toggle('open',opening);btn.classList.toggle('open',opening);btn.setAttribute('aria-expanded',String(opening));
+  });
+  menu.addEventListener('change',()=>{multiLabel(id);apply();});
+  menu.addEventListener('click',e=>{const a=e.target.closest('[data-action]');if(!a)return;const mark=a.dataset.action==='all';menu.querySelectorAll('.multi-opt input').forEach(c=>c.checked=mark);multiLabel(id);apply();});
+ }
+ document.addEventListener('click',e=>{if(e.target.closest('.multi'))return;document.querySelectorAll('.multi.open').forEach(n=>{n.classList.remove('open');n.querySelector('.multi-btn').classList.remove('open');n.querySelector('.multi-btn').setAttribute('aria-expanded','false')});});
+}
+function save(){const x={search:$('search').value};for(const id of multiIds)x[id]=selectedOf(id);savedFilters=x;localStorage.setItem(PREF,JSON.stringify(x));}
+function companies(){
+ const opts=[...new Set(all.map(x=>String(x.cod_empresa)).filter(Boolean))].sort((a,b)=>Number(a)-Number(b)).map(v=>({value:v,label:'Empresa '+v}));
+ setMultiOptions('company',opts,false);
+}
+function apply(){save();
+ const search=norm($('search').value),sets=Object.fromEntries(multiIds.map(id=>[id,new Set(selectedOf(id))]));
+ const ok=(id,value)=>!sets[id].size||sets[id].has(String(value??''));
+ filtered=all.filter(r=>{const nd=val(r.dias_ate_entrega_cliente);
+  const prazo=nd===null?'missing':nd<0?'overdue':nd<=15?'soon':'later';
+  return ok('company',r.cod_empresa)&&ok('quote',r.status_cotacao_material)&&ok('buy',r.status_compra)&&ok('processing',r.status_processamento)&&ok('pay',r.status_pagamento_oc)&&ok('deadline',prazo)
+   &&(!search||norm([r.n_os,r.titulo_os,r.cliente,r.produto,r.cod_interno,r.cod_oc,r.fornecedor,r.nfs_entrada,r.n_orcamento,r.cotacoes].join(' ')).includes(search));});
+ render();}
 function avg(a){const b=a.map(Number).filter(Number.isFinite);return b.length? (b.reduce((s,n)=>s+n,0)/b.length).toLocaleString('pt-BR',{maximumFractionDigits:1})+' d':'—';}
 function render(){
 let mats=new Map(filtered.map(r=>[keyMaterial(r),r]));const ocMap=new Map(filtered.filter(r=>r.cod_oc!=null).map(r=>[keyOC(r),r]));
@@ -217,7 +261,7 @@ try{await window.PstecCache?.write(CACHE,a)}catch{}
 }catch(e){console.warn('Atualização de compras indisponível:',e);setStatus('Atualização indisponível','bad');if(!all.length)$('rows').innerHTML='<tr><td colspan="23" class="empty">Não foi possível carregar os dados. Tente atualizar novamente.</td></tr>';}
 finally{updating=false;$('refresh').disabled=false;}}
 function exportCsv(){const keys=['cod_empresa','n_os','orcamentos','qtd_orcamentos','origem_previsao','cliente','titulo_os','produto','cod_interno','cod_os_aux','qtde_lista','qtde_a_comprar_cps','cod_oc','fornecedor','dt_oc','dt_primeira_entrada','dt_ultima_entrada','nfs_entrada','previsao_entrega_cliente','dias_ate_entrega_cliente','lead_time_solicitacao_oc_dias','lead_time_oc_primeira_entrada_dias','lead_time_oc_ultima_entrada_dias','status_compra','status_pagamento_oc','saldo_pagar_oc'];const csv=[keys.join(';'),...filtered.map(r=>keys.map(k=>'"'+String(r[k]??'').replaceAll('"','""')+'"').join(';'))].join('\r\n');let a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));a.download='pstec_compras_'+new Date().toISOString().slice(0,10)+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),3000);}
-restore();for(const id of campos)$(id).addEventListener(id==='search'?'input':'change',apply);$('refresh').addEventListener('click',load);$('export').addEventListener('click',exportCsv);$('reset').addEventListener('click',()=>{for(const id of campos)$(id).value='';apply();});
+restore();$('search').addEventListener('input',apply);$('refresh').addEventListener('click',load);$('export').addEventListener('click',exportCsv);$('reset').addEventListener('click',()=>{$('search').value='';for(const id of multiIds){$(id).querySelectorAll('.multi-opt input').forEach(c=>c.checked=false);multiLabel(id);}apply();});
 (async()=>{try{const v=await window.PstecCache?.read(CACHE);if(Array.isArray(v?.data)){all=v.data;companies();apply();setStatus('CACHE LOCAL • atualizando…','warn');}}catch{}await load();})();
 })();
 </script>
