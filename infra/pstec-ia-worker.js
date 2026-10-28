@@ -317,7 +317,7 @@ async function sampleLargeDataset(id) {
 }
 function createStreamAccumulator(q) {
   return { q, total:0, matched:0, validNumeric:0, sum:0, countNumeric:0,
-    distinct:new Set(), groups:new Map(), list:[] };
+    distinct:new Set(), missingDistinct:0, groups:new Map(), list:[] };
 }
 function addStreamRecord(acc, row, today) {
   const q = acc.q;
@@ -331,6 +331,7 @@ function addStreamRecord(acc, row, today) {
   if (q.metric === "distinct_count") {
     const key = String(row[q.distinctField] ?? "").trim();
     if (key) acc.distinct.add(key);
+    else acc.missingDistinct++;
   }
   if (q.groupBy) {
     const label = String(row[q.groupBy] ?? "(vazio)");
@@ -400,6 +401,10 @@ function completeStreamAccumulator(acc, at) {
       q.metric === "distinct_count" ? acc.distinct.size :
       q.metric === "sum" ? acc.sum :
       acc.countNumeric ? acc.sum/acc.countNumeric : 0;
+  }
+  if (q.metric === "distinct_count" && acc.missingDistinct > 0) {
+    out.warning = acc.missingDistinct + " linhas sem identificador de pedido/registro; " +
+      "a contagem de valores distintos pode estar subestimada.";
   }
   if (["sum","avg"].includes(q.metric)) {
     out.numericValuesPresent=acc.validNumeric;
