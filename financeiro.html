@@ -112,5 +112,335 @@
   </div>
  </section>
 </main>
-<!--SCRIPT_SLOT-->
+<script>
+
+'use strict';
+const API='https://pstec.consultoriarf.net/';
+const SOURCES={pagar:'financeiro_pagar',receber:'financeiro_receber',carteira:'financeiro_carteira'};
+const CACHE_PREFIX='pstec_financeiro_analitico_v1_';
+const STATE_KEY='pstec_financeiro_filtros_v1';
+const raw={pagar:[],receber:[],carteira:[]},sync={},charts={};
+const today=new Date(),year=today.getFullYear(),currentMonth=today.getMonth(),quarter=Math.floor(currentMonth/3)*3;
+const ym=(y,m)=>String(y)+'-'+String(m+1).padStart(2,'0');
+const defaults={from:ym(year,quarter),to:ym(year,quarter+2),empresa:'',prevP:'0',statusP:'abertos',prevR:'0',statusR:'abertos',nf:'COM NF',valorP:'rateio',grupo:'all',plano:'',carteira:'1',busca:'',anoJ:String(year),view:'resumo',detail:'pagar',pageSize:'50'};
+let state={...defaults},page=0,model={rows:[],pagar:[],receber:[],carteira:[]},loading=false,renderTimer=0;
+try{const saved=JSON.parse(localStorage.getItem(STATE_KEY)||'{}');for(const k of Object.keys(defaults))if(Object.hasOwn(saved,k))state[k]=saved[k];}catch(e){}
+const brl=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+const num=new Intl.NumberFormat('pt-BR',{maximumFractionDigits:2});
+function n(v){
+ if(typeof v==='number')return Number.isFinite(v)?v:0;
+ if(v===null||v===undefined||v==='')return 0;
+ let s=String(v).trim();
+ if(s.includes(',')&&s.includes('.'))s=s.replace(/\./g,'').replace(',','.');
+ else if(s.includes(','))s=s.replace(',','.');
+ const q=Number(s);return Number.isFinite(q)?q:0;
+}
+function bool(v){return v===true||v===1||v==='1'||v==='true'||v==='t'||v==='True'}
+function norm(v){return String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim()}
+function datekey(v){
+ if(!v)return '';
+ const s=String(v);
+ if(/^\d{4}-\d{2}/.test(s))return s.slice(0,7);
+ const m=s.match(/^(\d\d)\/(\d\d)\/(\d{4})/);
+ return m?m[3]+'-'+m[2]:'';
+}
+function dt(v){
+ if(v===null||v===undefined||v==='')return '—';
+ const s=String(v);
+ return /^\d{4}-\d{2}-\d{2}/.test(s)?s.slice(8,10)+'/'+s.slice(5,7)+'/'+s.slice(0,4):s.slice(0,10);
+}
+function ehtml(v){return String(v===null||v===undefined?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+function round(v){return Math.round((v+Number.EPSILON)*100)/100}
+function inPeriod(v){const k=datekey(v);return !!k&&k>=state.from&&k<=state.to}
+function monthLabel(key){const names=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];return (names[Number(key.slice(5,7))-1]||key)+'/'+key.slice(0,4)}
+function monthsRange(){
+ const a=state.from<=state.to?state.from:state.to,b=state.from<=state.to?state.to:state.from;
+ let y=Number(a.slice(0,4)),m=Number(a.slice(5,7))-1;
+ const ey=Number(b.slice(0,4)),em=Number(b.slice(5,7))-1,out=[];
+ for(let i=0;i<120&&(y<ey||(y===ey&&m<=em));i++){out.push(ym(y,m));m++;if(m===12){m=0;y++}}
+ return out;
+}
+function company(r){return !state.empresa||String(r.cod_empresa)===state.empresa}
+function prev(r,opt){return opt==='all'||String(n(r.previsao))===opt}
+function status(v,filter){const x=norm(v),f=norm(filter);return f==='ALL'||(f==='ABERTOS'?(x==='EM ABERTO'||x==='PARCIAL'):x===f)}
+function amountP(r){return n(state.valorP==='saldo'?r.saldo_rateado:r.valor_rateio)}
+function passesP(r){return company(r)&&inPeriod(r.dt_vencimento)&&prev(r,state.prevP)&&status(r.status_pagamento,state.statusP)&&(state.grupo==='all'||String(r.grupo_financeiro)===state.grupo)&&(!state.plano||norm(r.plano_contas).includes(norm(state.plano)))}
+function passesR(r){return company(r)&&inPeriod(r.dt_vencimento)&&prev(r,state.prevR)&&status(r.status_titulo,state.statusR)&&(state.nf==='all'||String(r.status_emissao_nf)===state.nf)}
+function passesC(r){return company(r)&&inPeriod(r.prazo)&&(state.carteira==='todos'||n(r.vl_a_faturar)>0)&&(state.carteira!=='1'||String(r.status_orcamento)==='1')}
+function buildModel(){
+ const months=monthsRange(),index=new Map(months.map((k,i)=>[k,i]));
+ const rows=months.map(m=>({mes:m,mp:0,impostos:0,financeiro:0,pagar:0,receber:0,carteira:0,saldo:0}));
+ const pagar=raw.pagar.filter(passesP),receber=raw.receber.filter(passesR),carteira=raw.carteira.filter(passesC);
+ for(const r of pagar){
+  const k=index.get(datekey(r.dt_vencimento));if(k===undefined)continue;
+  const value=amountP(r),grupo=String(r.grupo_financeiro);
+  if(grupo==='MP')rows[k].mp+=value;else if(grupo==='IMPOSTOS')rows[k].impostos+=value;else rows[k].financeiro+=value;
+  rows[k].pagar+=value;
+ }
+ for(const r of receber){const k=index.get(datekey(r.dt_vencimento));if(k!==undefined)rows[k].receber+=n(r.saldo_a_receber)}
+ for(const r of carteira){const k=index.get(datekey(r.prazo));if(k!==undefined)rows[k].carteira+=n(r.vl_a_faturar)}
+ let running=0;
+ for(const r of rows){
+  running+=r.receber-r.pagar;r.saldo=round(running);
+  for(const k of ['mp','impostos','financeiro','pagar','receber','carteira'])r[k]=round(r[k]);
+ }
+ return{rows,pagar,receber,carteira};
+}
+function totals(rows){
+ const x={mp:0,impostos:0,financeiro:0,pagar:0,receber:0,carteira:0,saldo:0};
+ for(const r of rows)for(const k of ['mp','impostos','financeiro','pagar','receber','carteira'])x[k]+=r[k];
+ for(const k of Object.keys(x))x[k]=round(x[k]);
+ x.saldo=rows.length?rows[rows.length-1].saldo:0;
+ return x;
+}
+function drawKpis(){
+ const x=totals(model.rows);
+ const arr=[
+  ['Total a pagar',x.pagar,'red','Títulos e rateios selecionados'],
+  ['Total a receber',x.receber,'green','Saldo das parcelas filtradas'],
+  ['Carteira total',x.carteira,'blue','A faturar dos pedidos'],
+  ['Saldo acumulado',x.saldo,'red','A receber − A pagar'],
+  ['Saldo final do período',round(x.carteira+x.saldo),'gold','Carteira + saldo acumulado']
+ ];
+ document.getElementById('kpiCards').innerHTML=arr.map(t=>'<div class="kpi '+t[2]+'"><small>'+t[0]+'</small><strong class="'+(t[1]<0?'negative':t[0]==='Total a receber'?'positive':'')+'">'+brl.format(t[1])+'</strong><div class="hint">'+t[3]+'</div></div>').join('');
+ document.getElementById('balanceFormula').innerHTML='<b>Saldo final:</b> '+brl.format(x.carteira)+' (carteira) + '+brl.format(x.saldo)+' (saldo acumulado) = <b>'+brl.format(round(x.carteira+x.saldo))+'</b>. Se o saldo é negativo, o resultado desconta esse déficit da carteira.';
+}
+function monthlyTable(id,small){
+ const names=small?['Mês','A pagar','A receber','Saldo acumulado']:['Mês','MP','Impostos','Financeiro','A pagar','A receber','Carteira','Saldo'];
+ const keys=small?['pagar','receber','saldo']:['mp','impostos','financeiro','pagar','receber','carteira','saldo'];
+ const x=totals(model.rows);
+ let out='<table><thead><tr>'+names.map(v=>'<th>'+v+'</th>').join('')+'</tr></thead><tbody>';
+ for(const r of model.rows){out+='<tr><td>'+monthLabel(r.mes)+'</td>'+keys.map(k=>'<td class="text-right '+(k==='saldo'?(r[k]<0?'neg':'pos'):'')+'">'+brl.format(r[k])+'</td>').join('')+'</tr>'}
+ out+='</tbody><tfoot><tr><td>Total</td>'+keys.map(k=>'<td class="text-right '+(k==='saldo'?(x[k]<0?'neg':'pos'):'')+'">'+brl.format(x[k])+'</td>').join('')+'</tr></tfoot></table>';
+ document.getElementById(id).innerHTML=out;
+}
+function destroyCharts(){for(const ch of Object.values(charts))try{ch.destroy()}catch(e){}for(const k of Object.keys(charts))delete charts[k]}
+function makeChart(id,type,labels,datasets,options={}){
+ if(!window.Chart)return;
+ const canvas=document.getElementById(id);if(!canvas)return;
+ const defaults={
+  responsive:true,maintainAspectRatio:false,animation:{duration:120},
+  plugins:{
+   legend:{position:'bottom',labels:{boxWidth:11,font:{size:11}}},
+   tooltip:{callbacks:{label:function(p){const v=(typeof p.parsed==='number'?p.parsed:(p.parsed.y??p.parsed.x));return (p.dataset.label||p.label||'Valor')+': '+brl.format(v)}}}
+  }
+ };
+ const result=Object.assign({},defaults,options);
+ if(type!=='doughnut'&&!result.scales){
+  result.scales={x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'#e9edf3'},ticks:{callback:v=>new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1}).format(v),font:{size:10}}}};
+ }
+ charts[id]=new Chart(canvas,{type,data:{labels,datasets},options:result});
+}
+function chartPay(id){
+ makeChart(id,'bar',model.rows.map(r=>monthLabel(r.mes)),[
+  {label:'A pagar',data:model.rows.map(r=>r.pagar),backgroundColor:'#c94136',borderRadius:4},
+  {label:'A receber',data:model.rows.map(r=>r.receber),backgroundColor:'#1c9873',borderRadius:4}
+ ]);
+}
+function chartSaldo(id){
+ makeChart(id,'line',model.rows.map(r=>monthLabel(r.mes)),[
+  {label:'Saldo acumulado',data:model.rows.map(r=>r.saldo),borderColor:'#c94136',backgroundColor:'rgba(201,65,54,.10)',pointRadius:4,tension:.2,fill:true}
+ ]);
+}
+function chartComposition(){
+ const r=model.rows,x=totals(r);
+ makeChart('chartGrupo','bar',r.map(t=>monthLabel(t.mes)),[
+  {label:'MP',data:r.map(t=>t.mp),backgroundColor:'#123454',stack:'total'},
+  {label:'Impostos',data:r.map(t=>t.impostos),backgroundColor:'#e4a52b',stack:'total'},
+  {label:'Financeiro',data:r.map(t=>t.financeiro),backgroundColor:'#ca4b3e',stack:'total'}
+ ]);
+ makeChart('chartPizza','doughnut',['MP','Impostos','Financeiro'],[{label:'Valor',data:[x.mp,x.impostos,x.financeiro],backgroundColor:['#123454','#e4a52b','#ca4b3e']}],{cutout:'62%'});
+ document.getElementById('grupoLegenda').textContent='MP: '+brl.format(x.mp)+' · Impostos: '+brl.format(x.impostos)+' · Financeiro: '+brl.format(x.financeiro);
+ const plans=new Map();
+ for(const p of model.pagar){const key=p.plano_contas||'Sem plano';plans.set(key,(plans.get(key)||0)+amountP(p))}
+ const top=[...plans].sort((a,b)=>b[1]-a[1]).slice(0,12).reverse();
+ makeChart('chartPlanos','bar',top.map(r=>r[0]),[{label:'Valor',data:top.map(r=>round(r[1])),backgroundColor:'#215c9c',borderRadius:3}],{indexAxis:'y',scales:{x:{ticks:{callback:v=>new Intl.NumberFormat('pt-BR',{notation:'compact'}).format(v)}},y:{grid:{display:false},ticks:{font:{size:11}}}}});
+}
+function jurosRows(){
+ const y=Number(state.anoJ)||year;
+ return raw.pagar.filter(r=>{
+  const key=datekey(r.dt_pagamento||r.dt_vencimento),yearItem=Number(key.slice(0,4));
+  return company(r)&&bool(r.juros_antecipacao)&&prev(r,state.prevP)&&(yearItem===y||yearItem===y-1);
+ });
+}
+function drawJuros(){
+ const y=Number(state.anoJ)||year,items=jurosRows(),months=Array.from({length:12},()=>[0,0]);
+ for(const r of items){
+  const key=datekey(r.dt_pagamento||r.dt_vencimento),jy=Number(key.slice(0,4)),m=Number(key.slice(5,7))-1;
+  if(m>=0&&m<12)months[m][jy===y?1:0]+=n(r.valor_rateio);
+ }
+ const p=round(months.reduce((a,x)=>a+x[0],0)),q=round(months.reduce((a,x)=>a+x[1],0));
+ document.getElementById('jurosTotalAnterior').textContent=(y-1)+': '+brl.format(p);
+ document.getElementById('jurosTotalAtual').textContent=y+': '+brl.format(q);
+ makeChart('chartJuros','bar',['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'],[
+  {label:String(y-1),data:months.map(x=>round(x[0])),backgroundColor:'#596577',borderRadius:3},
+  {label:String(y),data:months.map(x=>round(x[1])),backgroundColor:'#e4a42a',borderRadius:3}
+ ]);
+ document.getElementById('jurosRowsLabel').textContent=items.length+' rateios';
+ const cols=[['empresa','Empresa'],['dt_pagamento','Pagamento'],['dt_vencimento','Vencimento'],['fornecedor','Fornecedor'],['documento','Documento'],['plano_contas','Plano'],['valor_rateio','Valor']];
+ document.getElementById('jurosTable').innerHTML=htmlTable(items.slice(0,300),cols);
+}
+const cols={
+ pagar:[['empresa','Empresa'],['dt_abertura','Lançamento'],['dt_vencimento','Vencimento'],['fornecedor','Fornecedor'],['documento','Documento'],['n_nf','NF'],['plano_contas','Plano de contas'],['grupo_financeiro','Grupo'],['previsao','Previsão'],['status_pagamento','Situação'],['valor_rateio','Rateio'],['saldo_rateado','Saldo rateado']],
+ receber:[['empresa','Empresa'],['dt_abertura','Lançamento'],['dt_vencimento','Vencimento'],['cliente','Cliente'],['documento','Documento'],['n_nf','NF'],['status_emissao_nf','Emissão NF'],['previsao','Previsão'],['status_titulo','Situação'],['valor_corrigido_titulo','Valor corrigido'],['valor_recebido','Recebido'],['saldo_a_receber','A receber']],
+ carteira:[['empresa','Empresa'],['prazo','Prazo'],['cliente','Cliente'],['orcamento','Orçamento'],['os','OS'],['n_pedido','Pedido'],['produto','Produto'],['status_orcamento','Status orçamento'],['qtde_pendente','Qtde pendente'],['situacao_carteira','Situação'],['vl_unitario','Valor unitário'],['vl_a_faturar','A faturar']]
+};
+const numericCols=['valor_rateio','saldo_rateado','valor_titulo','valor_corrigido_titulo','valor_pago_titulo','saldo_a_receber','valor_recebido','vl_a_faturar','vl_total','vl_unitario'];
+function formatCell(row,key){
+ const v=row[key];
+ if(numericCols.includes(key))return brl.format(n(v));
+ if(key==='qtde_pendente'||key==='qtde')return num.format(n(v));
+ if(key.startsWith('dt_')||key==='prazo')return dt(v);
+ return v===null||v===undefined?'—':String(v);
+}
+function htmlTable(rows,columns){
+ if(!rows.length)return '<div class="empty">Nenhum registro encontrado para os filtros selecionados.</div>';
+ let out='<table><thead><tr>'+columns.map(c=>'<th>'+ehtml(c[1])+'</th>').join('')+'</tr></thead><tbody>';
+ for(const r of rows)out+='<tr>'+columns.map(c=>'<td class="'+(numericCols.includes(c[0])?'text-right':'')+'">'+ehtml(formatCell(r,c[0]))+'</td>').join('')+'</tr>';
+ return out+'</tbody></table>';
+}
+function detailRows(){
+ let rows=model[state.detail]||[];
+ const q=norm(state.busca);
+ if(!q)return rows;
+ const keys=state.detail==='pagar'?['empresa','fornecedor','documento','plano_contas','n_nf']:state.detail==='receber'?['empresa','cliente','documento','n_nf','status_titulo']:['empresa','cliente','orcamento','os','produto','n_pedido'];
+ return rows.filter(r=>keys.some(k=>norm(r[k]).includes(q)));
+}
+function drawDetails(){
+ const rows=detailRows(),size=Number(state.pageSize)||50;
+ const last=Math.max(0,Math.ceil(rows.length/size)-1);
+ page=Math.min(page,last);
+ document.getElementById('detailCount').textContent=num.format(rows.length)+' registros';
+ document.getElementById('detailTable').innerHTML=htmlTable(rows.slice(page*size,(page+1)*size),cols[state.detail]);
+ document.getElementById('detailPagination').textContent=rows.length?'Exibindo '+num.format(page*size+1)+'–'+num.format(Math.min((page+1)*size,rows.length))+' de '+num.format(rows.length):'Nenhum registro';
+ document.getElementById('pagePrev').disabled=page===0;
+ document.getElementById('pageNext').disabled=page>=last;
+}
+function changePage(delta){page+=delta;drawDetails();document.getElementById('detailTable').scrollTop=0}
+function exportDetails(){
+ const rows=detailRows(),columns=cols[state.detail];
+ if(!rows.length)return alert('Não há registros para exportar.');
+ if(!window.XLSX)return alert('Biblioteca Excel indisponível.');
+ const content=rows.map(r=>Object.fromEntries(columns.map(c=>[c[1],numericCols.includes(c[0])?n(r[c[0]]):formatCell(r,c[0])])));
+ const book=XLSX.utils.book_new();XLSX.utils.book_append_sheet(book,XLSX.utils.json_to_sheet(content),'Financeiro');
+ XLSX.writeFile(book,'PSTEC_Financeiro_'+state.detail+'_'+state.from+'_'+state.to+'.xlsx');
+}
+function showWarning(){
+ const bad=Object.keys(sync).filter(k=>sync[k].error);
+ const missing=Object.keys(SOURCES).filter(k=>!sync[k]?.ok&&!sync[k]?.cache);
+ const el=document.getElementById('warning');
+ if(bad.length||missing.length){
+  el.style.display='block';
+  el.textContent='Atenção: '+(bad.length?'não foi possível atualizar '+bad.join(', ')+'. ':'')+(missing.length?'Sem dados disponíveis em '+missing.join(', ')+'. ':'')+'Os totais podem estar incompletos. Dados de cache continuam disponíveis quando existirem.';
+ }else el.style.display='none';
+}
+function render(){
+ model=buildModel();
+ document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id==='view_'+state.view));
+ document.querySelectorAll('.navbutton').forEach(x=>x.classList.toggle('active',x.dataset.view===state.view));
+ document.getElementById('periodCaption').textContent=monthLabel(state.from)+' até '+monthLabel(state.to);
+ destroyCharts();
+ drawKpis();monthlyTable('monthlyTable',false);monthlyTable('compareTable',true);
+ if(state.view==='resumo'){chartPay('chartResumoPR');chartSaldo('chartResumoSaldo')}
+ else if(state.view==='comparativo'){chartPay('chartCompPR');chartSaldo('chartCompSaldo')}
+ else if(state.view==='composicao')chartComposition();
+ else if(state.view==='juros')drawJuros();
+ else if(state.view==='detalhes')drawDetails();
+ showWarning();if(window.lucide)lucide.createIcons();
+}
+function scheduleRender(){clearTimeout(renderTimer);renderTimer=setTimeout(render,100)}
+function sourceBadge(){
+ const ks=Object.keys(SOURCES),ready=ks.filter(k=>sync[k]?.ok).length,errors=ks.filter(k=>sync[k]?.error).length,cache=ks.filter(k=>sync[k]?.cache&&!sync[k]?.ok).length;
+ document.getElementById('dataStatus').textContent=(loading?'Sincronizando · ':'')+ready+'/'+ks.length+' APIs'+(errors?' · '+errors+' falha(s)':'')+(cache?' · '+cache+' cache':'');
+}
+function sourceArray(v){
+ if(Array.isArray(v))return v;
+ for(const k of ['data','results','rows','items','registros'])if(Array.isArray(v?.[k]))return v[k];
+ throw Error('Resposta da API não contém uma lista de registros');
+}
+function fillCompanies(){
+ const list=new Map();
+ for(const type of Object.keys(raw))for(const r of raw[type]){
+  const key=String(r.cod_empresa??'');
+  if(key&&!list.has(key))list.set(key,String(r.empresa||'Empresa '+key));
+ }
+ const sel=document.getElementById('f_empresa');
+ sel.innerHTML='<option value="">Todas</option>'+[...list].sort((a,b)=>a[1].localeCompare(b[1])).map(x=>'<option value="'+ehtml(x[0])+'">'+ehtml(x[1])+'</option>').join('');
+ sel.value=state.empresa;
+}
+async function loadCache(){
+ if(!window.PstecCache)return;
+ for(const k of Object.keys(SOURCES)){
+  try{const value=await PstecCache.read(CACHE_PREFIX+k);if(value&&Array.isArray(value.data)){raw[k]=value.data;sync[k]={cache:true,ok:false,date:value.savedAt}}}
+  catch(e){console.warn('Cache '+k,e)}
+ }
+ fillCompanies();scheduleRender();sourceBadge();
+}
+async function loadSource(k){
+ const previous=raw[k];
+ try{
+  const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),90000);
+  let res;
+  try{res=await fetch(API+SOURCES[k]+'?_t='+Date.now(),{cache:'no-store',signal:ctrl.signal})}
+  finally{clearTimeout(timer)}
+  if(!res.ok)throw Error('HTTP '+res.status);
+  const data=sourceArray(await res.json());
+  raw[k]=data;sync[k]={ok:true,cache:false,date:Date.now()};
+  if(window.PstecCache)try{await PstecCache.write(CACHE_PREFIX+k,data,new Date().toISOString())}catch(e){console.warn('Falha no cache '+k,e)}
+  fillCompanies();scheduleRender();
+ }catch(e){
+  console.error('PSTEC '+k,e);raw[k]=previous;sync[k]={...sync[k],ok:false,error:String(e.message||e)};
+  scheduleRender();
+ }finally{sourceBadge()}
+}
+async function reloadAll(){
+ if(loading)return;
+ loading=true;document.getElementById('refreshBtn').disabled=true;sourceBadge();
+ await Promise.all(Object.keys(SOURCES).map(loadSource));
+ loading=false;document.getElementById('refreshBtn').disabled=false;sourceBadge();
+}
+function save(){localStorage.setItem(STATE_KEY,JSON.stringify(state))}
+function applyFilters(){
+ for(const id of ['from','to','empresa','prevP','statusP','prevR','statusR','nf','valorP','grupo','plano','carteira','busca','anoJ']){
+  const el=document.getElementById('f_'+id);if(el)el.value=state[id]??defaults[id];
+ }
+ document.getElementById('detailType').value=state.detail;
+ document.getElementById('pageSize').value=state.pageSize;
+}
+function resetFilters(){state={...defaults,view:state.view,detail:state.detail};page=0;applyFilters();save();render()}
+function quickPeriod(which){
+ const d=new Date(),y=d.getFullYear(),m=d.getMonth();
+ if(which==='year'){state.from=ym(y,0);state.to=ym(y,11)}
+ else if(which==='quarter'){const q=Math.floor(m/3)*3;state.from=ym(y,q);state.to=ym(y,q+2)}
+ else{const a=new Date(y,m-11,1);state.from=ym(a.getFullYear(),a.getMonth());state.to=ym(y,m)}
+ page=0;applyFilters();save();render();
+}
+function changeView(v){state.view=v;page=0;save();render()}
+function setup(){
+ const yearSel=document.getElementById('f_anoJ');
+ for(let y=year+1;y>=year-12;y--)yearSel.innerHTML+='<option value="'+y+'">'+y+'</option>';
+ applyFilters();
+ for(const id of ['from','to','empresa','prevP','statusP','prevR','statusR','nf','valorP','grupo','plano','carteira','busca','anoJ']){
+  const el=document.getElementById('f_'+id);
+  el.addEventListener(id==='plano'||id==='busca'?'input':'change',()=>{
+   state[id]=el.value;
+   if(state.from>state.to){
+    if(id==='from')state.to=state.from;
+    else if(id==='to')state.from=state.to;
+    applyFilters();
+   }
+   page=0;save();scheduleRender();
+  });
+ }
+ document.querySelectorAll('.navbutton').forEach(b=>b.addEventListener('click',()=>changeView(b.dataset.view)));
+ document.getElementById('detailType').addEventListener('change',e=>{state.detail=e.target.value;page=0;save();drawDetails()});
+ document.getElementById('pageSize').addEventListener('change',e=>{state.pageSize=e.target.value;page=0;save();drawDetails()});
+ render();loadCache().then(reloadAll);
+ setInterval(()=>{if(document.visibilityState==='visible'&&!loading)reloadAll()},300000);
+ document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&!loading&&Object.values(sync).some(v=>!v.date||Date.now()-new Date(v.date).getTime()>300000))reloadAll()});
+ if(window.lucide)lucide.createIcons();
+}
+document.addEventListener('DOMContentLoaded',setup);
+
+</script>
 </body></html>
