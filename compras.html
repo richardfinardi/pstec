@@ -331,9 +331,10 @@ function joinDatasets(ds){
       const cotGuid=String(oc?.guid_item_cotacao_referenciado||oc?.guid_cotacao||'').trim();
       const cotNumeroBruto=oc?.cod_cotacao_referenciada??oc?.cod_cotacao;
       const cotNumero=cotNumeroBruto!=null&&String(cotNumeroBruto)!=='0'?String(cotNumeroBruto):null;
+      // Nenhuma cotacao presumida: sem GUID/codigo comprovado, etapa cotacao->OC fica sem calculo.
       const cotVinculada=(cotGuid?cotRows.find(c=>String(c.guid_item_cotacao||'')===cotGuid):null)
         ||(cotNumero?cotRows.find(c=>String(c.cod_cotacao)===cotNumero):null)
-        ||(cotComData.length===1?cotComData[0]:null);
+        ||null;
       // Para uma OC, considerar a cotacao que originou essa OC,
       // nao a primeira cotacao historica do material.
       const dataCotParaOc=cotVinculada?.dt_cotacao||null;
