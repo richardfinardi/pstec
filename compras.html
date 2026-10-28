@@ -22,6 +22,15 @@ main{max-width:1550px;margin:auto;padding:24px 22px 50px}.headline{display:flex;
 .multi-menu{display:none;position:absolute;left:0;top:calc(100% + 4px);min-width:205px;width:max(100%,205px);max-height:270px;overflow:auto;z-index:30;background:#fff;border:1px solid #cbd7e7;box-shadow:0 14px 34px #182a4d33;border-radius:12px;padding:8px}
 .multi.open .multi-menu{display:block}.multi-opt{display:flex;align-items:center;gap:9px;padding:8px 6px;cursor:pointer;border-radius:7px;font-size:12px;white-space:normal}.multi-opt:hover{background:#f2f6fc}.multi-opt input{width:16px!important;height:16px!important;padding:0!important;margin:0;accent-color:#003b96;flex-shrink:0}
 .multi-actions{display:flex;justify-content:space-between;gap:6px;padding:4px 4px 8px;border-bottom:1px solid var(--line)}.multi-actions button{background:transparent;border:0;cursor:pointer;font-weight:750;color:#0047cc;font-size:11px;padding:4px}
+/* Dropdowns: retirar conflito com CSS geral da classe .field */
+.field label.multi-opt{display:flex;align-items:center;gap:12px;font-size:12px!important;font-weight:650!important;letter-spacing:normal!important;text-transform:none!important;color:#263f61;margin:0!important;padding:9px 10px;line-height:1.4;min-height:39px}
+.field label.multi-opt span{flex:1;min-width:0;word-break:normal}
+.field .multi-opt input[type="checkbox"]{appearance:auto;display:inline-block;width:17px!important;height:17px!important;min-width:17px!important;min-height:17px!important;max-width:17px;max-height:17px;padding:0!important;border-radius:3px!important;margin:0!important;flex:0 0 17px!important}
+.multi-menu{min-width:275px;width:max(100%,275px);max-width:min(330px,calc(100vw - 26px));max-height:290px}
+.field:nth-last-child(-n+2) .multi-menu{left:auto;right:0}
+.multi-menu .multi-actions{position:sticky;top:0;background:white;z-index:1}
+.multi-opt:has(input:checked){background:#edf4ff}
+.multi-empty{padding:12px 8px;color:#64748b;font-size:12px;text-align:center}
 @media(max-width:1100px){.cards{grid-template-columns:repeat(3,1fr)}.filters{grid-template-columns:repeat(3,minmax(130px,1fr))}.field:first-child{grid-column:span 3}}
 @media(max-width:650px){main{padding:14px 10px 35px}.top{padding:10px}.top .namehide{display:none}.cards{grid-template-columns:repeat(2,1fr);gap:8px}.card{padding:12px}.card b{font-size:22px}.filters{grid-template-columns:repeat(2,minmax(0,1fr));padding:10px}.field:first-child{grid-column:span 2}.headline h1{font-size:22px}.paneltitle{padding:12px}.top img{height:30px}}
 </style>
@@ -39,8 +48,11 @@ main{max-width:1550px;margin:auto;padding:24px 22px 50px}.headline{display:flex;
 <div class="card good"><span class="tag">OCs pagas</span><b id="k_pagas">—</b><small>pedidos com pagamento concluído</small></div>
 <div class="card alert"><span class="tag">OCs com saldo a pagar</span><b id="k_pendentes">—</b><small>pendentes ou parcialmente pagas</small></div>
 <div class="card time"><span class="tag">Entrada OS → processamento</span><b id="k_lt_os">—</b><small>média em dias corridos</small></div>
-<div class="card time"><span class="tag">Processamento → OC</span><b id="k_lt_lista">—</b><small>média em dias corridos</small></div>
-<div class="card time"><span class="tag">OC → 1ª entrada</span><b id="k_lt_entrada">—</b><small>média em dias corridos</small></div>
+<div class="card time"><span class="tag">Processamento → cotação</span><b id="k_lt_cot">—</b><small>lead time médio</small></div>
+<div class="card time"><span class="tag">Cotação → OC</span><b id="k_lt_cot_oc">—</b><small>lead time médio</small></div>
+<div class="card time"><span class="tag">LT compras • Processamento → OC</span><b id="k_lt_lista">—</b><small>lead time médio</small></div>
+<div class="card time"><span class="tag">OC → 1º recebimento</span><b id="k_lt_entrada">—</b><small>lead time médio</small></div>
+<div class="card time"><span class="tag">LT suprimentos • Processamento → entrada</span><b id="k_lt_supr">—</b><small>lead time médio</small></div>
 </section>
 <section class="panel" id="filtersPanel"><div class="paneltitle"><span>Filtros</span><small>Seleções mantidas ao atualizar a página</small></div><div class="filters">
 <div class="field"><label for="search">Pesquisar OS, cliente, material, fornecedor, OC, NF</label><input id="search" placeholder="Pesquise qualquer informação"></div>
@@ -51,7 +63,7 @@ main{max-width:1550px;margin:auto;padding:24px 22px 50px}.headline{display:flex;
 <div class="field"><label for="pay">Financeiro</label><select id="pay"><option value="">Todos</option><option value="PAGA">Paga</option><option value="PARCIAL">Parcial</option><option value="EM_ABERTO">Em aberto</option><option value="SEM_TITULO_IDENTIFICADO">Sem título identificado</option></select></div>
 <div class="field"><label for="deadline">Prazo cliente</label><select id="deadline"><option value="">Todos</option><option value="overdue">Vencido</option><option value="soon">0 a 15 dias</option><option value="later">Mais de 15 dias</option><option value="missing">Sem previsão</option></select></div>
 </div><div class="controls"><button class="btn small" id="reset">Limpar filtros</button><button class="btn small" id="export">Exportar CSV</button></div></section>
-<section class="panel"><div class="paneltitle"><span>Acompanhamento por material</span><small id="count">0 registros</small></div><div class="tablewrap"><table class="table"><thead><tr><th>OS / empresa</th><th>Orçamento</th><th>Cliente</th><th>Material</th><th>Cotação</th><th>Processamento</th><th>Entrada da OS</th><th>Data processamento</th><th>OS → Proc.</th><th>Dias aguardando</th><th>Situação compra</th><th>OC</th><th>Qtde na OC</th><th>Fornecedor</th><th>Data OC</th><th>1ª entrada</th><th>Previsão OS</th><th>Prazo cliente</th><th>Dias restantes</th><th>Proc. → OC</th><th>OC → Entrada</th><th>Pagamento OC</th><th>NF entrada</th></tr></thead><tbody id="rows"><tr><td colspan="23" class="empty">Buscando dados...</td></tr></tbody></table></div></section>
+<section class="panel"><div class="paneltitle"><span>Acompanhamento por material</span><small id="count">0 registros</small></div><div class="tablewrap"><table class="table"><thead><tr><th>OS / empresa</th><th>Orçamento</th><th>Cliente</th><th>Material</th><th>Cotação</th><th>Data cotação</th><th>Processamento</th><th>Entrada da OS</th><th>Data processamento</th><th>OS → Proc.</th><th>Dias aguardando</th><th>Situação compra</th><th>OC</th><th>Qtde na OC</th><th>Fornecedor</th><th>Data OC</th><th>1ª entrada</th><th>Previsão OS</th><th>Prazo cliente</th><th>Dias restantes</th><th>Proc. → Cotação</th><th>Cotação → OC</th><th>LT compras</th><th>OC → Entrada</th><th>LT suprimentos</th><th>Pagamento OC</th><th>NF entrada</th></tr></thead><tbody id="rows"><tr><td colspan="27" class="empty">Buscando dados...</td></tr></tbody></table></div></section>
 <p class="foot">Prazos em dias corridos. O pagamento é acompanhado pelo pedido de compra, inclusive nos casos de adiantamento.</p>
 </main>
 <script>
@@ -66,7 +78,7 @@ const APIS={
   cotacoes:'06_compras_cotacoes'
 };
 const API_ROOT='https://pstec.consultoriarf.net/';
-const CACHE='pstec_compras_monitoramento_v5', PREF='pstec_compras_filters_v2';
+const CACHE='pstec_compras_monitoramento_v6', PREF='pstec_compras_filters_v2';
 let cotacoesDisponiveis=false;
 let all=[],filtered=[],updating=false;
 const $=id=>document.getElementById(id);
@@ -149,7 +161,7 @@ $('k_lt_os').textContent=avg([...mats.values()].map(r=>r.lead_time_os_processame
 $('k_lt_lista').textContent=avg([...new Map(filtered.filter(r=>r.lead_time_solicitacao_oc_dias!==null&&r.cod_oc!=null).map(r=>[[keyMaterial(r),keyOC(r)].join('|'),r.lead_time_solicitacao_oc_dias])).values()]);
 $('k_lt_entrada').textContent=avg([...new Map(filtered.filter(r=>r.lead_time_oc_primeira_entrada_dias!==null&&r.cod_oc!=null).map(r=>[[keyMaterial(r),keyOC(r)].join('|'),r.lead_time_oc_primeira_entrada_dias])).values()]);
 $('count').textContent=filtered.length.toLocaleString('pt-BR')+' linhas • '+mats.size.toLocaleString('pt-BR')+' materiais • '+ocMap.size.toLocaleString('pt-BR')+' OCs';
-const body=$('rows');if(!filtered.length){body.innerHTML='<tr><td colspan="23" class="empty">Nenhum registro. Verifique os filtros ou a conexão da API.</td></tr>';return;}
+const body=$('rows');if(!filtered.length){body.innerHTML='<tr><td colspan="27" class="empty">Nenhum registro. Verifique os filtros ou a conexão da API.</td></tr>';return;}
 const n=filtered.length>400?400:filtered.length;
 body.innerHTML=filtered.slice(0,n).map(r=>{let days=val(r.dias_ate_entrega_cliente),tag=days===null?'muted':days<0?'datehot':days<=15?'datesoon':'';return '<tr>'+[
 '<strong class="os">'+escapeHtml(r.n_os)+'</strong><br><span class="muted">Emp. '+escapeHtml(r.cod_empresa)+'</span>',
@@ -165,7 +177,7 @@ pill(r.status_compra),escapeHtml(r.cod_oc??'—'),escapeHtml(r.qtde_oc??'—'),e
 '<span class="'+tag+'">'+(days===null?'—':days+' d')+'</span>',
 val(r.lead_time_solicitacao_oc_dias)===null?'—':r.lead_time_solicitacao_oc_dias+' d',
 val(r.lead_time_oc_primeira_entrada_dias)===null?'—':r.lead_time_oc_primeira_entrada_dias+' d',pill(r.status_pagamento_oc),escapeHtml(r.nfs_entrada||'—')].map((v,i)=>'<td'+(i===2?' class="wrap"':'')+'>'+v+'</td>').join('')+'</tr>';}).join('');
-if(n<filtered.length)body.innerHTML+='<tr><td colspan="23" class="empty">Exibindo as primeiras 400 linhas. Use filtros ou exporte o CSV para todos os registros.</td></tr>';
+if(n<filtered.length)body.innerHTML+='<tr><td colspan="27" class="empty">Exibindo as primeiras 400 linhas. Use filtros ou exporte o CSV para todos os registros.</td></tr>';
 }
 function dateMs(v){const s=String(v||'').slice(0,10);return /^\d{4}-\d{2}-\d{2}$/.test(s)?Date.parse(s+'T12:00:00Z'):NaN;}
 function dayDiff(a,b){const x=dateMs(a),y=dateMs(b);return Number.isFinite(x)&&Number.isFinite(y)?Math.round((y-x)/86400000):null;}
@@ -276,7 +288,7 @@ const respostas=await Promise.all(Object.entries(APIS).map(async ([tipo,caminho]
 cotacoesDisponiveis=Array.isArray(respostas[6]);
 const a=joinDatasets(respostas);all=a;companies();apply();setStatus((cotacoesDisponiveis?'Atualizado • ':'Atualizado • cotações pendentes • ')+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),cotacoesDisponiveis?'ok':'warn');
 try{await window.PstecCache?.write(CACHE,a)}catch{}
-}catch(e){console.warn('Atualização de compras indisponível:',e);setStatus('Atualização indisponível','bad');if(!all.length)$('rows').innerHTML='<tr><td colspan="23" class="empty">Não foi possível carregar os dados. Tente atualizar novamente.</td></tr>';}
+}catch(e){console.warn('Atualização de compras indisponível:',e);setStatus('Atualização indisponível','bad');if(!all.length)$('rows').innerHTML='<tr><td colspan="27" class="empty">Não foi possível carregar os dados. Tente atualizar novamente.</td></tr>';}
 finally{updating=false;$('refresh').disabled=false;}}
 function exportCsv(){const keys=['cod_empresa','n_os','orcamentos','qtd_orcamentos','cliente','cotacoes','status_cotacao_material','dt_prevista_os','dt_entrada_os','dt_processamento_referencia','lead_time_os_processamento_dias','origem_previsao','titulo_os','produto','cod_interno','cod_os_aux','qtde_lista','qtde_a_comprar_cps','cod_oc','qtde_oc','fornecedor','dt_oc','dt_primeira_entrada','dt_ultima_entrada','nfs_entrada','previsao_entrega_cliente','dias_ate_entrega_cliente','lead_time_solicitacao_oc_dias','lead_time_oc_primeira_entrada_dias','lead_time_oc_ultima_entrada_dias','status_compra','status_pagamento_oc','saldo_pagar_oc'];const csv=[keys.join(';'),...filtered.map(r=>keys.map(k=>'"'+String(r[k]??'').replaceAll('"','""')+'"').join(';'))].join('\r\n');let a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));a.download='pstec_compras_'+new Date().toISOString().slice(0,10)+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),3000);}
 restore();$('search').addEventListener('input',apply);$('refresh').addEventListener('click',load);$('export').addEventListener('click',exportCsv);$('reset').addEventListener('click',()=>{$('search').value='';for(const id of multiIds){$(id).querySelectorAll('.multi-opt input').forEach(c=>c.checked=false);multiLabel(id);}apply();});
