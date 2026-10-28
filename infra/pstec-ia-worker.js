@@ -686,6 +686,14 @@ async function answerWithLiveData(env, question, history) {
     "Use op month com valor AAAA-MM para comparar meses e a data atual para termos como hoje, ontem, mes passado. " +
     "Somente filtros relativos a perguntas solicitadas; nao invente status. " +
     "Para listar itens, use metric=list e select com campos relevantes. " +
+    "Na Carteira PSTEC, se perguntarem quantos PEDIDOS ainda faltam entregar, " +
+    "use metric distinct_count no campo EXATO 'Nº Pedido' (se estiver presente), " +
+    "filtrando 'Saldo a entregar' com op gt e value 0. " +
+    "Quando especificar um cliente, filtre o campo 'Cliente' por contains, sem exigir nome exato. " +
+    "Para diferenciar pedidos de itens, adicione consulta count com os mesmos filtros. " +
+    "Se perguntarem quantos orcamentos, conte DISTINCT 'Nº Orçamento'. " +
+    "Para quantidade de pecas pendentes, use sum em 'Saldo a entregar' com os mesmos filtros. " +
+    "Nunca chame total de linhas de total de pedidos. " +
     "Para total use sum no campo NUMERICO do valor de LINHA, nunca campo de total de NF repetido por item. " +
     "Na fonte faturamento os dados podem ter uma linha por item de nota, evite duplicar valores de cabecalho. " +
     "Se nao souber qual valor somar, produza apenas contagens e listas; nao invente. " +
