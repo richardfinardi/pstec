@@ -57,7 +57,7 @@ main{max-width:1550px;margin:auto;padding:24px 22px 50px}.headline{display:flex;
 <section class="panel" id="filtersPanel"><div class="paneltitle"><span>Filtros</span><small>Seleções mantidas ao atualizar a página</small></div><div class="filters">
 <div class="field"><label for="search">Pesquisar OS, cliente, material, fornecedor, OC, NF</label><input id="search" placeholder="Pesquise qualquer informação"></div>
 <div class="field"><label for="company">Empresa</label><select id="company"><option value="">Todas</option></select></div>
-<div class="field"><label for="quote">Cotação</label><select id="quote"><option value="">Todas</option><option value="COTADO">Com cotação</option><option value="SEM_COTACAO">Sem cotação</option></select></div>
+<div class="field"><label for="quote">Cotação</label><select id="quote"><option value="">Todas</option><option value="COTADO">Com cotação</option><option value="SEM_COTACAO">Sem cotação</option><option value="SEM_DADOS_COTACAO">Cotação não disponível</option></select></div>
 <div class="field"><label for="buy">Compra</label><select id="buy"><option value="">Todas</option><option value="SEM_OC">Compra não emitida</option><option value="AGUARDANDO_PROCESSAMENTO">Aguardando processamento</option><option value="OC_SEM_ENTRADA">Aguardando entrega</option><option value="ENTRADA_PARCIAL">Recebimento parcial</option><option value="RECEBIDO">Recebido</option></select></div>
 <div class="field"><label for="processing">Processamento</label><select id="processing"><option value="">Todos</option><option value="NAO_PROCESSADO">Aguardando processamento</option><option value="PROCESSADO">Processado</option></select></div>
 <div class="field"><label for="pay">Financeiro</label><select id="pay"><option value="">Todos</option><option value="PAGA">Paga</option><option value="PARCIAL">Parcial</option><option value="EM_ABERTO">Em aberto</option><option value="SEM_TITULO_IDENTIFICADO">Sem título identificado</option></select></div>
@@ -85,6 +85,7 @@ const $=id=>document.getElementById(id);
 const campos=['search','company','quote','buy','processing','pay','deadline'];
 const multiIds=campos.filter(x=>x!=='search');
 let savedFilters={};
+const filterCatalog={};
 const data=v=>{if(v==null||v==='')return null;const d=new Date(String(v).substring(0,10)+'T12:00:00');return Number.isNaN(d.getTime())?null:d;};
 const fmt=v=>{const d=data(v);return d?d.toLocaleDateString('pt-BR'):'—';};
 const val=v=>{if(v==null||v==='')return null;const n=Number(v);return Number.isFinite(n)?n:null;};
@@ -120,6 +121,7 @@ function restore(){
   const sel=$(id),opts=[...sel.options].filter(o=>o.value).map(o=>({value:o.value,label:o.textContent}));
   const div=document.createElement('div');div.className='multi';div.id=id;
   div.innerHTML='<button class="multi-btn" type="button" aria-expanded="false"><b>Todas</b><span>▾</span></button><div class="multi-menu"></div>';
+  filterCatalog[id]=opts;
   sel.replaceWith(div);setMultiOptions(id,opts,false);
   const btn=div.querySelector('.multi-btn'),menu=div.querySelector('.multi-menu');
   btn.addEventListener('click',()=>{
@@ -127,24 +129,59 @@ function restore(){
    document.querySelectorAll('.multi.open').forEach(n=>{n.classList.remove('open');n.querySelector('.multi-btn').classList.remove('open');n.querySelector('.multi-btn').setAttribute('aria-expanded','false')});
    div.classList.toggle('open',opening);btn.classList.toggle('open',opening);btn.setAttribute('aria-expanded',String(opening));
   });
-  menu.addEventListener('change',()=>{multiLabel(id);apply();});
-  menu.addEventListener('click',e=>{const a=e.target.closest('[data-action]');if(!a)return;const mark=a.dataset.action==='all';menu.querySelectorAll('.multi-opt input').forEach(c=>c.checked=mark);multiLabel(id);apply();});
+  menu.addEventListener('change',()=>{multiLabel(id);apply(id);});
+  menu.addEventListener('click',e=>{const a=e.target.closest('[data-action]');if(!a)return;const mark=a.dataset.action==='all';menu.querySelectorAll('.multi-opt input').forEach(c=>c.checked=mark);multiLabel(id);apply(id);});
  }
  document.addEventListener('click',e=>{if(e.target.closest('.multi'))return;document.querySelectorAll('.multi.open').forEach(n=>{n.classList.remove('open');n.querySelector('.multi-btn').classList.remove('open');n.querySelector('.multi-btn').setAttribute('aria-expanded','false')});});
 }
 function save(){const x={search:$('search').value};for(const id of multiIds)x[id]=selectedOf(id);savedFilters=x;localStorage.setItem(PREF,JSON.stringify(x));}
 function companies(){
  const opts=[...new Set(all.map(x=>String(x.cod_empresa)).filter(Boolean))].sort((a,b)=>Number(a)-Number(b)).map(v=>({value:v,label:'Empresa '+v}));
+ filterCatalog.company=opts;
  setMultiOptions('company',opts,false);
 }
-function apply(){save();
- const search=norm($('search').value),sets=Object.fromEntries(multiIds.map(id=>[id,new Set(selectedOf(id))]));
- const ok=(id,value)=>!sets[id].size||sets[id].has(String(value??''));
- filtered=all.filter(r=>{const nd=val(r.dias_ate_entrega_cliente);
-  const prazo=nd===null?'missing':nd<0?'overdue':nd<=15?'soon':'later';
-  return ok('company',r.cod_empresa)&&ok('quote',r.status_cotacao_material)&&ok('buy',r.status_compra)&&ok('processing',r.status_processamento)&&ok('pay',r.status_pagamento_oc)&&ok('deadline',prazo)
-   &&(!search||norm([r.n_os,r.titulo_os,r.cliente,r.produto,r.cod_interno,r.cod_oc,r.fornecedor,r.nfs_entrada,r.n_orcamento,r.cotacoes].join(' ')).includes(search));});
- render();}
+/* Filtros incrementais: somente opcoes que existem no conjunto resultante.
+   A ultima escolha tem prioridade; selecoes antigas incompatíveis sao retiradas. */
+function facetValue(r,id){
+ if(id==='company')return String(r.cod_empresa??'');
+ if(id==='quote')return String(r.status_cotacao_material??'');
+ if(id==='buy')return String(r.status_compra??'');
+ if(id==='processing')return String(r.status_processamento??'');
+ if(id==='pay')return String(r.status_pagamento_oc??'');
+ const nd=val(r.dias_ate_entrega_cliente);
+ if(id==='deadline')return nd===null?'missing':nd<0?'overdue':nd<=15?'soon':'later';
+ return '';
+}
+function setVisibleFacet(id,allowed,chosen){
+ const menu=$(id).querySelector('.multi-menu');
+ const options=(filterCatalog[id]||[]).filter(o=>allowed.has(o.value));
+ menu.innerHTML='<div class="multi-actions"><button type="button" data-action="all">Marcar todas</button><button type="button" data-action="none">Limpar seleção</button></div>'
+   +(options.length
+    ? options.map(o=>'<label class="multi-opt"><input type="checkbox" value="'+escapeHtml(o.value)+'"'+(chosen.includes(o.value)?' checked':'')+'><span>'+escapeHtml(o.label)+'</span></label>').join('')
+    : '<div class="multi-empty">Nenhuma opção disponível</div>');
+ multiLabel(id);
+}
+function matchesSelection(r,selections,exclude=''){
+ return multiIds.every(id=>id===exclude||!selections[id]?.length||selections[id].includes(facetValue(r,id)));
+}
+function apply(changed=''){
+ const search=norm($('search').value);
+ const searchRows=all.filter(r=>!search||norm([r.n_os,r.titulo_os,r.cliente,r.produto,r.cod_interno,r.cod_oc,r.fornecedor,r.nfs_entrada,r.n_orcamento,r.cotacoes].join(' ')).includes(search));
+ const current=Object.fromEntries(multiIds.map(id=>[id,selectedOf(id)]));
+ const accepted={};
+ const priority=multiIds.includes(changed)?[changed,...multiIds.filter(id=>id!==changed)]:multiIds;
+ for(const id of priority){
+   const allowed=new Set(searchRows.filter(r=>matchesSelection(r,accepted)).map(r=>facetValue(r,id)));
+   accepted[id]=current[id].filter(v=>allowed.has(v));
+ }
+ for(const id of multiIds){
+   const allowed=new Set(searchRows.filter(r=>matchesSelection(r,accepted,id)).map(r=>facetValue(r,id)));
+   const chosen=accepted[id].filter(v=>allowed.has(v));
+   setVisibleFacet(id,allowed,chosen);
+ }
+ filtered=searchRows.filter(r=>matchesSelection(r,accepted));
+ save();render();
+}
 function avg(a){const b=a.map(Number).filter(Number.isFinite);return b.length? (b.reduce((s,n)=>s+n,0)/b.length).toLocaleString('pt-BR',{maximumFractionDigits:1})+' d':'—';}
 function render(){
 let mats=new Map(filtered.map(r=>[keyMaterial(r),r]));const ocMap=new Map(filtered.filter(r=>r.cod_oc!=null).map(r=>[keyOC(r),r]));
@@ -291,7 +328,7 @@ try{await window.PstecCache?.write(CACHE,a)}catch{}
 }catch(e){console.warn('Atualização de compras indisponível:',e);setStatus('Atualização indisponível','bad');if(!all.length)$('rows').innerHTML='<tr><td colspan="27" class="empty">Não foi possível carregar os dados. Tente atualizar novamente.</td></tr>';}
 finally{updating=false;$('refresh').disabled=false;}}
 function exportCsv(){const keys=['cod_empresa','n_os','orcamentos','qtd_orcamentos','cliente','cotacoes','status_cotacao_material','dt_prevista_os','dt_entrada_os','dt_processamento_referencia','lead_time_os_processamento_dias','origem_previsao','titulo_os','produto','cod_interno','cod_os_aux','qtde_lista','qtde_a_comprar_cps','cod_oc','qtde_oc','fornecedor','dt_oc','dt_primeira_entrada','dt_ultima_entrada','nfs_entrada','previsao_entrega_cliente','dias_ate_entrega_cliente','lead_time_solicitacao_oc_dias','lead_time_oc_primeira_entrada_dias','lead_time_oc_ultima_entrada_dias','status_compra','status_pagamento_oc','saldo_pagar_oc'];const csv=[keys.join(';'),...filtered.map(r=>keys.map(k=>'"'+String(r[k]??'').replaceAll('"','""')+'"').join(';'))].join('\r\n');let a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));a.download='pstec_compras_'+new Date().toISOString().slice(0,10)+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),3000);}
-restore();$('search').addEventListener('input',apply);$('refresh').addEventListener('click',load);$('export').addEventListener('click',exportCsv);$('reset').addEventListener('click',()=>{$('search').value='';for(const id of multiIds){$(id).querySelectorAll('.multi-opt input').forEach(c=>c.checked=false);multiLabel(id);}apply();});
+restore();$('search').addEventListener('input',()=>apply('search'));$('refresh').addEventListener('click',load);$('export').addEventListener('click',exportCsv);$('reset').addEventListener('click',()=>{$('search').value='';for(const id of multiIds){$(id).querySelectorAll('.multi-opt input').forEach(c=>c.checked=false);multiLabel(id);}apply();});
 (async()=>{try{const v=await window.PstecCache?.read(CACHE);if(Array.isArray(v?.data)){all=v.data;companies();apply();setStatus('CACHE LOCAL • atualizando…','warn');}}catch{}await load();})();
 })();
 </script>
