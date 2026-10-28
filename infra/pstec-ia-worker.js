@@ -202,7 +202,230 @@ function rowsFromJSON(value) {
   if (arrays.length === 1) return arrays[0];
   throw Error("A API retornou um JSON sem lista unica de registros.");
 }
+
+// Stream seguro para endpoints grandes que retornam ARRAY JSON no nivel principal.
+// Le e descarta cada registro antes do proximo: nunca armazena a carteira inteira.
+async function streamArrayDataset(id, onRow, sampleLimit = 0) {
+  if (!Object.prototype.hasOwnProperty.call(DATASETS, id)) throw Error("Fonte nao autorizada.");
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 90000);
+  let reader = null;
+  let bytesRead = 0, rowsRead = 0, finished = false, sampled = false;
+  let buffer = "", cursor = 0, start = -1, depth = 0, inString = false;
+  let escaped = false, arrayStarted = false, arrayDone = false;
+  const MAX_STREAM_BYTES = 180 * 1024 * 1024;
+  const scan = () => {
+    for (; cursor < buffer.length; cursor++) {
+      const ch = buffer[cursor];
+      if (!arrayStarted) {
+        if (/[\s\uFEFF]/.test(ch)) continue;
+        if (ch !== "[") throw Error("A rota /" + dataPath(id) +
+          " nao retornou array JSON. Requer endpoint paginado/agregado.");
+        arrayStarted = true;
+        continue;
+      }
+      if (arrayDone) {
+        if (!/\s/.test(ch)) throw Error("JSON invalido apos o fechamento do array.");
+        continue;
+      }
+      if (start < 0) {
+        if (/[\s,]/.test(ch)) continue;
+        if (ch === "]") { arrayDone = true; continue; }
+        if (ch !== "{") throw Error("Esperado objeto no array da rota /" + dataPath(id) + ".");
+        start = cursor; depth = 1; inString = false; escaped = false;
+        continue;
+      }
+      if (inString) {
+        if (escaped) escaped = false;
+        else if (ch === "\\") escaped = true;
+        else if (ch === '"') inString = false;
+      } else {
+        if (ch === '"') inString = true;
+        else if (ch === "{") depth++;
+        else if (ch === "}") {
+          depth--;
+          if (depth === 0) {
+            const item = JSON.parse(buffer.slice(start, cursor + 1));
+            rowsRead++;
+            const result = onRow(item, rowsRead);
+            start = -1;
+            if (result === false || (sampleLimit && rowsRead >= sampleLimit)) {
+              sampled = true;
+              cursor++;
+              return;
+            }
+          }
+        }
+      }
+    }
+    if (start >= 0) {
+      if (buffer.length - start > 2 * 1024 * 1024)
+        throw Error("Registro JSON individual excede 2 MB.");
+      buffer = buffer.slice(start);
+      cursor = buffer.length;
+      start = 0;
+    } else {
+      buffer = "";
+      cursor = 0;
+    }
+  };
+  try {
+    const response = await fetch(DATA_API_ROOT + dataPath(id), {
+      method: "GET",
+      signal: controller.signal,
+      headers: { "Accept": "application/json", "Cache-Control": "no-cache" },
+      cf: { cacheTtl: 0 }
+    });
+    if (!response.ok) throw Error("GET /" + dataPath(id) + ": HTTP " +
+      response.status + ".");
+    if (!response.body) throw Error("A API nao retornou corpo de dados.");
+    reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    while (true) {
+      const part = await reader.read();
+      if (part.done) {
+        buffer += decoder.decode();
+        scan();
+        finished = arrayDone && start < 0;
+        break;
+      }
+      bytesRead += part.value.byteLength;
+      if (bytesRead > MAX_STREAM_BYTES) {
+        throw Error("Limite de 180 MB atingido sem truncar o resultado. " +
+          "Requer endpoint agregado/paginado.");
+      }
+      buffer += decoder.decode(part.value, { stream: true });
+      scan();
+      if (sampled) break;
+    }
+    if (!sampled && !finished) throw Error("JSON incompleto retornado por /" + dataPath(id) + ".");
+    return { rowsRead, bytesRead, complete:finished && !sampled };
+  } finally {
+    clearTimeout(timer);
+    if (reader) {
+      try { if (sampled || !finished) await reader.cancel(); } catch {}
+      try { reader.releaseLock(); } catch {}
+    }
+  }
+}
+// Amostra somente para descobrir nomes e formatos dos campos. Nao e utilizada nos totais.
+async function sampleLargeDataset(id) {
+  const sample = [];
+  const info = await streamArrayDataset(id, row => { sample.push(row); }, 65);
+  return { id, rows:sample, fields:apiFields(sample),
+    streaming:true, fetchedAt:null, sampleBytes:info.bytesRead, rowsCount:0 };
+}
+function createStreamAccumulator(q) {
+  return { q, total:0, matched:0, validNumeric:0, sum:0, countNumeric:0,
+    distinct:new Set(), groups:new Map(), list:[] };
+}
+function addStreamRecord(acc, row, today) {
+  const q = acc.q;
+  acc.total++;
+  if (!q.filters.every(f => compareRows(row, f, today))) return;
+  acc.matched++;
+  const n = q.valueField ? toNumber(row[q.valueField]) : null;
+  if (["sum","avg"].includes(q.metric) && n !== null) {
+    acc.sum += n; acc.countNumeric++; acc.validNumeric++;
+  }
+  if (q.metric === "distinct_count") {
+    const key = String(row[q.distinctField] ?? "").trim();
+    if (key) acc.distinct.add(key);
+  }
+  if (q.groupBy) {
+    const label = String(row[q.groupBy] ?? "(vazio)");
+    let g = acc.groups.get(label);
+    if (!g) {
+      if (acc.groups.size >= 70000) throw Error("Mais de 70 mil grupos; solicite filtro mais especifico.");
+      g = { key:label, count:0, sum:0, numericCount:0,
+        unique:q.metric === "distinct_count" ? new Set() : null };
+      acc.groups.set(label, g);
+    }
+    g.count++;
+    if (n !== null && ["sum","avg"].includes(q.metric)) { g.sum += n; g.numericCount++; }
+    if (g.unique) {
+      const key = String(row[q.distinctField] ?? "").trim();
+      if (key) g.unique.add(key);
+    }
+  }
+  if (q.metric === "list") {
+    const columns = q.select.length ? q.select : [q.groupBy,q.valueField,q.distinctField].filter(Boolean);
+    const record = Object.fromEntries(columns.map(field => [field,
+      (row[field] == null || typeof row[field] === "object") ? null : String(row[field]).slice(0, 180)]));
+    const list = acc.list;
+    const item = { record, sortValue:n ?? 0 };
+    if (!q.valueField) {
+      if (list.length < Math.min(q.limit, DATA_MAX_ROWS_OUTPUT)) list.push(item);
+    } else {
+      list.push(item);
+      list.sort((a,b) => q.sort === "asc" ? a.sortValue-b.sortValue : b.sortValue-a.sortValue);
+      if (list.length > Math.min(q.limit, DATA_MAX_ROWS_OUTPUT)) list.pop();
+    }
+  }
+}
+function completeStreamAccumulator(acc, at) {
+  const q = acc.q;
+  const metricValue = group => {
+    if (q.metric === "distinct_count") return group.unique ? group.unique.size : acc.distinct.size;
+    if (q.metric === "count") return group.count;
+    if (q.metric === "sum") return group.sum;
+    if (q.metric === "avg") return group.numericCount ? group.sum/group.numericCount : 0;
+    return null;
+  };
+  const out = {
+    label:q.label, dataset:q.dataset, endpoint:"/" + dataPath(q.dataset),
+    metric:q.metric, groupBy:q.groupBy || null, valueField:q.valueField || null,
+    filters:q.filters, totalRows:acc.total, matchingRows:acc.matched,
+    fetchedAt:at, completeness:"Todos os registros processados em fluxo; nenhuma amostragem nos totais"
+  };
+  if (q.metric === "list") {
+    out.columns = q.select;
+    out.rows = acc.list.map(item=>item.record);
+    out.showing=out.rows.length;
+    out.truncated=acc.matched > out.showing;
+  } else if (q.groupBy) {
+    const groups=[...acc.groups.values()].map(g=>({
+      group:g.key.slice(0,110), count:g.count, value:metricValue(g)
+    }));
+    groups.sort((a,b)=>q.sort==="asc" ? a.value-b.value : b.value-a.value);
+    out.value = q.metric === "count" ? acc.matched :
+      q.metric === "distinct_count" ? acc.distinct.size :
+      q.metric === "sum" ? acc.sum :
+      acc.countNumeric ? acc.sum/acc.countNumeric : 0;
+    out.groupCount=groups.length;
+    out.groups=groups.slice(0,Math.min(q.limit, DATA_MAX_GROUPS));
+    out.truncated=out.groups.length < groups.length;
+  } else {
+    out.value = q.metric === "count" ? acc.matched :
+      q.metric === "distinct_count" ? acc.distinct.size :
+      q.metric === "sum" ? acc.sum :
+      acc.countNumeric ? acc.sum/acc.countNumeric : 0;
+  }
+  if (["sum","avg"].includes(q.metric)) {
+    out.numericValuesPresent=acc.validNumeric;
+    if (acc.validNumeric !== acc.matched) out.warning=acc.validNumeric===0 ?
+      "Nenhum campo numerico encontrado: NAO apresentar zero como faturamento valido." :
+      "Algumas linhas nao tinham valor numerico: conferir cobertura do resultado.";
+    if (q.dataset === "faturamento" && /(?:vl_total_nf|valor_total_nf|vl_total_nota|total_nf)/i.test(q.valueField)) {
+      out.warning="POSSIVEL DUPLICIDADE: total de NF repetido por item. NAO usar esta soma como faturamento.";
+    }
+  }
+  return out;
+}
+async function aggregateLargeDataset(id, queries) {
+  const accumulators = queries.map(createStreamAccumulator);
+  const today = currentBrazilDay();
+  const info = await streamArrayDataset(id, row => {
+    for (const a of accumulators) addStreamRecord(a,row,today);
+  });
+  if (!info.complete) throw Error("/" + dataPath(id) + ": nao foi possivel concluir a leitura total.");
+  const timestamp = new Date().toISOString();
+  return { rowsRead:info.rowsRead,
+    output:accumulators.map(a=>completeStreamAccumulator(a,timestamp)) };
+}
+
 async function getLiveDataset(id) {
+  if (id === 'carteira') return sampleLargeDataset(id);
   if (!Object.prototype.hasOwnProperty.call(DATASETS, id)) throw Error("Fonte de dados nao autorizada.");
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 25000);
@@ -447,7 +670,9 @@ async function answerWithLiveData(env, question, history) {
       ". Nao foi possivel confirmar o resultado.");
   }
   const schemas = datasets.map(d => ({
-    dataset:d.id, descricao:DATASETS[d.id], rows:d.rows.length, fields:d.fields
+    dataset:d.id, descricao:DATASETS[d.id],
+    rows:d.streaming ? "amostra de " + d.rows.length + " (total sera contado ao percorrer o fluxo)" : d.rows.length,
+    fields:d.fields
   }));
   const blueprint = await askModel(env,
     "Voce e um planejador JSON de analise de dados empresariais. " +
@@ -472,7 +697,22 @@ async function answerWithLiveData(env, question, history) {
     "\nFaca o plano JSON para as consultas.",
     2300, true);
   const plan = safePlan(blueprint, datasets);
-  const output = evaluatePlan(plan, datasets);
+  const output = Array(plan.length);
+  for (const d of datasets) {
+    const related = plan.map((q,i) => ({q,i})).filter(item=>item.q.dataset===d.id);
+    if (!related.length) continue;
+    let calculated;
+    if (d.streaming) {
+      const result = await aggregateLargeDataset(d.id, related.map(item=>item.q));
+      d.rowsCount = result.rowsRead;
+      d.fetchedAt = result.output[0]?.fetchedAt || null;
+      calculated = result.output;
+    } else {
+      d.rowsCount = d.rows.length;
+      calculated = evaluatePlan(related.map(item=>item.q), [d]);
+    }
+    related.forEach((item,j) => { output[item.i] = calculated[j]; });
+  }
   // Comparacao deterministica entre grupos compartilhados de duas fontes.
   // Nao equivale a um JOIN de banco; corresponde aos rotulos agrupados.
   const comparisons = [];
@@ -516,7 +756,7 @@ async function answerWithLiveData(env, question, history) {
     mode:"data",
     model:MODEL,
     dataSources:datasets.map(d => ({ id:d.id, url: DATA_API_ROOT + dataPath(d.id),
-      rows:d.rows.length, fetchedAt:d.fetchedAt })),
+      rows:d.rowsCount || d.rows.length, fetchedAt:d.fetchedAt })),
     calculated:output.map(q => ({ label:q.label, matchingRows:q.matchingRows,
       totalRows:q.totalRows, metric:q.metric, value:q.value, truncated:!!q.truncated })),
     sources:[]
