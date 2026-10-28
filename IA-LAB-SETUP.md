@@ -97,3 +97,28 @@ Ja usa \`OPENAI_API_KEY\` e \`IA_LAB_SENHA\` configurados anteriormente. Nao exi
 
 A rota \`/health\` apenas confirma que o Worker esta ativo; **nao valida a chamada a API OpenAI nem acesso aos dados PSTEC**. O teste real so acontece ao usar \`/ask-data\` com a senha configurada.
 
+
+## Versao 3 — sincronizar filtros da Carteira
+
+Esta versao corrige a divergencia entre o total sem filtros da IA e a tela Carteira filtrada.
+
+- A aba **Dados reais (GET)** agora mostra a opcao **Respeitar filtros da tela Carteira**, ligada por padrao.
+- O laboratorio le os filtros que a tela Carteira salvou no **mesmo navegador e usuario**, pela chave \`pstec_carteira_filters_v3_<USUARIO>\`, ou pela chave antiga de filtros se necessario.
+- Se nenhum filtro estiver salvo, o padrao do frontend e aplicado: \`Status OS = APROVADO\`.
+- Sao reproduzidos: filtros multiplos da tela, filtros de coluna, Status OS, saldo a entregar, empresa, cliente, pesquisa coringa, ano/mes, intervalo de \`Dt. Pesquisa\`, PCP/producao e capacidade.
+- Perguntas sobre pedidos pendentes usam **saldo a entregar > 0** e exibem dados calculados de **pedidos distintos** (\`Nº Pedido\`), **itens**, **saldo de pecas** (\`Saldo a entregar\`) e **valor a faturar** (\`Vl. a faturar\`).
+- O retorno lista os criterios efetivamente aplicados (tela + pergunta), total de linhas consultadas e total apos filtros da tela.
+- Para consultar a base ignorando os filtros do navegador, desmarque **Respeitar filtros da tela Carteira**.
+- Filtros feitos em outra maquina/usuario ou ainda nao salvos na Carteira nao sao sincronizados.
+- Se a Carteira estiver com filtro de SIGMA e a pergunta for sobre MAURIZIO, a IA aplica a **intersecao** e pode retornar zero. Nessa situacao, desmarque a opcao ou altere o filtro na Carteira.
+
+### Publicar
+
+Atualize o arquivo \`infra/pstec-ia-worker.js\` no Cloudflare Worker \`pstec-ia\` (Edit code, substituir por Raw do GitHub, Deploy) e atualize a pagina \`ia-lab.html\` com Ctrl+F5. Nao precisa cadastrar novos secrets.
+
+### Teste recomendado
+
+Abra a Carteira no navegador, ajuste \`Status OS = APROVADO\`, \`SaldoEntrega = com_saldo\` e, se quiser, \`Cliente = MAURIZIO\`. Volte ao laboratorio, marque **Respeitar filtros da tela Carteira** e pergunte: \`Quantos pedidos em carteira ainda faltam entregar para o cliente MAURIZIO?\`
+
+Confirme se o resultado mostra: pedidos distintos, itens pendentes, saldo de pecas, valor a faturar, filtros usados e linhas da API e da tela.
+
