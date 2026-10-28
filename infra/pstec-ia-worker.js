@@ -87,18 +87,24 @@ async function loadRepo() {
     x.type === "blob" && SOURCE_EXT.test(x.path) &&
     !IGNORE_PATH.test(x.path) && x.size > 0 && x.size <= 220000
   ).slice(0, 150);
-  const files = await Promise.all(entries.map(async e => {
-    try {
-      const raw = "https://raw.githubusercontent.com/" + REPO + "/" + BRANCH +
-        "/" + e.path.split("/").map(encodeURIComponent).join("/");
-      const r = await fetch(raw, { cf: { cacheTtl: 300, cacheEverything: true } });
-      if (!r.ok) return null;
-      const content = (await r.text()).slice(0, 220000);
-      return { path: e.path, content };
-    } catch {
-      return null;
-    }
-  }));
+  // No maximo 5 conexoes simultaneas, respeitando o limite do Cloudflare Workers.
+  const files = [];
+  for (let i = 0; i < entries.length; i += 5) {
+    const batch = entries.slice(i, i + 5);
+    const loaded = await Promise.all(batch.map(async e => {
+      try {
+        const raw = "https://raw.githubusercontent.com/" + REPO + "/" + BRANCH +
+          "/" + e.path.split("/").map(encodeURIComponent).join("/");
+        const r = await fetch(raw, { cf: { cacheTtl: 300, cacheEverything: true } });
+        if (!r.ok) return null;
+        const content = (await r.text()).slice(0, 220000);
+        return { path: e.path, content };
+      } catch {
+        return null;
+      }
+    }));
+    files.push(...loaded);
+  }
   const valid = files.filter(Boolean);
   if (!valid.length) throw new Error("Nao foi possivel ler os arquivos do repositorio.");
   const snapshot = { until: Date.now() + 5 * 60 * 1000,
