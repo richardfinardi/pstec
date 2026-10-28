@@ -972,9 +972,11 @@ async function answerWithLiveData(env, question, history, carteiraCtx) {
     mode:"data",
     model:MODEL,
     dataSources:datasets.map(d => ({ id:d.id, url: DATA_API_ROOT + dataPath(d.id),
-      rows:d.rowsCount || d.rows.length, fetchedAt:d.fetchedAt })),
-    calculated:output.map(q => ({ label:q.label, matchingRows:q.matchingRows,
-      totalRows:q.totalRows, metric:q.metric, value:q.value, truncated:!!q.truncated })),
+      rows:d.rowsCount ?? d.rows.length, uiRows:d.id==="carteira" ? d.uiMatched : null,
+      fetchedAt:d.fetchedAt })),
+    calculated:output.map((q,i) => ({ label:q.label, matchingRows:q.matchingRows,
+      totalRows:q.totalRows, metric:q.metric, value:q.value, truncated:!!q.truncated,
+      warning:q.warning||null, standard:!!plan[i]?.standard })),
     sources:[]
   };
 }
