@@ -14,8 +14,14 @@ header{background:var(--blue);color:#fff;position:sticky;top:0;z-index:10;box-sh
 main{max-width:1550px;margin:auto;padding:24px 22px 50px}.headline{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;flex-wrap:wrap;margin-bottom:18px}.headline h1{margin:0;font-size:26px;font-weight:850;letter-spacing:-.6px}.headline p{color:var(--muted);margin:4px 0 0}.status{font-size:11px;font-weight:800;border-radius:50px;padding:6px 11px;background:#fff;border:1px solid var(--line);color:var(--muted)}.status.ok{background:#e8f8ed;color:#136d3c;border-color:#b9e8c7}.status.warn{background:#fffae7;color:#866006;border-color:#f6dd8c}.status.bad{background:#fff0f0;color:#ae2535;border-color:#f3bec3}
 .cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:18px}.card{border-radius:16px;background:#fff;border:1px solid var(--line);padding:16px;box-shadow:0 4px 14px #182a4d09}.card b{display:block;font-size:25px;letter-spacing:-.8px;font-weight:850;margin:4px 0}.card small{color:var(--muted);font-size:11px;font-weight:650}.card .tag{font-size:10px;font-weight:900;color:#5275a7;text-transform:uppercase;letter-spacing:.5px}.card.alert{border-top:4px solid var(--red)}.card.good{border-top:4px solid var(--green)}.card.time{border-top:4px solid var(--blue)}
 .panel{background:#fff;border:1px solid var(--line);border-radius:16px;margin:14px 0;box-shadow:0 4px 14px #182a4d09;overflow:hidden}.paneltitle{font-size:14px;font-weight:850;padding:15px 17px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}.paneltitle small{color:var(--muted);font-weight:500}
-.filters{padding:15px 16px;display:grid;grid-template-columns:minmax(210px,2fr) repeat(5,minmax(130px,1fr));gap:10px}.field label{display:block;font-size:10px;font-weight:850;text-transform:uppercase;color:#617084;margin-bottom:4px;letter-spacing:.45px}.field select,.field input{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:10px;width:100%;outline-color:#87a9e3;height:40px}.controls{display:flex;gap:8px;align-items:center;justify-content:flex-end;padding:0 16px 14px;flex-wrap:wrap}.muted{color:var(--muted)}
+.filters{padding:15px 16px;display:grid;grid-template-columns:minmax(210px,2fr) repeat(6,minmax(130px,1fr));gap:10px}.field label{display:block;font-size:10px;font-weight:850;text-transform:uppercase;color:#617084;margin-bottom:4px;letter-spacing:.45px}.field select,.field input{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:10px;width:100%;outline-color:#87a9e3;height:40px}.controls{display:flex;gap:8px;align-items:center;justify-content:flex-end;padding:0 16px 14px;flex-wrap:wrap}.muted{color:var(--muted)}
 .tablewrap{overflow:auto;max-height:61vh}.table{width:100%;border-collapse:separate;border-spacing:0;font-size:12px;white-space:nowrap}.table th{position:sticky;top:0;background:#e9f0fc;color:#234979;text-transform:uppercase;font-size:10px;letter-spacing:.35px;text-align:left;z-index:2;padding:11px 12px;border-bottom:1px solid #cfdcf2}.table td{padding:10px 12px;border-bottom:1px solid #e7edf6;vertical-align:top}.table tbody tr:hover{background:#f4f9ff}.table td.wrap{white-space:normal;min-width:260px;max-width:340px}.table .os{font-weight:900;color:#0047cc}.pill{display:inline-block;padding:4px 8px;border-radius:6px;font-size:10px;font-weight:800;white-space:nowrap}.pill.red{background:#fee9eb;color:#b8293a}.pill.amber{background:#fff4d5;color:#946300}.pill.green{background:#e8f8e5;color:#328333}.pill.blue{background:#e5efff;color:#265ca4}.pill.gray{background:#edf2f8;color:#546a87}.empty{text-align:center;padding:45px 15px;color:#64748b}.datehot{color:#cc2540;font-weight:800}.datesoon{color:#996300;font-weight:800}.right{text-align:right}.toggle{border:0;background:transparent;color:#135caf;cursor:pointer;text-decoration:underline;font-weight:700;padding:0}.foot{font-size:11px;color:#64748b;margin-top:12px;line-height:1.65}.group{margin:12px 16px;border:1px solid var(--line);border-radius:12px;overflow:hidden}.group summary{padding:12px;background:#f7faff;font-weight:800;cursor:pointer}.group p{margin:0;padding:12px;font-size:12px}
+#filtersPanel{overflow:visible;position:relative;z-index:5}.filters .field{min-width:0;position:relative}
+.multi{position:relative}.multi-btn{display:flex;justify-content:space-between;align-items:center;width:100%;height:40px;background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:9px 10px;cursor:pointer;color:#234063;text-align:left;white-space:nowrap;overflow:hidden}
+.multi-btn b{font-weight:650;overflow:hidden;text-overflow:ellipsis}.multi-btn.open{border-color:var(--blue);background:#edf4ff}
+.multi-menu{display:none;position:absolute;left:0;top:calc(100% + 4px);min-width:205px;width:max(100%,205px);max-height:270px;overflow:auto;z-index:30;background:#fff;border:1px solid #cbd7e7;box-shadow:0 14px 34px #182a4d33;border-radius:12px;padding:8px}
+.multi.open .multi-menu{display:block}.multi-opt{display:flex;align-items:center;gap:9px;padding:8px 6px;cursor:pointer;border-radius:7px;font-size:12px;white-space:normal}.multi-opt:hover{background:#f2f6fc}.multi-opt input{width:16px;height:16px;accent-color:#003b96;flex-shrink:0}
+.multi-actions{display:flex;justify-content:space-between;gap:6px;padding:4px 4px 8px;border-bottom:1px solid var(--line)}.multi-actions button{background:transparent;border:0;cursor:pointer;font-weight:750;color:#0047cc;font-size:11px;padding:4px}
 @media(max-width:1100px){.cards{grid-template-columns:repeat(3,1fr)}.filters{grid-template-columns:repeat(3,minmax(130px,1fr))}.field:first-child{grid-column:span 3}}
 @media(max-width:650px){main{padding:14px 10px 35px}.top{padding:10px}.top .namehide{display:none}.cards{grid-template-columns:repeat(2,1fr);gap:8px}.card{padding:12px}.card b{font-size:22px}.filters{grid-template-columns:repeat(2,minmax(0,1fr));padding:10px}.field:first-child{grid-column:span 2}.headline h1{font-size:22px}.paneltitle{padding:12px}.top img{height:30px}}
 </style>
@@ -26,24 +32,26 @@ main{max-width:1550px;margin:auto;padding:24px 22px 50px}.headline{display:flex;
 <section class="headline"><div><h1>Monitoramento de compras</h1><p>Da lista de materiais ao recebimento, comparado à previsão de entrega dos itens do orçamento.</p></div><div id="dataStatus" class="status">Aguardando dados</div></section>
 <section class="cards" id="cards">
 <div class="card"><span class="tag">OS monitoradas</span><b id="k_os">—</b><small>com materiais na lista</small></div>
-<div class="card good"><span class="tag">OS com orçamento</span><b id="k_orc">—</b><small>com orçamento vinculado</small></div>
 <div class="card alert"><span class="tag">Sem processar</span><b id="k_nao_proc">—</b><small>materiais aguardando liberação</small></div>
 <div class="card alert"><span class="tag">Materiais sem OC</span><b id="k_falta">—</b><small>pedidos aguardando emissão</small></div>
 <div class="card"><span class="tag">Itens de OC sem entrada</span><b id="k_sem_entrada">—</b><small>aguardando recebimento</small></div>
-<div class="card good"><span class="tag">OC pagas</span><b id="k_pagas">—</b><small>pedidos com pagamento concluído</small></div>
+<div class="card"><span class="tag">OCs emitidas</span><b id="k_ocs">—</b><small>pedidos de compra distintos</small></div>
+<div class="card good"><span class="tag">OCs pagas</span><b id="k_pagas">—</b><small>pedidos com pagamento concluído</small></div>
+<div class="card alert"><span class="tag">OCs com saldo a pagar</span><b id="k_pendentes">—</b><small>pendentes ou parcialmente pagas</small></div>
 <div class="card time"><span class="tag">Entrada OS → processamento</span><b id="k_lt_os">—</b><small>média em dias corridos</small></div>
 <div class="card time"><span class="tag">Processamento → OC</span><b id="k_lt_lista">—</b><small>média em dias corridos</small></div>
 <div class="card time"><span class="tag">OC → 1ª entrada</span><b id="k_lt_entrada">—</b><small>média em dias corridos</small></div>
 </section>
-<section class="panel"><div class="paneltitle"><span>Filtros</span><small>Seleções mantidas ao atualizar a página</small></div><div class="filters">
+<section class="panel" id="filtersPanel"><div class="paneltitle"><span>Filtros</span><small>Seleções mantidas ao atualizar a página</small></div><div class="filters">
 <div class="field"><label for="search">Pesquisar OS, cliente, material, fornecedor, OC, NF</label><input id="search" placeholder="Pesquise qualquer informação"></div>
 <div class="field"><label for="company">Empresa</label><select id="company"><option value="">Todas</option></select></div>
+<div class="field"><label for="quote">Cotação</label><select id="quote"><option value="">Todas</option><option value="COTADO">Com cotação</option><option value="SEM_COTACAO">Sem cotação</option></select></div>
 <div class="field"><label for="buy">Compra</label><select id="buy"><option value="">Todas</option><option value="SEM_OC">Compra não emitida</option><option value="AGUARDANDO_PROCESSAMENTO">Aguardando processamento</option><option value="OC_SEM_ENTRADA">Aguardando entrega</option><option value="ENTRADA_PARCIAL">Recebimento parcial</option><option value="RECEBIDO">Recebido</option></select></div>
 <div class="field"><label for="processing">Processamento</label><select id="processing"><option value="">Todos</option><option value="NAO_PROCESSADO">Aguardando processamento</option><option value="PROCESSADO">Processado</option></select></div>
 <div class="field"><label for="pay">Financeiro</label><select id="pay"><option value="">Todos</option><option value="PAGA">Paga</option><option value="PARCIAL">Parcial</option><option value="EM_ABERTO">Em aberto</option><option value="SEM_TITULO_IDENTIFICADO">Sem título identificado</option></select></div>
 <div class="field"><label for="deadline">Prazo cliente</label><select id="deadline"><option value="">Todos</option><option value="overdue">Vencido</option><option value="soon">0 a 15 dias</option><option value="later">Mais de 15 dias</option><option value="missing">Sem previsão</option></select></div>
 </div><div class="controls"><button class="btn small" id="reset">Limpar filtros</button><button class="btn small" id="export">Exportar CSV</button></div></section>
-<section class="panel"><div class="paneltitle"><span>Acompanhamento por material</span><small id="count">0 registros</small></div><div class="tablewrap"><table class="table"><thead><tr><th>OS / empresa</th><th>Orçamento</th><th>Cliente</th><th>Material</th><th>Processamento</th><th>Entrada da OS</th><th>Data processamento</th><th>OS → Proc.</th><th>Dias aguardando</th><th>Situação compra</th><th>OC</th><th>Fornecedor</th><th>Data OC</th><th>1ª entrada</th><th>Prazo cliente</th><th>Dias restantes</th><th>Proc. → OC</th><th>OC → Entrada</th><th>Pagamento OC</th><th>NF entrada</th></tr></thead><tbody id="rows"><tr><td colspan="20" class="empty">Buscando dados...</td></tr></tbody></table></div></section>
+<section class="panel"><div class="paneltitle"><span>Acompanhamento por material</span><small id="count">0 registros</small></div><div class="tablewrap"><table class="table"><thead><tr><th>OS / empresa</th><th>Orçamento</th><th>Cliente</th><th>Material</th><th>Cotação</th><th>Processamento</th><th>Entrada da OS</th><th>Data processamento</th><th>OS → Proc.</th><th>Dias aguardando</th><th>Situação compra</th><th>OC</th><th>Qtde na OC</th><th>Fornecedor</th><th>Data OC</th><th>1ª entrada</th><th>Previsão OS</th><th>Prazo cliente</th><th>Dias restantes</th><th>Proc. → OC</th><th>OC → Entrada</th><th>Pagamento OC</th><th>NF entrada</th></tr></thead><tbody id="rows"><tr><td colspan="23" class="empty">Buscando dados...</td></tr></tbody></table></div></section>
 <p class="foot">Prazos em dias corridos. O pagamento é acompanhado pelo pedido de compra, inclusive nos casos de adiantamento.</p>
 </main>
 <script>
@@ -54,13 +62,17 @@ const APIS={
   solicitacoes:'02_compras_solicitacoes',
   ocs:'03_compras_ocs',
   entradas:'04_compras_entradas',
-  financeiro:'05_compras_financeiro'
+  financeiro:'05_compras_financeiro',
+  cotacoes:'06_compras_cotacoes'
 };
 const API_ROOT='https://pstec.consultoriarf.net/';
-const CACHE='pstec_compras_monitoramento_v4', PREF='pstec_compras_filters_v1';
+const CACHE='pstec_compras_monitoramento_v5', PREF='pstec_compras_filters_v2';
+let cotacoesDisponiveis=false;
 let all=[],filtered=[],updating=false;
 const $=id=>document.getElementById(id);
-const campos=['search','company','buy','processing','pay','deadline'];
+const campos=['search','company','quote','buy','processing','pay','deadline'];
+const multiIds=campos.filter(x=>x!=='search');
+let savedFilters={};
 const data=v=>{if(v==null||v==='')return null;const d=new Date(String(v).substring(0,10)+'T12:00:00');return Number.isNaN(d.getTime())?null:d;};
 const fmt=v=>{const d=data(v);return d?d.toLocaleDateString('pt-BR'):'—';};
 const val=v=>{if(v==null||v==='')return null;const n=Number(v);return Number.isFinite(n)?n:null;};
@@ -68,7 +80,7 @@ const norm=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLo
 const keyMaterial=r=>[r.cod_empresa,r.cod_os,r.cod_os_aux,r.guid_lm].join('|');
 const keyOC=r=>r.cod_oc==null?'':[r.cod_empresa,r.cod_oc].join('|');
 const unique=(arr,keyfn)=>new Map(arr.map(r=>[keyfn(r),r])).size;
-function pill(s){const names={NAO_PROCESSADO:'Aguardando processamento',PROCESSADO:'Processado',AGUARDANDO_PROCESSAMENTO:'Aguardando processamento',SEM_OC:'Compra não emitida',OC_SEM_ENTRADA:'Aguardando entrega',ENTRADA_PARCIAL:'Recebimento parcial',RECEBIDO:'Recebido',PAGA:'Pago',PARCIAL:'Pagamento parcial',EM_ABERTO:'Pagamento pendente',SEM_TITULO_IDENTIFICADO:'Sem informação de pagamento'};const text=names[s]||String(s||'—').replaceAll('_',' ');let color=/^PAGA$|^RECEBIDO$|^PROCESSADO$/.test(s)?'green':/SEM_OC|EM_ABERTO|OC_SEM_ENTRADA|NAO_PROCESSADO/.test(s)?'red':/PARCIAL/.test(s)?'amber':/SEM_TITULO/.test(s)?'gray':'blue';return '<span class="pill '+color+'">'+escapeHtml(text)+'</span>';}
+function pill(s){const names={SEM_DADOS_COTACAO:'Cotação indisponível',COTADO:'Cotado',SEM_COTACAO:'Sem cotação',NAO_PROCESSADO:'Aguardando processamento',PROCESSADO:'Processado',AGUARDANDO_PROCESSAMENTO:'Aguardando processamento',SEM_OC:'Compra não emitida',OC_SEM_ENTRADA:'Aguardando entrega',ENTRADA_PARCIAL:'Recebimento parcial',RECEBIDO:'Recebido',PAGA:'Pago',PARCIAL:'Pagamento parcial',EM_ABERTO:'Pagamento pendente',SEM_TITULO_IDENTIFICADO:'Sem informação de pagamento'};const text=names[s]||String(s||'—').replaceAll('_',' ');let color=/^PAGA$|^RECEBIDO$|^PROCESSADO$/.test(s)?'green':/SEM_OC|EM_ABERTO|OC_SEM_ENTRADA|NAO_PROCESSADO/.test(s)?'red':/PARCIAL/.test(s)?'amber':/SEM_TITULO/.test(s)?'gray':'blue';return '<span class="pill '+color+'">'+escapeHtml(text)+'</span>';}
 function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function setStatus(t,mode='warn'){$('dataStatus').className='status '+mode;$('dataStatus').textContent=t;}
 function unpack(json){if(Array.isArray(json))return json;for(const k of ['dados','data','registros','rows','items','results','resultado']){if(Array.isArray(json?.[k]))return json[k];if(Array.isArray(json?.[k]?.dados))return json[k].dados;}return [];}
@@ -91,7 +103,7 @@ $('k_lt_os').textContent=avg([...mats.values()].map(r=>r.lead_time_os_processame
 $('k_lt_lista').textContent=avg([...new Map(filtered.filter(r=>r.lead_time_solicitacao_oc_dias!==null&&r.cod_oc!=null).map(r=>[[keyMaterial(r),keyOC(r)].join('|'),r.lead_time_solicitacao_oc_dias])).values()]);
 $('k_lt_entrada').textContent=avg([...new Map(filtered.filter(r=>r.lead_time_oc_primeira_entrada_dias!==null&&r.cod_oc!=null).map(r=>[[keyMaterial(r),keyOC(r)].join('|'),r.lead_time_oc_primeira_entrada_dias])).values()]);
 $('count').textContent=filtered.length.toLocaleString('pt-BR')+' linhas • '+mats.size.toLocaleString('pt-BR')+' materiais • '+ocMap.size.toLocaleString('pt-BR')+' OCs';
-const body=$('rows');if(!filtered.length){body.innerHTML='<tr><td colspan="20" class="empty">Nenhum registro. Verifique os filtros ou a conexão da API.</td></tr>';return;}
+const body=$('rows');if(!filtered.length){body.innerHTML='<tr><td colspan="23" class="empty">Nenhum registro. Verifique os filtros ou a conexão da API.</td></tr>';return;}
 const n=filtered.length>400?400:filtered.length;
 body.innerHTML=filtered.slice(0,n).map(r=>{let days=val(r.dias_ate_entrega_cliente),tag=days===null?'muted':days<0?'datehot':days<=15?'datesoon':'';return '<tr>'+[
 '<strong class="os">'+escapeHtml(r.n_os)+'</strong><br><span class="muted">Emp. '+escapeHtml(r.cod_empresa)+'</span>',
@@ -106,7 +118,7 @@ pill(r.status_compra),escapeHtml(r.cod_oc??'—'),escapeHtml(r.fornecedor||'—'
 '<span class="'+tag+'">'+(days===null?'—':days+' d')+'</span>',
 val(r.lead_time_solicitacao_oc_dias)===null?'—':r.lead_time_solicitacao_oc_dias+' d',
 val(r.lead_time_oc_primeira_entrada_dias)===null?'—':r.lead_time_oc_primeira_entrada_dias+' d',pill(r.status_pagamento_oc),escapeHtml(r.nfs_entrada||'—')].map((v,i)=>'<td'+(i===2?' class="wrap"':'')+'>'+v+'</td>').join('')+'</tr>';}).join('');
-if(n<filtered.length)body.innerHTML+='<tr><td colspan="20" class="empty">Exibindo as primeiras 400 linhas. Use filtros ou exporte o CSV para todos os registros.</td></tr>';
+if(n<filtered.length)body.innerHTML+='<tr><td colspan="23" class="empty">Exibindo as primeiras 400 linhas. Use filtros ou exporte o CSV para todos os registros.</td></tr>';
 }
 function dateMs(v){const s=String(v||'').slice(0,10);return /^\d{4}-\d{2}-\d{2}$/.test(s)?Date.parse(s+'T12:00:00Z'):NaN;}
 function dayDiff(a,b){const x=dateMs(a),y=dateMs(b);return Number.isFinite(x)&&Number.isFinite(y)?Math.round((y-x)/86400000):null;}
@@ -202,7 +214,7 @@ const respostas=await Promise.all(Object.values(APIS).map(async caminho=>{
 }));
 const a=joinDatasets(respostas);all=a;companies();apply();setStatus('API • '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),'ok');
 try{await window.PstecCache?.write(CACHE,a)}catch{}
-}catch(e){console.warn('Atualização de compras indisponível:',e);setStatus('Atualização indisponível','bad');if(!all.length)$('rows').innerHTML='<tr><td colspan="20" class="empty">Não foi possível carregar os dados. Tente atualizar novamente.</td></tr>';}
+}catch(e){console.warn('Atualização de compras indisponível:',e);setStatus('Atualização indisponível','bad');if(!all.length)$('rows').innerHTML='<tr><td colspan="23" class="empty">Não foi possível carregar os dados. Tente atualizar novamente.</td></tr>';}
 finally{updating=false;$('refresh').disabled=false;}}
 function exportCsv(){const keys=['cod_empresa','n_os','orcamentos','qtd_orcamentos','origem_previsao','cliente','titulo_os','produto','cod_interno','cod_os_aux','qtde_lista','qtde_a_comprar_cps','cod_oc','fornecedor','dt_oc','dt_primeira_entrada','dt_ultima_entrada','nfs_entrada','previsao_entrega_cliente','dias_ate_entrega_cliente','lead_time_solicitacao_oc_dias','lead_time_oc_primeira_entrada_dias','lead_time_oc_ultima_entrada_dias','status_compra','status_pagamento_oc','saldo_pagar_oc'];const csv=[keys.join(';'),...filtered.map(r=>keys.map(k=>'"'+String(r[k]??'').replaceAll('"','""')+'"').join(';'))].join('\r\n');let a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));a.download='pstec_compras_'+new Date().toISOString().slice(0,10)+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),3000);}
 restore();for(const id of campos)$(id).addEventListener(id==='search'?'input':'change',apply);$('refresh').addEventListener('click',load);$('export').addEventListener('click',exportCsv);$('reset').addEventListener('click',()=>{for(const id of campos)$(id).value='';apply();});
