@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <link rel="icon" type="image/png" href="LOGO MINIMALISTA.png">
+  <title>PSTEC | Laboratorio IA</title>
+  <script>
+    // O laboratorio nao aparece no menu principal; exige login do portal
+    // e uma senha independente armazenada apenas durante esta sessao.
+    if (!localStorage.getItem('pstec_token')) location.replace('login-pstec.html');
+  </script>
+  <style>
+    :root{--brand:#003b96;--brand2:#0756cb;--ink:#12233f;--muted:#63748e;--border:#dae3ef;--bg:#f2f6fb;--green:#6aa621}
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;font:14px/1.5 "Segoe UI",system-ui,-apple-system,sans-serif;color:var(--ink);background:var(--bg)}
+    button,input,textarea{font:inherit}
+    button{cursor:pointer}
+    a{color:inherit}
+    .shell{min-height:100vh;display:flex;flex-direction:column}
+    .topbar{background:linear-gradient(106deg,#00286d,#003b96 65%,#1454af);color:white;padding:13px max(20px,calc((100vw - 1440px)/2));display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .logo{display:flex;align-items:center;gap:12px;min-width:0}
+    .logo img{height:38px;max-width:88px;object-fit:contain;border-radius:10px;background:#fff;padding:5px}
+    .logo b{display:block;font-size:17px;line-height:1.1;letter-spacing:.02em}
+    .logo small{display:block;color:#c7d9f5;font-size:11px;margin-top:4px}
+    .topactions{display:flex;align-items:center;gap:8px}
+    .toplink{background:rgba(255,255,255,.1);text-decoration:none;border:1px solid rgba(255,255,255,.25);color:white;border-radius:12px;padding:9px 13px;font-weight:700;font-size:12px}
+    .toplink:hover{background:rgba(255,255,255,.2)}
+    .badge{border:1px solid #c5d8f3;color:#214674;background:#eef5ff;border-radius:999px;padding:5px 10px;display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800}
+    .statusdot{width:7px;height:7px;border-radius:50%;background:#d88a2d;display:inline-block}
+    .statusdot.ok{background:#56ad44}
+    .main{width:min(1440px,100%);margin:0 auto;padding:23px 20px 28px;display:flex;flex-direction:column;gap:17px;flex:1;min-height:0}
+    .heading{display:flex;align-items:center;justify-content:space-between;gap:20px}
+    .heading h1{font-size:25px;letter-spacing:-.04em;margin:0 0 4px;font-weight:850}
+    .heading p{color:var(--muted);margin:0;font-size:13px}
+    .grid{flex:1;display:grid;grid-template-columns:315px minmax(0,1fr);gap:17px;min-height:620px}
+    .panel{background:#fff;border:1px solid var(--border);border-radius:21px;box-shadow:0 9px 25px rgba(24,55,106,.035)}
+    aside.panel{padding:21px;display:flex;flex-direction:column;gap:23px}
+    .cardtitle{font-weight:850;font-size:13px;margin:0 0 7px;display:flex;align-items:center;gap:9px}
+    .caption{margin:0;color:var(--muted);font-size:12px;line-height:1.55}
+    .field{display:flex;flex-direction:column;gap:5px;margin:15px 0 0}
+    .field label{font-size:11px;font-weight:800;color:#405573;text-transform:uppercase;letter-spacing:.04em}
+    .field input{width:100%;border:1px solid #ccdae9;border-radius:11px;background:#f8fbff;padding:11px;color:#1d3553;font-size:12px;outline:none}
+    .field input:focus,.prompt:focus{border-color:#1564c5;box-shadow:0 0 0 3px #e0eeff}
+    .passwordrow{display:flex;gap:6px;align-items:center}
+    .passwordrow input{flex:1;min-width:0}
+    .eye{border:1px solid var(--border);border-radius:10px;background:#fff;padding:10px;font-weight:700;font-size:12px}
+    .primary{background:var(--brand);color:white;border:0;border-radius:11px;padding:11px 15px;font-weight:800;font-size:12px}
+    .primary:hover{background:var(--brand2)}
+    .primary:disabled{opacity:.55;cursor:wait}
+    .secondary{background:#edf4ff;color:var(--brand);border:1px solid #d7e7ff;border-radius:11px;padding:10px 13px;font-weight:800;font-size:12px}
+    .setupbtn{width:100%;margin-top:12px}
+    .sep{height:1px;background:#e7edf6}
+    .smalllist{padding-left:19px;margin:11px 0 0;color:#53647c;font-size:12px;line-height:1.7}
+    .asidefooter{margin-top:auto;font-size:11px;color:#70829b;background:#f6f9fd;border-radius:13px;padding:12px}
+    .asidefooter b{color:#35527a}
+    .chat{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}
+    .chathead{padding:18px 21px;display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:1px solid var(--border)}
+    .chathead h2{margin:0;font-size:15px;letter-spacing:-.02em}
+    .chathead p{font-size:11px;color:#8593a8;margin:2px 0 0}
+    .chatbody{flex:1;min-height:380px;max-height:calc(100vh - 340px);overflow:auto;padding:27px 26px 20px;scroll-behavior:smooth;display:flex;flex-direction:column;gap:21px}
+    .message{display:flex;gap:11px;max-width:100%}
+    .message.user{justify-content:flex-end}
+    .avatar{width:33px;height:33px;flex:0 0 33px;border-radius:12px;background:#e8f2ff;color:var(--brand);display:grid;place-items:center;font-weight:900;font-size:12px}
+    .message.user .avatar{background:#dbe5f3;color:#2c466b;order:2}
+    .bubble{max-width:min(86%,860px);background:#f7f9fe;border:1px solid #e4eaf3;border-radius:5px 17px 17px 17px;padding:15px 17px;min-width:0;overflow-wrap:anywhere}
+    .message.user .bubble{border-color:var(--brand);background:var(--brand);color:#fff;border-radius:17px 5px 17px 17px}
+    .bubble .text{white-space:pre-wrap;line-height:1.66;font-size:13px}
+    .stamp{font-size:10px;opacity:.65;margin-top:8px}
+    .sources{display:flex;gap:5px;flex-wrap:wrap;margin-top:15px;border-top:1px solid #e1e8f3;padding-top:12px}
+    .source{color:#235998;border:1px solid #d8e6fb;background:#edf5ff;text-decoration:none;padding:4px 8px;border-radius:8px;font-size:10px;font-weight:700;max-width:260px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+    .source:hover{background:#dfeeff}
+    .suggestions{padding:0 26px 19px;display:flex;gap:8px;flex-wrap:wrap}
+    .suggestions button{border:1px solid #dce5f2;border-radius:999px;background:#fff;color:#3e5b7e;font-size:11px;padding:9px 11px;font-weight:650}
+    .suggestions button:hover{background:#edf5ff;border-color:#abc7ee}
+    .composer{border-top:1px solid var(--border);padding:17px 20px 15px;background:#fff}
+    .composewrap{border:1px solid #cedbea;display:flex;align-items:flex-end;gap:10px;padding:8px 9px 8px 14px;border-radius:15px;background:#fbfdff}
+    .prompt{width:100%;border:0;background:transparent;resize:none;outline:0;max-height:160px;min-height:28px;line-height:1.5;color:var(--ink);padding:7px 0}
+    .prompt:focus{box-shadow:none}
+    .send{flex-shrink:0;padding:11px 19px}
+    .composehint{font-size:10px;color:#8895a8;margin:8px 4px 0}
+    .msgerr{font-size:11px;color:#a63a3a;background:#fff0f0;border:1px solid #f3c5c5;border-radius:10px;padding:9px 11px;margin-top:9px;display:none}
+    .msgerr.show{display:block}
+    .hide{display:none!important}
+    @media(max-width:900px){.grid{grid-template-columns:1fr;min-height:0}.chatbody{max-height:55vh;min-height:420px}.main{padding:15px 12px}.heading h1{font-size:22px}aside.panel{gap:14px}.asidefooter{margin-top:0}}
+    @media(max-width:550px){.topbar{padding:11px 13px}.logo img{height:32px}.logo b{font-size:14px}.toplink{padding:8px}.heading{align-items:flex-start}.heading .badge{display:none}.chatbody{padding:17px 13px;min-height:330px}.chathead{padding:13px}.bubble{max-width:92%;padding:12px}.suggestions{padding:0 13px 15px}.composer{padding:10px}.send{padding:11px}.composehint{font-size:9px}}
+  </style>
+</head>
+<body>
+<div class="shell">
+  <header class="topbar">
+    <div class="logo"><img src="logo.png" alt="PSTEC"><div><b>GRUPO PSTEC</b><small>Ambiente de testes • Inteligência Artificial</small></div></div>
+    <div class="topactions"><a class="toplink" href="index.html">← Voltar ao menu</a></div>
+  </header>
+  <main class="main">
+    <div class="heading">
+      <div><h1>Laboratório IA Generativa</h1><p>Converse com a IA sobre qualquer módulo, regra, arquivo ou consulta SQL deste repositório.</p></div>
+      <span class="badge"><span class="statusdot" id="statusDot"></span><span id="connectionStatus">Aguardando configuração</span></span>
+    </div>
+    <div class="grid">
+      <aside class="panel">
+        <section>
+          <h3 class="cardtitle">Conexão com a IA</h3>
+          <p class="caption">O código é lido diretamente do GitHub. A chamada ao modelo passa por um Worker seguro, sem expor a chave OpenAI no navegador.</p>
+          <div class="field"><label for="workerUrl">Endereço do Worker</label><input id="workerUrl" type="url" autocomplete="url" placeholder="https://pstec-ia.seunome.workers.dev" spellcheck="false"></div>
+          <div class="field"><label for="labPassword">Senha do laboratório</label><div class="passwordrow"><input id="labPassword" type="password" autocomplete="off" placeholder="Senha configurada no Worker"><button type="button" class="eye" id="togglePass" title="Mostrar/ocultar senha">Ver</button></div></div>
+          <button class="primary setupbtn" id="connectBtn" type="button">Conectar laboratório</button>
+          <div class="msgerr" id="configError" role="alert"></div>
+        </section>
+        <div class="sep"></div>
+        <section>
+          <h3 class="cardtitle">Fontes consultadas</h3>
+          <span class="badge">GitHub · richardfinardi/pstec</span>
+          <ul class="smalllist"><li>Produção e Carteira</li><li>Capital, Compras e Faturamento</li><li>Indicadores e Conferência</li><li>HTML, JavaScript e SQL</li></ul>
+          <p class="caption" style="margin-top:12px" id="filesStatus">Arquivos são atualizados automaticamente a cada 5 minutos no Worker.</p>
+        </section>
+        <div class="asidefooter"><b>Ambiente reservado para testes.</b><br>Não aparece no menu PSTEC. A IA lê o código do repositório, não dados em tempo real do CPS. Não realiza alterações no sistema.</div>
+      </aside>
+      <section class="panel chat" aria-label="Conversa com IA">
+        <div class="chathead"><div><h2>Assistente do projeto</h2><p id="modelStatus">GPT-6 Luna • análise contextual de arquivos</p></div><button class="secondary" type="button" id="clearBtn">Nova conversa</button></div>
+        <div class="chatbody" id="chatBody" aria-live="polite"></div>
+        <div class="suggestions" id="suggestions">
+          <button type="button" data-question="Como funciona a Conferência de Remoção?">Como funciona a Conferência de Remoção?</button>
+          <button type="button" data-question="Onde a tela de Capital busca os dados financeiros?">Onde Capital busca os dados?</button>
+          <button type="button" data-question="Quais consultas SQL existem e o que elas fazem?">Quais SQL existem?</button>
+          <button type="button" data-question="Como funcionam os filtros e o cache na Carteira?">Filtros e cache da Carteira</button>
+        </div>
+        <form class="composer" id="questionForm">
+          <div class="composewrap"><textarea class="prompt" id="questionInput" aria-label="Pergunta para a IA" placeholder="Pergunte qualquer coisa sobre o código do PSTEC..." rows="1" maxlength="1200"></textarea><button class="primary send" id="sendBtn" type="submit">Enviar →</button></div>
+          <div class="composehint">Enter envia • Shift + Enter pula linha • Respostas baseadas no GitHub, não em dados operacionais ao vivo.</div>
+          <div class="msgerr" id="sendError" role="alert"></div>
+        </form>
+      </section>
+    </div>
+  </main>
+</div>
+<script>
+(function(){
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const workerKey = 'pstec_ia_worker_url';
+  const passKey = 'pstec_ia_lab_senha';
+  const convoKey = 'pstec_ia_history_v1';
+  const state = { connected:false, busy:false, history:[] };
+  $('workerUrl').value = localStorage.getItem(workerKey) || '';
+  $('labPassword').value = sessionStorage.getItem(passKey) || '';
+
+  function error(id, message) {
+    const node = $(id);
+    node.textContent = message || '';
+    node.classList.toggle('show', !!message);
+  }
+  function setStatus(value, ok=false) {
+    $('connectionStatus').textContent = value;
+    $('statusDot').classList.toggle('ok', ok);
+  }
+  function baseUrl(){
+    const input = $('workerUrl').value.trim();
+    if (!input) throw Error('Informe a URL do Worker.');
+    const url = new URL(input);
+    if (url.protocol !== 'https:') throw Error('O Worker deve usar HTTPS.');
+    if (url.username || url.password || url.search || url.hash) throw Error('Use somente o endereço do Worker.');
+    return url.origin + url.pathname.replace(/\/(api\/)?ask\/?$/,'').replace(/\/+$/,'');
+  }
+  function getConfig(){
+    const base = baseUrl();
+    const password = $('labPassword').value;
+    if (!password) throw Error('Informe a senha do laboratório.');
+    return { base, password };
+  }
+  async function connect(){
+    error('configError','');
+    let cfg;
+    try { cfg = getConfig(); } catch(e){error('configError', e.message); return;}
+    $('connectBtn').disabled = true;
+    $('connectBtn').textContent = 'Verificando...';
+    try{
+      const response = await fetch(cfg.base + '/health', { cache:'no-store', signal:AbortSignal.timeout(14000) });
+      const data = await response.json().catch(()=>({}));
+      if(!response.ok || !data.ok) throw Error(data.error || 'Worker não respondeu corretamente.');
+      localStorage.setItem(workerKey, cfg.base);
+      sessionStorage.setItem(passKey, cfg.password);
+      state.connected = true;
+      setStatus('Worker conectado',true);
+      $('questionInput').focus();
+    }catch(e){
+      state.connected = false;
+      setStatus('Sem conexão',false);
+      error('configError','Não foi possível alcançar o Worker: ' + e.message);
+    }finally{
+      $('connectBtn').disabled = false;
+      $('connectBtn').textContent = 'Conectar laboratório';
+    }
+  }
+  function stamp(){
+    return new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  }
+  function addMessage(role, content, sources=[], options={}){
+    const item = document.createElement('div');
+    item.className = 'message '+role;
+    const avatar = document.createElement('div');
+    avatar.className='avatar';
+    avatar.textContent = role === 'user' ? 'EU' : 'IA';
+    const bubble = document.createElement('div');
+    bubble.className='bubble';
+    const text = document.createElement('div');
+    text.className = 'text';
+    text.textContent = content;
+    bubble.appendChild(text);
+    if(sources && sources.length){
+      const row = document.createElement('div');
+      row.className = 'sources';
+      const title = document.createElement('span');
+      title.className = 'caption';
+      title.style.width = '100%';
+      title.textContent = 'Arquivos relacionados:';
+      row.appendChild(title);
+      sources.forEach(s => {
+        try {
+          const dest = new URL(s.url);
+          if(dest.hostname !== 'github.com') return;
+          const link = document.createElement('a');
+          link.href = dest.href;
+          link.className='source';
+          link.target='_blank';
+          link.rel='noopener noreferrer';
+          link.title = s.path + ' (linha ' + s.line + ')';
+          link.textContent = s.path + ':' + s.line;
+          row.appendChild(link);
+        } catch {}
+      });
+      bubble.appendChild(row);
+    }
+    if(!options.pending){
+      const time = document.createElement('div');
+      time.className = 'stamp';
+      time.textContent=stamp();
+      bubble.appendChild(time);
+    }
+    item.append(avatar,bubble);
+    $('chatBody').appendChild(item);
+    $('chatBody').scrollTop = $('chatBody').scrollHeight;
+    return item;
+  }
+  function save(){
+    sessionStorage.setItem(convoKey,JSON.stringify(state.history.slice(-14)));
+  }
+  function reset(){
+    state.history=[];
+    sessionStorage.removeItem(convoKey);
+    $('chatBody').replaceChildren();
+    $('suggestions').classList.remove('hide');
+    addMessage('assistant','Olá! Eu sou a IA de testes do PSTEC. Posso examinar arquivos de Produção, Carteira, Capital, Faturamento, Compras, Indicadores, Conferência e consultas SQL.\n\nFaça uma pergunta sobre regras, cálculos, campos, filtros, endpoints ou o funcionamento do projeto.');
+  }
+  function restore(){
+    try{
+      const saved=JSON.parse(sessionStorage.getItem(convoKey)||'[]');
+      if(!Array.isArray(saved)||!saved.length) return reset();
+      state.history=saved.filter(x=>['user','assistant'].includes(x.role)&&typeof x.content==='string').slice(-14);
+      state.history.forEach(x=>addMessage(x.role,x.content,x.sources||[]));
+      $('suggestions').classList.add('hide');
+    }catch{reset()}
+  }
+  async function ask(question){
+    if(state.busy) return;
+    if(!state.connected){
+      error('sendError','Conecte o Worker e informe a senha no painel lateral primeiro.');
+      return;
+    }
+    const q=question.trim();
+    if(q.length < 4) return;
+    error('sendError','');
+    const previous=state.history.slice(-6).map(x=>({role:x.role,content:x.content}));
+    state.busy=true;
+    $('sendBtn').disabled=true;
+    $('sendBtn').textContent='Consultando...';
+    $('questionInput').value='';
+    $('suggestions').classList.add('hide');
+    addMessage('user',q);
+    state.history.push({role:'user',content:q});
+    save();
+    const pending=addMessage('assistant','Buscando trechos no GitHub e analisando com a IA...',[],{pending:true});
+    try{
+      const cfg=getConfig();
+      const controller=new AbortController();
+      const timeout=setTimeout(()=>controller.abort(),85000);
+      let response;
+      try{
+        response=await fetch(cfg.base+'/ask',{
+          method:'POST',
+          cache:'no-store',
+          signal:controller.signal,
+          headers:{'Content-Type':'application/json','X-IA-Lab-Senha':cfg.password},
+          body:JSON.stringify({question:q,history:previous})
+        });
+      }finally{clearTimeout(timeout)}
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok) throw Error(data.error||('HTTP '+response.status));
+      pending.remove();
+      addMessage('assistant',data.answer,data.sources||[]);
+      state.history.push({role:'assistant',content:data.answer,sources:data.sources||[]});
+      save();
+      if(data.filesIndexed){
+        $('filesStatus').textContent = data.filesIndexed+' arquivos de texto indexados. Atualização automática a cada 5 minutos.';
+      }
+      if(data.model) $('modelStatus').textContent = data.model+' • leitura contextual do GitHub';
+      setStatus('IA pronta',true);
+    }catch(e){
+      pending.remove();
+      if(e.name==='AbortError') error('sendError','A chamada demorou demais. Tente novamente.');
+      else error('sendError',e.message||'Erro ao consultar IA.');
+      state.history.pop(); // retira pergunta que nao recebeu resposta
+      save();
+    }finally{
+      state.busy=false;
+      $('sendBtn').disabled=false;
+      $('sendBtn').textContent='Enviar →';
+      $('questionInput').focus();
+    }
+  }
+  $('togglePass').addEventListener('click',()=>{
+    const p=$('labPassword');
+    p.type=p.type==='password'?'text':'password';
+    $('togglePass').textContent=p.type==='password'?'Ver':'Ocultar';
+  });
+  $('connectBtn').addEventListener('click',connect);
+  $('workerUrl').addEventListener('change',()=>{state.connected=false;setStatus('Aguardando configuração',false)});
+  $('labPassword').addEventListener('change',()=>{state.connected=false;setStatus('Aguardando configuração',false)});
+  $('clearBtn').addEventListener('click',reset);
+  $('questionForm').addEventListener('submit',ev=>{ev.preventDefault();ask($('questionInput').value)});
+  $('questionInput').addEventListener('keydown',ev=>{
+    if(ev.key==='Enter'&&!ev.shiftKey){ev.preventDefault();ask($('questionInput').value)}
+  });
+  document.querySelectorAll('[data-question]').forEach(b=>b.addEventListener('click',()=>ask(b.dataset.question)));
+  restore();
+  if($('workerUrl').value && $('labPassword').value) connect();
+})();
+</script>
+</body>
+</html>
