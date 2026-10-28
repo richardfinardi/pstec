@@ -213,8 +213,8 @@
       '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
     }[c]));
     text.innerHTML = role === 'assistant'
-      ? escaped.replace(/`([^`\\n]+)`/g, '<code>$1</code>')
-        .replace(/\\*\\*([^*\\n]+)\\*\\*/g, '<strong>$1</strong>')
+      ? escaped.replace(/`([^`\n]+)`/g, '<code>$1</code>')
+        .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
       : escaped;
     bubble.appendChild(text);
     if(sources && sources.length){
