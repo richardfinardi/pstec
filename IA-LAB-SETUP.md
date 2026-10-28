@@ -57,3 +57,43 @@ Para fazer perguntas como "quantos orcamentos estao atrasados hoje?", "quanto fa
 - Se o navegador exibir erro de CORS, verifique se o site esta publicado em `consultoriarf.net`, `www.consultoriarf.net` ou `richardfinardi.github.io`; sao as origens permitidas no codigo.
 
 Este teste nao modifica a indexacao do menu PSTEC e pode ser removido apagando `ia-lab.html` e desativando o Worker.
+
+
+## Versao 2: dados reais da API PSTEC (somente GET)
+
+O laboratorio agora tem dois modos:
+
+- **Codigo GitHub**: preserva o funcionamento anterior e suas referencias por arquivo.
+- **Dados reais (GET)**: a IA seleciona ate duas fontes autorizadas, le os dados no momento da pergunta, identifica os campos existentes, planeja filtros/agrupamentos, executa as contas no Worker e responde com fontes e quantidade de registros.
+
+**Importante: atualizar manualmente o Worker no Cloudflare** depois de atualizar este arquivo no GitHub.
+
+1. Cloudflare -> Workers & Pages -> pstec-ia -> Edit code.
+2. Abra \`infra/pstec-ia-worker.js\` -> Raw -> copie integralmente.
+3. Substitua o codigo completo do editor e clique em **Deploy**.
+4. F5 em \`https://consultoriarf.net/pstec/ia-lab.html\`.
+5. Selecione **Dados reais (GET)** e pergunte:
+   - "Quais clientes estao com pedidos atrasados e qual o valor a faturar?"
+   - "Quanto faturamos em outubro de 2026 versus setembro de 2026?"
+   - "Quais materiais estao aguardando compra e ha quantos dias?"
+
+Ja usa \`OPENAI_API_KEY\` e \`IA_LAB_SENHA\` configurados anteriormente. Nao exige novos secrets.
+
+### Restricoes e cuidados
+
+- Endpoints fixos autorizados: /CARTEIRA, /producao, /faturamento, /faturamento_indicadores, /capital_carteira, /capital_faturamento, /capital_financeiro, /00_compras_orcamentos, /01_compras_materiais, /03_compras_ocs, /06_compras_cotacoes e /remocao.
+- Apenas requisicoes **GET**. Nao ha comandos de alteracao nem executa SQL arbitrario.
+- O acesso ao Worker depende da senha \`IA_LAB_SENHA\`, mas ainda **nao ha verificacao server-side do perfil do usuario logado no ERP**. Utilize apenas como laboratorio restrito e nao divulgue a senha. Nao publique no menu dos usuarios antes de implementar autenticacao adequada.
+- O Worker envia para a OpenAI o esquema de campos (com ate dois exemplos por campo) e os resultados calculados. Isso pode incluir informacoes empresariais. A OpenAI pode processar essas informacoes conforme as condicoes de API contratadas.
+- Limite de **10 MB por endpoint**. Respostas maiores geram erro, em vez de apresentar total parcial. Alguns endpoints podem exigir futuramente versao agregada/paginada da API.
+- A IA escolhe endpoints/campos, mas sua escolha e validada pelo Worker. Perguntas complexas ainda exigem validacao por um humano; nao confundir sugestao do modelo com dado verificado.
+- Comparacao entre clientes de dois endpoints, se aparecer, e por texto normalizado, nao por codigo unico; pode nao equivaler a um JOIN de banco. Nao presumir conciliacao perfeita.
+- Fontes como \`/faturamento\` podem ser granulares por item de NF. O Worker sinaliza risco de duplicidade ao somar campos de total de cabecalho da NF.
+- O modo dados usa ate **tres chamadas OpenAI** por pergunta (selecionar fontes, planejar, responder), portanto consome mais tokens que o modo codigo.
+- Se a API exigir login/autorizacao para GET server-to-server, vai retornar erro HTTP 401/403. Sera necessario implementar autenticação adequada da API na proxima etapa, sem mandar senhas do usuario para a IA.
+- Para implantacao final, recomendo autenticacao server-side, controle por perfil, limite de chamadas, auditoria e rotas agregadas para bases maiores.
+
+### Verificacao
+
+A rota \`/health\` apenas confirma que o Worker esta ativo; **nao valida a chamada a API OpenAI nem acesso aos dados PSTEC**. O teste real so acontece ao usar \`/ask-data\` com a senha configurada.
+
