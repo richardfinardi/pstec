@@ -57,6 +57,14 @@
     .asidefooter b{color:#35527a}
     .chat{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}
     .chathead{padding:18px 21px;display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:1px solid var(--border)}
+    .modebar{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:11px 20px;border-bottom:1px solid #e3ebf5;background:#f9fbff}
+    .modebtn{border:1px solid #dce4f0;background:#fff;color:#526783;border-radius:10px;font-weight:800;font-size:12px;padding:8px 12px}
+    .modebtn.active{background:#003b96;color:white;border-color:#003b96}
+    .modehint{font-size:11px;color:#6b7e97;margin-left:auto}
+    .live-tag{color:#126a43;background:#e6f9ed;border:1px solid #b7ebc9;border-radius:8px;padding:4px 8px;font-size:10px;font-weight:800}
+    .live-sources{display:flex;flex-wrap:wrap;gap:5px;margin-top:12px;border-top:1px solid #e1e8f3;padding-top:10px}
+    .live-sources a{background:#e6f9ed;border:1px solid #c2e9cd;border-radius:7px;color:#14613e;text-decoration:none;font-size:10px;padding:5px 8px;font-weight:750}
+    .live-sources a:hover{background:#cef2dc}
     .chathead h2{margin:0;font-size:15px;letter-spacing:-.02em}
     .chathead p{font-size:11px;color:#8593a8;margin:2px 0 0}
     .chatbody{flex:1;min-height:380px;max-height:calc(100vh - 340px);overflow:auto;padding:27px 26px 20px;scroll-behavior:smooth;display:flex;flex-direction:column;gap:21px}
@@ -86,7 +94,7 @@
     .msgerr.show{display:block}
     .hide{display:none!important}
     @media(max-width:900px){.grid{grid-template-columns:1fr;min-height:0}.chatbody{max-height:55vh;min-height:420px}.main{padding:15px 12px}.heading h1{font-size:22px}aside.panel{gap:14px}.asidefooter{margin-top:0}}
-    @media(max-width:550px){.topbar{padding:11px 13px}.logo img{height:32px}.logo b{font-size:14px}.toplink{padding:8px}.heading{align-items:flex-start}.heading .badge{display:none}.chatbody{padding:17px 13px;min-height:330px}.chathead{padding:13px}.bubble{max-width:92%;padding:12px}.suggestions{padding:0 13px 15px}.composer{padding:10px}.send{padding:11px}.composehint{font-size:9px}}
+    @media(max-width:550px){.modehint{margin-left:0;width:100%}.modebar{padding:10px 13px}.topbar{padding:11px 13px}.logo img{height:32px}.logo b{font-size:14px}.toplink{padding:8px}.heading{align-items:flex-start}.heading .badge{display:none}.chatbody{padding:17px 13px;min-height:330px}.chathead{padding:13px}.bubble{max-width:92%;padding:12px}.suggestions{padding:0 13px 15px}.composer{padding:10px}.send{padding:11px}.composehint{font-size:9px}}
   </style>
 </head>
 <body>
@@ -104,7 +112,7 @@
       <aside class="panel">
         <section>
           <h3 class="cardtitle">Conexão com a IA</h3>
-          <p class="caption">O código é lido diretamente do GitHub. A chamada ao modelo passa por um Worker seguro, sem expor a chave OpenAI no navegador.</p>
+          <p class="caption">Escolha entre analisar o código do GitHub ou consultar os dados reais dos endpoints da PSTEC. A chave OpenAI continua protegida no Worker.</p>
           <div class="field"><label for="workerUrl">Endereço do Worker</label><input id="workerUrl" type="url" autocomplete="url" placeholder="https://pstec-ia.seunome.workers.dev" spellcheck="false"></div>
           <div class="field"><label for="labPassword">Senha do laboratório</label><div class="passwordrow"><input id="labPassword" type="password" autocomplete="off" placeholder="Senha configurada no Worker"><button type="button" class="eye" id="togglePass" title="Mostrar/ocultar senha">Ver</button></div></div>
           <button class="primary setupbtn" id="connectBtn" type="button">Conectar laboratório</button>
@@ -112,25 +120,29 @@
         </section>
         <div class="sep"></div>
         <section>
-          <h3 class="cardtitle">Fontes consultadas</h3>
+          <h3 class="cardtitle">Fontes disponíveis</h3>
           <span class="badge">GitHub · richardfinardi/pstec</span>
           <ul class="smalllist"><li>Produção e Carteira</li><li>Capital, Compras e Faturamento</li><li>Indicadores e Conferência</li><li>HTML, JavaScript e SQL</li></ul>
-          <p class="caption" style="margin-top:12px" id="filesStatus">Arquivos são atualizados automaticamente a cada 5 minutos no Worker.</p>
+          <p class="caption" style="margin-top:12px" id="filesStatus">Código GitHub: índice renovado a cada 5 minutos. Dados reais: consulta GET no momento da pergunta.</p>
         </section>
-        <div class="asidefooter"><b>Ambiente reservado para testes.</b><br>Não aparece no menu PSTEC. A IA lê o código do repositório, não dados em tempo real do CPS. Não realiza alterações no sistema.</div>
+        <div class="asidefooter"><b>Ambiente de testes — uso restrito.</b><br>Modo Dados Reais: consulta apenas endpoints GET autorizados. Não executa SQL, UPDATE, DELETE ou qualquer alteração. Dados selecionados e resultados são enviados à OpenAI para análise; não use para informações sigilosas sem autorização.</div>
       </aside>
       <section class="panel chat" aria-label="Conversa com IA">
         <div class="chathead"><div><h2>Assistente do projeto</h2><p id="modelStatus">GPT-6 Luna • análise contextual de arquivos</p></div><button class="secondary" type="button" id="clearBtn">Nova conversa</button></div>
+        <div class="modebar"><button type="button" class="modebtn active" id="modeCode">Código GitHub</button><button type="button" class="modebtn" id="modeData">Dados reais (GET)</button><span class="modehint" id="modeHint">Explicações sobre os arquivos e regras do projeto</span></div>
         <div class="chatbody" id="chatBody" aria-live="polite"></div>
         <div class="suggestions" id="suggestions">
           <button type="button" data-question="Como funciona a Conferência de Remoção?">Como funciona a Conferência de Remoção?</button>
           <button type="button" data-question="Onde a tela de Capital busca os dados financeiros?">Onde Capital busca os dados?</button>
           <button type="button" data-question="Quais consultas SQL existem e o que elas fazem?">Quais SQL existem?</button>
           <button type="button" data-question="Como funcionam os filtros e o cache na Carteira?">Filtros e cache da Carteira</button>
+          <button type="button" class="hide" data-live-suggestion data-question="Quanto faturamos neste mês e no mês anterior?">Faturamento mês atual x anterior</button>
+          <button type="button" class="hide" data-live-suggestion data-question="Quais clientes possuem pedidos em atraso e quais são os valores?">Clientes com pedidos atrasados</button>
+          <button type="button" class="hide" data-live-suggestion data-question="Quais materiais estão aguardando compra?">Materiais aguardando compra</button>
         </div>
         <form class="composer" id="questionForm">
           <div class="composewrap"><textarea class="prompt" id="questionInput" aria-label="Pergunta para a IA" placeholder="Pergunte qualquer coisa sobre o código do PSTEC..." rows="1" maxlength="1200"></textarea><button class="primary send" id="sendBtn" type="submit">Enviar →</button></div>
-          <div class="composehint">Enter envia • Shift + Enter pula linha • Respostas baseadas no GitHub, não em dados operacionais ao vivo.</div>
+          <div class="composehint" id="composeHint">Enter envia • Shift + Enter pula linha • Respostas baseadas no GitHub.</div>
           <div class="msgerr" id="sendError" role="alert"></div>
         </form>
       </section>
@@ -144,7 +156,7 @@
   const workerKey = 'pstec_ia_worker_url';
   const passKey = 'pstec_ia_lab_senha';
   const convoKey = 'pstec_ia_history_v1';
-  const state = { connected:false, busy:false, history:[] };
+  const state = { connected:false, busy:false, history:[], mode:'code' };
   $('workerUrl').value = localStorage.getItem(workerKey) || '';
   $('labPassword').value = sessionStorage.getItem(passKey) || '';
 
@@ -241,6 +253,23 @@
       });
       bubble.appendChild(row);
     }
+    if(Array.isArray(options.dataSources) && options.dataSources.length){
+      const row = document.createElement('div');
+      row.className='live-sources';
+      const badge=document.createElement('span');
+      badge.className='live-tag';
+      badge.textContent='Dados reais • GET';
+      row.appendChild(badge);
+      options.dataSources.forEach(s=>{
+        const link=document.createElement('a');
+        link.href=s.url;
+        link.target='_blank';
+        link.rel='noopener noreferrer';
+        link.textContent='/' + s.id + ' (' + Number(s.rows || 0).toLocaleString('pt-BR') + ' linhas)';
+        row.appendChild(link);
+      });
+      bubble.appendChild(row);
+    }
     if(!options.pending){
       const time = document.createElement('div');
       time.className = 'stamp';
@@ -255,19 +284,41 @@
   function save(){
     sessionStorage.setItem(convoKey,JSON.stringify(state.history.slice(-14)));
   }
+  function setMode(mode){
+    if(state.busy) return;
+    state.mode = mode === 'data' ? 'data' : 'code';
+    const isData = state.mode === 'data';
+    $('modeData').classList.toggle('active',isData);
+    $('modeCode').classList.toggle('active',!isData);
+    $('modeHint').textContent = isData ? 'GET em endpoints reais • apenas leitura' : 'Explicações sobre arquivos e regras do projeto';
+    $('composeHint').textContent = isData
+      ? 'Modo Dados Reais • respostas com informações atualizadas da API PSTEC • nenhuma alteração permitida.'
+      : 'Enter envia • Shift + Enter pula linha • Respostas baseadas no GitHub.';
+    $('questionInput').placeholder = isData
+      ? 'Ex.: Quais clientes têm pedidos em atraso e qual o valor total?'
+      : 'Pergunte qualquer coisa sobre o código da PSTEC...';
+    document.querySelectorAll('[data-question]').forEach(btn=>{
+      const live=btn.hasAttribute('data-live-suggestion');
+      btn.classList.toggle('hide',live !== isData || state.history.length > 0);
+    });
+    $('modelStatus').textContent = isData
+      ? 'GPT-6 Luna • consulta de dados reais via API'
+      : 'GPT-6 Luna • análise contextual de arquivos';
+    sessionStorage.setItem('pstec_ia_mode',state.mode);
+  }
   function reset(){
     state.history=[];
     sessionStorage.removeItem(convoKey);
     $('chatBody').replaceChildren();
     $('suggestions').classList.remove('hide');
-    addMessage('assistant','Olá! Eu sou a IA de testes do PSTEC. Posso examinar arquivos de Produção, Carteira, Capital, Faturamento, Compras, Indicadores, Conferência e consultas SQL.\n\nFaça uma pergunta sobre regras, cálculos, campos, filtros, endpoints ou o funcionamento do projeto.');
+    addMessage('assistant','Olá! Eu sou a IA de testes da PSTEC. Escolha **Código GitHub** para entender o sistema ou **Dados Reais** para consultar os endpoints (somente leitura).');
   }
   function restore(){
     try{
       const saved=JSON.parse(sessionStorage.getItem(convoKey)||'[]');
       if(!Array.isArray(saved)||!saved.length) return reset();
       state.history=saved.filter(x=>['user','assistant'].includes(x.role)&&typeof x.content==='string').slice(-14);
-      state.history.forEach(x=>addMessage(x.role,x.content,x.sources||[]));
+      state.history.forEach(x=>addMessage(x.role,x.content,x.sources||[],{dataSources:x.dataSources||[]}));
       $('suggestions').classList.add('hide');
     }catch{reset()}
   }
@@ -282,6 +333,8 @@
     error('sendError','');
     const previous=state.history.slice(-6).map(x=>({role:x.role,content:x.content}));
     state.busy=true;
+    $('modeCode').disabled=true;
+    $('modeData').disabled=true;
     $('sendBtn').disabled=true;
     $('sendBtn').textContent='Consultando...';
     $('questionInput').value='';
@@ -289,14 +342,16 @@
     addMessage('user',q);
     state.history.push({role:'user',content:q});
     save();
-    const pending=addMessage('assistant','Buscando trechos no GitHub e analisando com a IA...',[],{pending:true});
+    const pending=addMessage('assistant',state.mode==='data'
+      ? 'Consultando a API PSTEC e calculando os resultados...'
+      : 'Buscando trechos no GitHub e analisando com a IA...',[],{pending:true});
     try{
       const cfg=getConfig();
       const controller=new AbortController();
-      const timeout=setTimeout(()=>controller.abort(),85000);
+      const timeout=setTimeout(()=>controller.abort(),150000);
       let response;
       try{
-        response=await fetch(cfg.base+'/ask',{
+        response=await fetch(cfg.base+(state.mode==='data'?'/ask-data':'/ask'),{
           method:'POST',
           cache:'no-store',
           signal:controller.signal,
@@ -307,13 +362,14 @@
       const data=await response.json().catch(()=>({}));
       if(!response.ok) throw Error(data.error||('HTTP '+response.status));
       pending.remove();
-      addMessage('assistant',data.answer,data.sources||[]);
-      state.history.push({role:'assistant',content:data.answer,sources:data.sources||[]});
+      addMessage('assistant',data.answer,data.sources||[],{dataSources:data.dataSources||[]});
+      state.history.push({role:'assistant',content:data.answer,sources:data.sources||[],dataSources:data.dataSources||[]});
       save();
       if(data.filesIndexed){
         $('filesStatus').textContent = data.filesIndexed+' arquivos de texto indexados. Atualização automática a cada 5 minutos.';
       }
-      if(data.model) $('modelStatus').textContent = data.model+' • leitura contextual do GitHub';
+      if(data.model) $('modelStatus').textContent = data.model + (data.mode==='data'
+        ? ' • dados reais dos endpoints' : ' • leitura contextual do GitHub');
       setStatus('IA pronta',true);
     }catch(e){
       pending.remove();
@@ -323,6 +379,8 @@
       save();
     }finally{
       state.busy=false;
+      $('modeCode').disabled=false;
+      $('modeData').disabled=false;
       $('sendBtn').disabled=false;
       $('sendBtn').textContent='Enviar →';
       $('questionInput').focus();
@@ -336,13 +394,16 @@
   $('connectBtn').addEventListener('click',connect);
   $('workerUrl').addEventListener('change',()=>{state.connected=false;setStatus('Aguardando configuração',false)});
   $('labPassword').addEventListener('change',()=>{state.connected=false;setStatus('Aguardando configuração',false)});
-  $('clearBtn').addEventListener('click',reset);
+  $('clearBtn').addEventListener('click',()=>{reset();setMode(state.mode)});
+  $('modeCode').addEventListener('click',()=>setMode('code'));
+  $('modeData').addEventListener('click',()=>setMode('data'));
   $('questionForm').addEventListener('submit',ev=>{ev.preventDefault();ask($('questionInput').value)});
   $('questionInput').addEventListener('keydown',ev=>{
     if(ev.key==='Enter'&&!ev.shiftKey){ev.preventDefault();ask($('questionInput').value)}
   });
   document.querySelectorAll('[data-question]').forEach(b=>b.addEventListener('click',()=>ask(b.dataset.question)));
   restore();
+  setMode(sessionStorage.getItem('pstec_ia_mode') || 'code');
   if($('workerUrl').value && $('labPassword').value) connect();
 })();
 </script>
