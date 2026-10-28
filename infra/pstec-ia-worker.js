@@ -153,6 +153,9 @@ function openAIText(data) {
 // A lista abaixo e fechada: nunca aceitar URL fornecida pela IA ou pelo usuario.
 // Codigo/deploy no Cloudflare; os resultados nao sao armazenados no Worker.
 const DATA_API_ROOT = "https://pstec.consultoriarf.net/";
+// O front da Carteira usa /CARTEIRA em maiusculas (rotas HTTP distinguem maiusculas).
+const DATA_PATHS = Object.freeze({ carteira:"CARTEIRA" });
+function dataPath(id) { return DATA_PATHS[id] || id; }
 const DATASETS = Object.freeze({
   carteira: "Carteira comercial, clientes, orcamentos, pedidos, entregas, prazo, valores a faturar",
   producao: "Producao, ordens de servico, OS, situacao e planejamento",
@@ -204,7 +207,7 @@ async function getLiveDataset(id) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 25000);
   try {
-    const response = await fetch(DATA_API_ROOT + id, {
+    const response = await fetch(DATA_API_ROOT + dataPath(id), {
       method: "GET", signal: controller.signal,
       headers: { "Accept": "application/json", "Cache-Control": "no-cache" },
       cf: { cacheTtl: 0 }
@@ -365,7 +368,7 @@ function evaluatePlan(plan, datasets) {
   for (const q of plan) {
     const d = data.get(q.dataset);
     const filtered = d.rows.filter(r => q.filters.every(f => compareRows(r, f, today)));
-    let output = { label:q.label, dataset:q.dataset, endpoint:"/" + q.dataset,
+    let output = { label:q.label, dataset:q.dataset, endpoint:"/" + dataPath(q.dataset),
       metric:q.metric, groupBy:q.groupBy || null, valueField:q.valueField || null,
       filters:q.filters, totalRows:d.rows.length, matchingRows:filtered.length,
       fetchedAt:d.fetchedAt, completeness:"Resposta completa da API, sem amostragem" };
@@ -512,7 +515,7 @@ async function answerWithLiveData(env, question, history) {
     answer,
     mode:"data",
     model:MODEL,
-    dataSources:datasets.map(d => ({ id:d.id, url: DATA_API_ROOT + d.id,
+    dataSources:datasets.map(d => ({ id:d.id, url: DATA_API_ROOT + dataPath(d.id),
       rows:d.rows.length, fetchedAt:d.fetchedAt })),
     calculated:output.map(q => ({ label:q.label, matchingRows:q.matchingRows,
       totalRows:q.totalRows, metric:q.metric, value:q.value, truncated:!!q.truncated })),
