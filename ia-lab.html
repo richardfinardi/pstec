@@ -61,6 +61,16 @@
     .modebtn{border:1px solid #dce4f0;background:#fff;color:#526783;border-radius:10px;font-weight:800;font-size:12px;padding:8px 12px}
     .modebtn.active{background:#003b96;color:white;border-color:#003b96}
     .modehint{font-size:11px;color:#6b7e97;margin-left:auto}
+    .syncbox{border:1px solid #d9e6f5;border-radius:12px;background:#f5f9fe;padding:11px 12px;margin-top:12px}
+    .syncbox label{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:#26476f;cursor:pointer}
+    .syncbox input{accent-color:#003b96;width:16px;height:16px;flex:0 0 auto}
+    .syncbox p{margin:5px 0 0;color:#5d728d;font-size:11px;line-height:1.5}
+    .filtertrace{border-top:1px dashed #d7e4f3;padding-top:12px;margin-top:14px;color:#46607f;font-size:11px}
+    .filtertrace strong{color:#204b81;font-weight:900}
+    .filtertrace p{margin:4px 0;line-height:1.5;overflow-wrap:anywhere}
+    .kpi-audit{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+    .kpi-audit .stat{padding:7px 9px;border-radius:9px;background:#fff;border:1px solid #d8e4f2;font-size:11px}
+    .kpi-audit .stat b{display:block;font-size:12px;color:#064192}
     .live-tag{color:#126a43;background:#e6f9ed;border:1px solid #b7ebc9;border-radius:8px;padding:4px 8px;font-size:10px;font-weight:800}
     .live-sources{display:flex;flex-wrap:wrap;gap:5px;margin-top:12px;border-top:1px solid #e1e8f3;padding-top:10px}
     .live-sources a{background:#e6f9ed;border:1px solid #c2e9cd;border-radius:7px;color:#14613e;text-decoration:none;font-size:10px;padding:5px 8px;font-weight:750}
@@ -115,6 +125,10 @@
           <p class="caption">Escolha entre analisar o código do GitHub ou consultar os dados reais dos endpoints da PSTEC. A chave OpenAI continua protegida no Worker.</p>
           <div class="field"><label for="workerUrl">Endereço do Worker</label><input id="workerUrl" type="url" autocomplete="url" placeholder="https://pstec-ia.seunome.workers.dev" spellcheck="false"></div>
           <div class="field"><label for="labPassword">Senha do laboratório</label><div class="passwordrow"><input id="labPassword" type="password" autocomplete="off" placeholder="Senha configurada no Worker"><button type="button" class="eye" id="togglePass" title="Mostrar/ocultar senha">Ver</button></div></div>
+          <div class="syncbox hide" id="syncBox">
+            <label><input type="checkbox" id="useCarteiraFilters" checked> Respeitar filtros da tela Carteira</label>
+            <p id="syncDetails">Lê os filtros salvos neste navegador ao enviar cada pergunta. Inclui Status OS, saldo, cliente, filtros de coluna, datas e pesquisa.</p>
+          </div>
           <button class="primary setupbtn" id="connectBtn" type="button">Conectar laboratório</button>
           <div class="msgerr" id="configError" role="alert"></div>
         </section>
@@ -156,6 +170,48 @@
   const workerKey = 'pstec_ia_worker_url';
   const passKey = 'pstec_ia_lab_senha';
   const convoKey = 'pstec_ia_history_v1';
+  const syncKey = 'pstec_ia_sync_carteira_v1';
+  $('useCarteiraFilters').checked = localStorage.getItem(syncKey)!=='false';
+  function carteiraStorageKey(){
+    const user=(localStorage.getItem('pstec_usuario_nome') || 'anon')
+      .trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'_');
+    return 'pstec_carteira_filters_v3_' + (user||'anon');
+  }
+  function currentCarteiraFilters(){
+    try{
+      const v3=localStorage.getItem(carteiraStorageKey());
+      if(v3){const data=JSON.parse(v3); if(data&&typeof data==='object'&&data.filters)
+        return {...data,source:'v3'};}
+      const v1=localStorage.getItem('pstec_carteira_filter_state_v1');
+      if(v1){const data=JSON.parse(v1); if(data&&typeof data==='object')
+        return {...data,source:'v1'};}
+    }catch(e){console.warn('Filtro Carteira invalido:',e)}
+    return null;
+  }
+  function updateSyncSummary(){
+    const f=currentCarteiraFilters();
+    if(!$('useCarteiraFilters').checked){
+      $('syncDetails').textContent='Sem filtros da tela: consulte toda a base, aplicando apenas critérios da sua pergunta.';
+      return;
+    }
+    if(!f){
+      $('syncDetails').textContent='Nenhum filtro salvo. Padrão da Carteira: Status OS = APROVADO. Entre na Carteira e ajuste os filtros para sincronizar.';
+      return;
+    }
+    const groups=f.filters||f.filterState||{};
+    const cols=f.columnFilters||f.colFilterState||{};
+    const items=[
+      ...Object.entries(groups).filter(([,v])=>Array.isArray(v)&&v.length)
+        .map(([k,v])=>k+': '+v.join(', ')),
+      ...Object.entries(cols).filter(([,v])=>Array.isArray(v)&&v.length)
+        .map(([k,v])=>'Col. '+k+': '+v.join(', '))
+    ];
+    if(f.search)items.push('Busca: '+f.search);
+    if(f.dateFrom)items.push('De: '+f.dateFrom);
+    if(f.dateTo)items.push('Até: '+f.dateTo);
+    $('syncDetails').textContent='Filtros deste navegador: '+(items.length?items.join(' | '):'Todos (sem filtro)')+
+      '. Atualizados ao enviar a pergunta.';
+  }
   const state = { connected:false, busy:false, history:[], mode:'code' };
   $('workerUrl').value = localStorage.getItem(workerKey) || '';
   $('labPassword').value = sessionStorage.getItem(passKey) || '';
@@ -265,10 +321,53 @@
         link.href=s.url;
         link.target='_blank';
         link.rel='noopener noreferrer';
-        link.textContent='/' + s.id + ' (' + Number(s.rows || 0).toLocaleString('pt-BR') + ' linhas)';
+        const rows=Number(s.rows || 0).toLocaleString('pt-BR');
+        const after=s.uiRows == null ? '' : ' • '+Number(s.uiRows).toLocaleString('pt-BR')+' após filtros';
+        link.textContent='/' + s.id + ' (' + rows + ' linhas'+after+')';
         row.appendChild(link);
       });
       bubble.appendChild(row);
+    }
+    if(options.appliedFilters && role==='assistant'){
+      const trace = document.createElement('div');
+      trace.className='filtertrace';
+      const title=document.createElement('strong');
+      title.textContent='Critérios efetivamente aplicados';
+      trace.appendChild(title);
+      const detail=(txt)=>{
+        const p=document.createElement('p');
+        p.textContent=txt;
+        trace.appendChild(p);
+      };
+      const filters=options.appliedFilters;
+      if(filters.screen?.length){
+        detail('Tela Carteira ('+filters.source+'): '+filters.screen.join(' • '));
+      }
+      if(filters.question?.length){
+        detail('Pergunta: '+filters.question.join(' • '));
+      }
+      if(Array.isArray(options.calculated)){
+        const all=options.calculated.filter(x=>x.standard && Number.isFinite(x.value));
+        if(all.length){
+          const kpis=document.createElement('div');
+          kpis.className='kpi-audit';
+          all.forEach(a=>{
+            const el=document.createElement('div');
+            el.className='stat';
+            const b=document.createElement('b');
+            const isMoney=/valor a faturar/i.test(a.label);
+            b.textContent=isMoney
+              ? Number(a.value).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})
+              : Number(a.value).toLocaleString('pt-BR',{maximumFractionDigits:2});
+            el.append(b,document.createTextNode(a.label));
+            kpis.appendChild(el);
+          });
+          trace.appendChild(kpis);
+        }
+        const warnings=[...new Set(options.calculated.map(x=>x.warning).filter(Boolean))];
+        if(warnings.length)detail('Atenção: '+warnings.join(' • '));
+      }
+      bubble.appendChild(trace);
     }
     if(!options.pending){
       const time = document.createElement('div');
@@ -289,6 +388,8 @@
     state.mode = mode === 'data' ? 'data' : 'code';
     const isData = state.mode === 'data';
     $('modeData').classList.toggle('active',isData);
+    $('syncBox').classList.toggle('hide',!isData);
+    if(isData)updateSyncSummary();
     $('modeCode').classList.toggle('active',!isData);
     $('modeHint').textContent = isData ? 'GET em endpoints reais • apenas leitura' : 'Explicações sobre arquivos e regras do projeto';
     $('composeHint').textContent = isData
@@ -318,7 +419,10 @@
       const saved=JSON.parse(sessionStorage.getItem(convoKey)||'[]');
       if(!Array.isArray(saved)||!saved.length) return reset();
       state.history=saved.filter(x=>['user','assistant'].includes(x.role)&&typeof x.content==='string').slice(-14);
-      state.history.forEach(x=>addMessage(x.role,x.content,x.sources||[],{dataSources:x.dataSources||[]}));
+      state.history.forEach(x=>addMessage(x.role,x.content,x.sources||[],{
+        dataSources:x.dataSources||[], appliedFilters:x.appliedFilters||null,
+        calculated:x.calculated||[]
+      }));
       $('suggestions').classList.add('hide');
     }catch{reset()}
   }
@@ -347,6 +451,9 @@
       : 'Buscando trechos no GitHub e analisando com a IA...',[],{pending:true});
     try{
       const cfg=getConfig();
+      const carteiraFilters=state.mode==='data' && $('useCarteiraFilters').checked ?
+        currentCarteiraFilters() : null;
+      const useCarteiraFilters=state.mode==='data' && $('useCarteiraFilters').checked;
       const controller=new AbortController();
       const timeout=setTimeout(()=>controller.abort(),150000);
       let response;
@@ -356,14 +463,19 @@
           cache:'no-store',
           signal:controller.signal,
           headers:{'Content-Type':'application/json','X-IA-Lab-Senha':cfg.password},
-          body:JSON.stringify({question:q,history:previous})
+          body:JSON.stringify({question:q,history:previous,carteiraFilters,useCarteiraFilters})
         });
       }finally{clearTimeout(timeout)}
       const data=await response.json().catch(()=>({}));
       if(!response.ok) throw Error(data.error||('HTTP '+response.status));
       pending.remove();
-      addMessage('assistant',data.answer,data.sources||[],{dataSources:data.dataSources||[]});
-      state.history.push({role:'assistant',content:data.answer,sources:data.sources||[],dataSources:data.dataSources||[]});
+      addMessage('assistant',data.answer,data.sources||[],{
+        dataSources:data.dataSources||[],appliedFilters:data.appliedFilters||null,
+        calculated:data.calculated||[]
+      });
+      state.history.push({role:'assistant',content:data.answer,sources:data.sources||[],
+        dataSources:data.dataSources||[],appliedFilters:data.appliedFilters||null,
+        calculated:data.calculated||[]});
       save();
       if(data.filesIndexed){
         $('filesStatus').textContent = data.filesIndexed+' arquivos de texto indexados. Atualização automática a cada 5 minutos.';
@@ -394,6 +506,11 @@
   $('connectBtn').addEventListener('click',connect);
   $('workerUrl').addEventListener('change',()=>{state.connected=false;setStatus('Aguardando configuração',false)});
   $('labPassword').addEventListener('change',()=>{state.connected=false;setStatus('Aguardando configuração',false)});
+  $('useCarteiraFilters').addEventListener('change',()=>{
+    localStorage.setItem(syncKey,String($('useCarteiraFilters').checked));
+    updateSyncSummary();
+  });
+  window.addEventListener('focus',()=>{if(state.mode==='data')updateSyncSummary()});
   $('clearBtn').addEventListener('click',()=>{reset();setMode(state.mode)});
   $('modeCode').addEventListener('click',()=>setMode('code'));
   $('modeData').addEventListener('click',()=>setMode('data'));
