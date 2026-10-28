@@ -22,6 +22,11 @@
 .filtercard{padding:15px 18px;margin:14px 0}.filterhead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap}
 .filtergrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px}.field{min-width:0}.field label{display:block;font-size:10px;font-weight:800;color:#66778c;text-transform:uppercase;letter-spacing:.03em;margin-bottom:5px}
 .field select,.field input,.searchinput{width:100%;height:35px;background:#f9fbfe;border:1px solid #dce5ef;border-radius:8px;padding:0 9px;font-size:12px;color:#22374b;outline:none;min-width:0}.field select:focus,.field input:focus{border-color:#5188d9}
+.period-pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(76px,36%);gap:6px}
+.period-pair select{min-width:0;text-overflow:ellipsis;font-weight:650}
+#periodCaption{margin-left:8px;white-space:nowrap;color:#718198;font-weight:600}
+@media(max-width:560px){.period-pair{grid-template-columns:minmax(0,1fr) minmax(67px,40%)}}
+
 .kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:13px;margin:16px 0}.kpi{background:white;border:1px solid var(--line);border-radius:15px;padding:18px 17px;min-width:0;box-shadow:0 4px 10px rgba(15,42,70,.04)}.kpi small{display:block;font-size:12px;color:#617186;font-weight:650}.kpi strong{display:block;font-size:clamp(18px,2vw,27px);font-weight:850;letter-spacing:-.035em;overflow-wrap:anywhere;margin-top:8px}.kpi .hint{font-size:10px;color:#76879b;margin-top:4px}.kpi.red{border-top:3px solid #d94e47}.kpi.green{border-top:3px solid #20a37c}.kpi.blue{border-top:3px solid #003b96}.kpi.gold{border-top:3px solid #d99c2d}.kpi strong.negative{color:var(--red)}.kpi strong.positive{color:var(--green)}
 .chartgrid{display:grid;grid-template-columns:1.25fr 1fr;gap:15px}.chartgrid.equal{grid-template-columns:1fr 1fr}.chartcard{padding:17px;min-width:0}.chartcard h3{font-size:14px;font-weight:850;color:var(--navy);margin:0}.chartcard .sub{font-size:11px;color:var(--muted);margin:3px 0 14px}.chartbox{height:300px;position:relative}.wide{grid-column:1/-1}
 .sectiontitle{font-size:19px;font-weight:850;margin:20px 0 6px;letter-spacing:-.025em}.sectiondesc{font-size:12px;color:var(--muted);margin:0 0 15px}
@@ -53,8 +58,8 @@
  <div class="card filtercard">
   <div class="filterhead"><div class="inline"><strong style="font-size:13px">Filtros do painel</strong><span class="muted" id="periodCaption"></span></div><div class="inline"><button class="toggle" onclick="quickPeriod('quarter')">Trimestre</button><button class="toggle" onclick="quickPeriod('year')">Ano</button><button class="toggle" onclick="quickPeriod('last12')">12 meses</button><button class="toggle" onclick="resetFilters()">Limpar</button></div></div>
   <div class="filtergrid">
-   <div class="field"><label>De (mês)</label><input type="month" id="f_from"></div>
-   <div class="field"><label>Até (mês)</label><input type="month" id="f_to"></div>
+   <div class="field"><label>Período inicial</label><div class="period-pair"><select id="f_fromMonth" aria-label="Mês inicial"></select><select id="f_fromYear" aria-label="Ano inicial"></select></div></div>
+   <div class="field"><label>Período final</label><div class="period-pair"><select id="f_toMonth" aria-label="Mês final"></select><select id="f_toYear" aria-label="Ano final"></select></div></div>
    <div class="field"><label>Empresa</label><select id="f_empresa"><option value="">Todas</option></select></div>
    <div class="field"><label>A pagar — previsão</label><select id="f_prevP"><option value="0">Somente efetivos</option><option value="1">Somente previsões</option><option value="all">Ambos</option></select></div>
    <div class="field"><label>A pagar — situação</label><select id="f_statusP"><option value="abertos">Em aberto + parcial</option><option value="EM ABERTO">Em aberto</option><option value="PARCIAL">Parcial</option><option value="PAGO">Pago</option><option value="all">Todas</option></select></div>
@@ -62,7 +67,7 @@
    <div class="field"><label>A receber — nota fiscal</label><select id="f_nf"><option value="COM NF">Com NF</option><option value="SEM NF">Sem NF</option><option value="all">Ambos</option></select></div>
    <div class="field"><label>A receber — situação</label><select id="f_statusR"><option value="abertos">Em aberto + parcial</option><option value="EM ABERTO">Em aberto</option><option value="PARCIAL">Parcial</option><option value="RECEBIDO">Recebido</option><option value="all">Todas</option></select></div>
    <div class="field"><label>Valor a pagar</label><select id="f_valorP"><option value="rateio">Valor do plano (original)</option><option value="saldo">Saldo pendente rateado</option></select></div>
-   <div class="field"><label>Categoria A pagar</label><select id="f_grupo"><option value="all">Todas</option><option value="MP">Matéria-prima</option><option value="IMPOSTOS">Impostos</option><option value="FINANCEIRO">Financeiro</option></select></div>
+   <div class="field"><label>Categoria A pagar</label><select id="f_grupo"><option value="all">Todas</option><option value="MP">Matéria-prima</option><option value="IMPOSTOS">Impostos</option><option value="FINANCEIRO">Geral</option></select></div>
    <div class="field"><label>Plano de contas (buscar)</label><input id="f_plano" placeholder="Todos os planos"></div>
    <div class="field"><label>Carteira</label><select id="f_carteira"><option value="1">Aprovados com saldo</option><option value="all">Todos com saldo</option><option value="todos">Incluir sem saldo</option></select></div>
    <div class="field"><label>Pesquisa no detalhe</label><input id="f_busca" placeholder="Cliente, documento, fornecedor..."></div>
@@ -97,7 +102,7 @@
  </section>
  <section class="page" id="view_juros">
   <div class="toolbar"><div><h2 class="sectiontitle" style="margin:0">Juros de antecipação</h2><p class="sectiondesc" style="margin:4px 0">Plano “JUROS DE ANTECIPAÇÃO”; ano escolhido versus anterior.</p></div><div class="inline"><span class="pill" id="jurosTotalAnterior"></span><span class="pill" id="jurosTotalAtual"></span></div></div>
-  <div class="card chartcard"><h3>Comparativo anual por mês</h3><div class="sub">Data do pagamento quando disponível; caso contrário, vencimento. Independente do período geral.</div><div class="chartbox" style="height:350px"><canvas id="chartJuros"></canvas></div></div>
+  <div class="card chartcard"><h3>Comparativo anual por mês</h3><div class="sub">Agrupado pela data de pagamento; sem pagamento, usa vencimento. Independe de período, situação e previsão dos demais painéis.</div><div id="jurosEmpty" class="hintbar" style="display:none"></div><div class="chartbox" id="jurosChartBox" style="height:350px"><canvas id="chartJuros"></canvas></div></div>
   <div class="card tablecard" style="margin-top:14px"><div class="toolbar"><strong style="font-size:13px">Lançamentos de juros</strong><span class="statline" id="jurosRowsLabel"></span></div><div class="tablewrap" id="jurosTable"></div></div>
  </section>
  <section class="page" id="view_detalhes">
@@ -206,7 +211,7 @@ function drawKpis(){
  document.getElementById('balanceFormula').innerHTML='<b>Saldo final:</b> '+brl.format(x.carteira)+' (carteira) + '+brl.format(x.saldo)+' (saldo acumulado) = <b>'+brl.format(round(x.carteira+x.saldo))+'</b>. Se o saldo é negativo, o resultado desconta esse déficit da carteira.';
 }
 function monthlyTable(id,small){
- const names=small?['Mês','A pagar','A receber','Saldo acumulado']:['Mês','MP','Impostos','Financeiro','A pagar','A receber','Carteira','Saldo'];
+ const names=small?['Mês','A pagar','A receber','Saldo acumulado']:['Mês','MP','Impostos','Geral','A pagar','A receber','Carteira','Saldo'];
  const keys=small?['pagar','receber','saldo']:['mp','impostos','financeiro','pagar','receber','carteira','saldo'];
  const x=totals(model.rows);
  let out='<table><thead><tr>'+names.map(v=>'<th>'+v+'</th>').join('')+'</tr></thead><tbody>';
@@ -247,26 +252,31 @@ function chartComposition(){
  makeChart('chartGrupo','bar',r.map(t=>monthLabel(t.mes)),[
   {label:'MP',data:r.map(t=>t.mp),backgroundColor:'#123454',stack:'total'},
   {label:'Impostos',data:r.map(t=>t.impostos),backgroundColor:'#e4a52b',stack:'total'},
-  {label:'Financeiro',data:r.map(t=>t.financeiro),backgroundColor:'#ca4b3e',stack:'total'}
+  {label:'Geral',data:r.map(t=>t.financeiro),backgroundColor:'#ca4b3e',stack:'total'}
  ]);
- makeChart('chartPizza','doughnut',['MP','Impostos','Financeiro'],[{label:'Valor',data:[x.mp,x.impostos,x.financeiro],backgroundColor:['#123454','#e4a52b','#ca4b3e']}],{cutout:'62%'});
- document.getElementById('grupoLegenda').textContent='MP: '+brl.format(x.mp)+' · Impostos: '+brl.format(x.impostos)+' · Financeiro: '+brl.format(x.financeiro);
+ makeChart('chartPizza','doughnut',['MP','Impostos','Geral'],[{label:'Valor',data:[x.mp,x.impostos,x.financeiro],backgroundColor:['#123454','#e4a52b','#ca4b3e']}],{cutout:'62%'});
+ document.getElementById('grupoLegenda').textContent='MP: '+brl.format(x.mp)+' · Impostos: '+brl.format(x.impostos)+' · Geral: '+brl.format(x.financeiro);
  const plans=new Map();
  for(const p of model.pagar){const key=p.plano_contas||'Sem plano';plans.set(key,(plans.get(key)||0)+amountP(p))}
  const top=[...plans].sort((a,b)=>b[1]-a[1]).slice(0,12).reverse();
  makeChart('chartPlanos','bar',top.map(r=>r[0]),[{label:'Valor',data:top.map(r=>round(r[1])),backgroundColor:'#215c9c',borderRadius:3}],{indexAxis:'y',scales:{x:{ticks:{callback:v=>new Intl.NumberFormat('pt-BR',{notation:'compact'}).format(v)}},y:{grid:{display:false},ticks:{font:{size:11}}}}});
 }
+function isInterest(r){
+ const text=norm(r.plano_contas);
+ return bool(r.juros_antecipacao)||(text.includes('JUROS')&&text.includes('ANTECIP'));
+}
+function interestDate(r){return datekey(r.dt_pagamento||r.dt_vencimento||r.dt_abertura)}
 function jurosRows(){
  const y=Number(state.anoJ)||year;
  return raw.pagar.filter(r=>{
-  const key=datekey(r.dt_pagamento||r.dt_vencimento),yearItem=Number(key.slice(0,4));
-  return company(r)&&bool(r.juros_antecipacao)&&prev(r,state.prevP)&&(yearItem===y||yearItem===y-1);
+  const sourceYear=Number(interestDate(r).slice(0,4));
+  return company(r)&&isInterest(r)&&(sourceYear===y||sourceYear===y-1);
  });
 }
 function drawJuros(){
  const y=Number(state.anoJ)||year,items=jurosRows(),months=Array.from({length:12},()=>[0,0]);
  for(const r of items){
-  const key=datekey(r.dt_pagamento||r.dt_vencimento),jy=Number(key.slice(0,4)),m=Number(key.slice(5,7))-1;
+  const key=interestDate(r),jy=Number(key.slice(0,4)),m=Number(key.slice(5,7))-1;
   if(m>=0&&m<12)months[m][jy===y?1:0]+=n(r.valor_rateio);
  }
  const p=round(months.reduce((a,x)=>a+x[0],0)),q=round(months.reduce((a,x)=>a+x[1],0));
@@ -276,6 +286,17 @@ function drawJuros(){
   {label:String(y-1),data:months.map(x=>round(x[0])),backgroundColor:'#596577',borderRadius:3},
   {label:String(y),data:months.map(x=>round(x[1])),backgroundColor:'#e4a42a',borderRadius:3}
  ]);
+ const allInterest=raw.pagar.filter(r=>company(r)&&isInterest(r));
+ const years=[...new Set(allInterest.map(r=>interestDate(r).slice(0,4)).filter(Boolean))].sort();
+ const notice=document.getElementById('jurosEmpty');
+ const box=document.getElementById('jurosChartBox');
+ if(items.length===0){
+  notice.style.display='block';
+  notice.textContent=allInterest.length
+   ? 'Há '+allInterest.length+' lançamentos de juros, mas nenhum em '+(y-1)+' ou '+y+'. Anos disponíveis: '+years.join(', ')+'.'
+   : 'Nenhum título identificado com plano de contas contendo JUROS e ANTECIPAÇÃO. Confira a nomenclatura no detalhamento de A pagar.';
+  box.style.display='none';
+ }else{notice.style.display='none';box.style.display='block'}
  document.getElementById('jurosRowsLabel').textContent=items.length+' rateios';
  const cols=[['empresa','Empresa'],['dt_pagamento','Pagamento'],['dt_vencimento','Vencimento'],['fornecedor','Fornecedor'],['documento','Documento'],['plano_contas','Plano'],['valor_rateio','Valor']];
  document.getElementById('jurosTable').innerHTML=htmlTable(items.slice(0,300),cols);
@@ -288,6 +309,7 @@ const cols={
 const numericCols=['valor_rateio','saldo_rateado','valor_titulo','valor_corrigido_titulo','valor_pago_titulo','saldo_a_receber','valor_recebido','vl_a_faturar','vl_total','vl_unitario'];
 function formatCell(row,key){
  const v=row[key];
+ if(key==='grupo_financeiro'&&String(v).toUpperCase()==='FINANCEIRO')return 'Geral';
  if(numericCols.includes(key))return brl.format(n(v));
  if(key==='qtde_pendente'||key==='qtde')return num.format(n(v));
  if(key.startsWith('dt_')||key==='prazo')return dt(v);
@@ -401,11 +423,35 @@ async function reloadAll(){
 }
 function save(){localStorage.setItem(STATE_KEY,JSON.stringify(state))}
 function applyFilters(){
- for(const id of ['from','to','empresa','prevP','statusP','prevR','statusR','nf','valorP','grupo','plano','carteira','busca','anoJ']){
+ for(const id of ['empresa','prevP','statusP','prevR','statusR','nf','valorP','grupo','plano','carteira','busca','anoJ']){
   const el=document.getElementById('f_'+id);if(el)el.value=state[id]??defaults[id];
+ }
+ for(const side of ['from','to']){
+  const v=state[side]||defaults[side];
+  document.getElementById('f_'+side+'Month').value=v.slice(5,7);
+  document.getElementById('f_'+side+'Year').value=v.slice(0,4);
  }
  document.getElementById('detailType').value=state.detail;
  document.getElementById('pageSize').value=state.pageSize;
+}
+function populatePeriodSelectors(){
+ const months=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+ const years=[Number(state.from.slice(0,4)),Number(state.to.slice(0,4)),year];
+ const minYear=Math.min(...years,year-20),maxYear=Math.max(...years,year+5);
+ for(const side of ['from','to']){
+  document.getElementById('f_'+side+'Month').innerHTML=months.map((m,i)=>'<option value="'+String(i+1).padStart(2,'0')+'">'+m+'</option>').join('');
+  document.getElementById('f_'+side+'Year').innerHTML=Array.from({length:maxYear-minYear+1},(_,i)=>minYear+i).map(y=>'<option value="'+y+'">'+y+'</option>').join('');
+ }
+}
+function periodChanged(side){
+ const month=document.getElementById('f_'+side+'Month').value;
+ const yearValue=document.getElementById('f_'+side+'Year').value;
+ state[side]=yearValue+'-'+month;
+ if(state.from>state.to){
+  if(side==='from')state.to=state.from;
+  else state.from=state.to;
+ }
+ applyFilters();page=0;save();scheduleRender();
 }
 function resetFilters(){state={...defaults,view:state.view,detail:state.detail};page=0;applyFilters();save();render()}
 function quickPeriod(which){
@@ -419,16 +465,15 @@ function changeView(v){state.view=v;page=0;save();render()}
 function setup(){
  const yearSel=document.getElementById('f_anoJ');
  for(let y=year+1;y>=year-12;y--)yearSel.innerHTML+='<option value="'+y+'">'+y+'</option>';
+ populatePeriodSelectors();
  applyFilters();
- for(const id of ['from','to','empresa','prevP','statusP','prevR','statusR','nf','valorP','grupo','plano','carteira','busca','anoJ']){
+ for(const side of ['from','to']){
+  for(const kind of ['Month','Year'])document.getElementById('f_'+side+kind).addEventListener('change',()=>periodChanged(side));
+ }
+ for(const id of ['empresa','prevP','statusP','prevR','statusR','nf','valorP','grupo','plano','carteira','busca','anoJ']){
   const el=document.getElementById('f_'+id);
   el.addEventListener(id==='plano'||id==='busca'?'input':'change',()=>{
    state[id]=el.value;
-   if(state.from>state.to){
-    if(id==='from')state.to=state.from;
-    else if(id==='to')state.from=state.to;
-    applyFilters();
-   }
    page=0;save();scheduleRender();
   });
  }
