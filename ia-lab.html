@@ -67,6 +67,8 @@
     .bubble{max-width:min(86%,860px);background:#f7f9fe;border:1px solid #e4eaf3;border-radius:5px 17px 17px 17px;padding:15px 17px;min-width:0;overflow-wrap:anywhere}
     .message.user .bubble{border-color:var(--brand);background:var(--brand);color:#fff;border-radius:17px 5px 17px 17px}
     .bubble .text{white-space:pre-wrap;line-height:1.66;font-size:13px}
+    .bubble .text code{font-family:Consolas,'Courier New',monospace;background:#eaf0f9;padding:1px 4px;border-radius:4px;color:#26476f;font-size:.95em}
+    .bubble .text strong{font-weight:800}
     .stamp{font-size:10px;opacity:.65;margin-top:8px}
     .sources{display:flex;gap:5px;flex-wrap:wrap;margin-top:15px;border-top:1px solid #e1e8f3;padding-top:12px}
     .source{color:#235998;border:1px solid #d8e6fb;background:#edf5ff;text-decoration:none;padding:4px 8px;border-radius:8px;font-size:10px;font-weight:700;max-width:260px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
@@ -206,7 +208,14 @@
     bubble.className='bubble';
     const text = document.createElement('div');
     text.className = 'text';
-    text.textContent = content;
+    // Renderiza apenas negrito e codigo inline; escapa HTML antes para evitar XSS.
+    const escaped = String(content).replace(/[&<>"']/g, c => ({
+      '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+    }[c]));
+    text.innerHTML = role === 'assistant'
+      ? escaped.replace(/`([^`\\n]+)`/g, '<code>$1</code>')
+        .replace(/\\*\\*([^*\\n]+)\\*\\*/g, '<strong>$1</strong>')
+      : escaped;
     bubble.appendChild(text);
     if(sources && sources.length){
       const row = document.createElement('div');
