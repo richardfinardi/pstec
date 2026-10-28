@@ -346,6 +346,12 @@
       if(filters.question?.length){
         detail('Pergunta: '+filters.question.join(' • '));
       }
+      if(!filters.question?.length && Array.isArray(filters.criteriaByQuery)){
+        const criteria=[...new Set(filters.criteriaByQuery
+          .flatMap(q=>(q.fields||[]).map(v=>q.endpoint+' — '+v)))];
+        if(criteria.length) detail('Consulta: '+criteria.slice(0,12).join(' • '));
+        else detail('Consulta: sem filtros adicionais na pergunta.');
+      }
       if(Array.isArray(options.calculated)){
         const all=options.calculated.filter(x=>x.standard && Number.isFinite(x.value));
         if(all.length){
