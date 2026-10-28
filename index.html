@@ -25,7 +25,7 @@
 </head>
 <body class="min-h-screen flex flex-col">
     <header class="bg-pstec-700 text-white shadow-md">
-        <div class="max-w-[1500px] mx-auto px-5 py-4 flex items-center justify-between gap-4">
+        <div class="max-w-[1500px] mx-auto px-5 py-3 flex items-center justify-between gap-4">
             <div class="flex items-center gap-4">
                 <div class="bg-white rounded-xl p-2 shadow-sm">
                     <img src="./logo.png" alt="PSTEC" class="h-9 w-auto object-contain" onerror="this.style.display='none'">
@@ -47,88 +47,100 @@
         </div>
     </header>
 
-    <main class="flex-1 max-w-[1500px] w-full mx-auto px-5 pt-12 pb-16 flex flex-col justify-start">
-        <div class="mb-7">
+    <main class="flex-1 max-w-[1500px] w-full mx-auto px-5 pt-7 pb-8 flex flex-col justify-start">
+        <div class="mb-5">
             <p class="text-xs font-extrabold uppercase tracking-[0.18em] text-pstec-600">Selecione o módulo</p>
-            <h2 class="text-3xl font-black text-slate-900 mt-1">Central PSTEC</h2>
+            <h2 class="text-2xl font-black text-slate-900 mt-1">Central PSTEC</h2>
             <p class="text-sm text-slate-500 mt-2">Produção, carteira, compras, capital, faturamento, indicadores e conferência no mesmo ambiente.</p>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-3 gap-5">
-            <a href="producao.html" class="module-card group bg-white border border-slate-200 hover:border-pstec-400 rounded-3xl p-6 shadow-sm hover:shadow-xl">
-                <div class="w-14 h-14 rounded-2xl bg-pstec-50 border border-pstec-100 flex items-center justify-center mb-5">
-                    <i data-lucide="factory" class="w-7 h-7 text-pstec-700"></i>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            <a href="producao.html" class="module-card group bg-white border border-slate-200 hover:border-pstec-400 rounded-2xl p-4 shadow-sm hover:shadow-xl">
+                <div class="w-11 h-11 rounded-xl bg-pstec-50 border border-pstec-100 flex items-center justify-center mb-3">
+                    <i data-lucide="factory" class="w-6 h-6 text-pstec-700"></i>
                 </div>
                 <div class="flex items-start justify-between gap-3">
-                    <div><h3 class="text-xl font-black text-slate-900">PRODUÇÃO</h3><p class="text-sm text-slate-500 mt-1">Programação e acompanhamento das OS.</p></div>
+                    <div><h3 class="text-lg font-black text-slate-900">PRODUÇÃO</h3><p class="text-xs text-slate-500 mt-1">Programação e acompanhamento das OS.</p></div>
                     <i data-lucide="arrow-up-right" class="w-5 h-5 text-slate-300 group-hover:text-pstec-600"></i>
                 </div>
-                <div class="mt-6 text-xs font-extrabold text-pstec-700 flex items-center gap-2"><span>Abrir Produção</span><i data-lucide="arrow-right" class="w-4 h-4"></i></div>
+                <div class="mt-4 text-xs font-extrabold text-pstec-700 flex items-center gap-2"><span>Abrir Produção</span><i data-lucide="arrow-right" class="w-4 h-4"></i></div>
             </a>
 
-            <a href="carteira.html" class="module-card group bg-white border border-slate-200 hover:border-pstec-400 rounded-3xl p-6 shadow-sm hover:shadow-xl">
-                <div class="w-14 h-14 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center mb-5">
-                    <i data-lucide="briefcase-business" class="w-7 h-7 text-emerald-700"></i>
+            <a href="carteira.html" class="module-card group bg-white border border-slate-200 hover:border-pstec-400 rounded-2xl p-4 shadow-sm hover:shadow-xl">
+                <div class="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center mb-3">
+                    <i data-lucide="briefcase-business" class="w-6 h-6 text-emerald-700"></i>
                 </div>
                 <div class="flex items-start justify-between gap-3">
-                    <div><h3 class="text-xl font-black text-slate-900">CARTEIRA</h3><p class="text-sm text-slate-500 mt-1">Carteira comercial, PCP e acompanhamento de entrega.</p></div>
+                    <div><h3 class="text-lg font-black text-slate-900">CARTEIRA</h3><p class="text-xs text-slate-500 mt-1">Carteira comercial, PCP e acompanhamento de entrega.</p></div>
                     <i data-lucide="arrow-up-right" class="w-5 h-5 text-slate-300 group-hover:text-emerald-600"></i>
                 </div>
-                <div class="mt-6 text-xs font-extrabold text-emerald-700 flex items-center gap-2"><span>Abrir Carteira</span><i data-lucide="arrow-right" class="w-4 h-4"></i></div>
+                <div class="mt-4 text-xs font-extrabold text-emerald-700 flex items-center gap-2"><span>Abrir Carteira</span><i data-lucide="arrow-right" class="w-4 h-4"></i></div>
             </a>
 
-            <a href="compras.html" class="module-card group bg-white border border-slate-200 hover:border-pstec-400 rounded-3xl p-6 shadow-sm hover:shadow-xl">
-                <div class="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center mb-5">
-                    <i data-lucide="shopping-cart" class="w-7 h-7 text-pstec-700"></i>
+            <a href="compras.html" class="module-card group bg-white border border-slate-200 hover:border-pstec-400 rounded-2xl p-4 shadow-sm hover:shadow-xl">
+                <div class="w-11 h-11 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center mb-3">
+                    <i data-lucide="shopping-cart" class="w-6 h-6 text-pstec-700"></i>
                 </div>
                 <div class="flex items-start justify-between gap-3">
-                    <div><h3 class="text-xl font-black text-slate-900">COMPRAS</h3><p class="text-sm text-slate-500 mt-1">Prazos, lead time, OCs, recebimentos e financeiro.</p></div>
+                    <div><h3 class="text-lg font-black text-slate-900">COMPRAS</h3><p class="text-xs text-slate-500 mt-1">Prazos, lead time, OCs, recebimentos e financeiro.</p></div>
                     <i data-lucide="arrow-up-right" class="w-5 h-5 text-slate-300 group-hover:text-pstec-600"></i>
                 </div>
-                <div class="mt-6 text-xs font-extrabold text-pstec-700 flex items-center gap-2"><span>Abrir Compras</span><i data-lucide="arrow-right" class="w-4 h-4"></i></div>
+                <div class="mt-4 text-xs font-extrabold text-pstec-700 flex items-center gap-2"><span>Abrir Compras</span><i data-lucide="arrow-right" class="w-4 h-4"></i></div>
             </a>
 
-            <a href="capital.html" class="module-card group bg-white border border-slate-200 hover:border-amber-300 rounded-3xl p-6 shadow-sm hover:shadow-xl">
-                <div class="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center mb-5">
-                    <i data-lucide="landmark" class="w-7 h-7 text-amber-700"></i>
+            <a href="capital.html" class="module-card group bg-white border border-slate-200 hover:border-amber-300 rounded-2xl p-4 shadow-sm hover:shadow-xl">
+                <div class="w-11 h-11 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center mb-3">
+                    <i data-lucide="landmark" class="w-6 h-6 text-amber-700"></i>
                 </div>
                 <div class="flex items-start justify-between gap-3">
-                    <div><h3 class="text-xl font-black text-slate-900">CAPITAL</h3><p class="text-sm text-slate-500 mt-1">Capital de giro, faturamento e financeiro.</p></div>
+                    <div><h3 class="text-lg font-black text-slate-900">CAPITAL</h3><p class="text-xs text-slate-500 mt-1">Capital de giro, faturamento e financeiro.</p></div>
                     <i data-lucide="arrow-up-right" class="w-5 h-5 text-slate-300 group-hover:text-amber-600"></i>
                 </div>
-                <div class="mt-6 text-xs font-extrabold text-amber-700 flex items-center gap-2"><span>Abrir Capital</span><i data-lucide="arrow-right" class="w-4 h-4"></i></div>
+                <div class="mt-4 text-xs font-extrabold text-amber-700 flex items-center gap-2"><span>Abrir Capital</span><i data-lucide="arrow-right" class="w-4 h-4"></i></div>
             </a>
 
-            <a href="faturamento.html" class="module-card group bg-white border border-slate-200 hover:border-violet-300 rounded-3xl p-6 shadow-sm hover:shadow-xl">
-                <div class="w-14 h-14 rounded-2xl bg-violet-50 border border-violet-100 flex items-center justify-center mb-5">
-                    <i data-lucide="receipt-text" class="w-7 h-7 text-violet-700"></i>
+
+            <a href="financeiro.html" class="module-card group bg-white border border-slate-200 hover:border-teal-300 rounded-2xl p-4 shadow-sm hover:shadow-xl">
+                <div class="w-11 h-11 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center mb-3">
+                    <i data-lucide="wallet-cards" class="w-6 h-6 text-teal-700"></i>
                 </div>
                 <div class="flex items-start justify-between gap-3">
-                    <div><h3 class="text-xl font-black text-slate-900">FATURAMENTO</h3><p class="text-sm text-slate-500 mt-1">Faturamento diário, mensal, clientes e comparativos.</p></div>
+                    <div><h3 class="text-lg font-black text-slate-900">FINANCEIRO</h3><p class="text-xs text-slate-500 mt-1">Fluxo de caixa, previsões, carteira e juros.</p></div>
+                    <i data-lucide="arrow-up-right" class="w-5 h-5 text-slate-300 group-hover:text-teal-600"></i>
+                </div>
+                <div class="mt-4 text-xs font-extrabold text-teal-700 flex items-center gap-2"><span>Abrir Financeiro</span><i data-lucide="arrow-right" class="w-4 h-4"></i></div>
+            </a>
+
+            <a href="faturamento.html" class="module-card group bg-white border border-slate-200 hover:border-violet-300 rounded-2xl p-4 shadow-sm hover:shadow-xl">
+                <div class="w-11 h-11 rounded-xl bg-violet-50 border border-violet-100 flex items-center justify-center mb-3">
+                    <i data-lucide="receipt-text" class="w-6 h-6 text-violet-700"></i>
+                </div>
+                <div class="flex items-start justify-between gap-3">
+                    <div><h3 class="text-lg font-black text-slate-900">FATURAMENTO</h3><p class="text-xs text-slate-500 mt-1">Faturamento diário, mensal, clientes e comparativos.</p></div>
                     <i data-lucide="arrow-up-right" class="w-5 h-5 text-slate-300 group-hover:text-violet-600"></i>
                 </div>
-                <div class="mt-6 text-xs font-extrabold text-violet-700 flex items-center gap-2"><span>Abrir Faturamento</span><i data-lucide="arrow-right" class="w-4 h-4"></i></div>
+                <div class="mt-4 text-xs font-extrabold text-violet-700 flex items-center gap-2"><span>Abrir Faturamento</span><i data-lucide="arrow-right" class="w-4 h-4"></i></div>
             </a>
 
-            <a href="indicadores-faturamento.html" class="module-card group bg-white border border-slate-200 hover:border-sky-300 rounded-3xl p-6 shadow-sm hover:shadow-xl">
-                <div class="w-14 h-14 rounded-2xl bg-sky-50 border border-sky-100 flex items-center justify-center mb-5">
-                    <i data-lucide="chart-no-axes-combined" class="w-7 h-7 text-sky-700"></i>
+            <a href="indicadores-faturamento.html" class="module-card group bg-white border border-slate-200 hover:border-sky-300 rounded-2xl p-4 shadow-sm hover:shadow-xl">
+                <div class="w-11 h-11 rounded-xl bg-sky-50 border border-sky-100 flex items-center justify-center mb-3">
+                    <i data-lucide="chart-no-axes-combined" class="w-6 h-6 text-sky-700"></i>
                 </div>
                 <div class="flex items-start justify-between gap-3">
-                    <div><h3 class="text-xl font-black text-slate-900">INDICADORES</h3><p class="text-sm text-slate-500 mt-1">Pontualidade de faturamento, entregas e desempenho.</p></div>
+                    <div><h3 class="text-lg font-black text-slate-900">INDICADORES</h3><p class="text-xs text-slate-500 mt-1">Pontualidade de faturamento, entregas e desempenho.</p></div>
                     <i data-lucide="arrow-up-right" class="w-5 h-5 text-slate-300 group-hover:text-sky-600"></i>
                 </div>
-                <div class="mt-6 text-xs font-extrabold text-sky-700 flex items-center gap-2"><span>Abrir Indicadores</span><i data-lucide="arrow-right" class="w-4 h-4"></i></div>
+                <div class="mt-4 text-xs font-extrabold text-sky-700 flex items-center gap-2"><span>Abrir Indicadores</span><i data-lucide="arrow-right" class="w-4 h-4"></i></div>
             </a>
-            <a href="conferencia-remocao.html" class="module-card group bg-white border border-slate-200 hover:border-rose-300 rounded-3xl p-6 shadow-sm hover:shadow-xl">
-                <div class="w-14 h-14 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center mb-5">
-                    <i data-lucide="clipboard-check" class="w-7 h-7 text-rose-700"></i>
+            <a href="conferencia-remocao.html" class="module-card group bg-white border border-slate-200 hover:border-rose-300 rounded-2xl p-4 shadow-sm hover:shadow-xl">
+                <div class="w-11 h-11 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center mb-3">
+                    <i data-lucide="clipboard-check" class="w-6 h-6 text-rose-700"></i>
                 </div>
                 <div class="flex items-start justify-between gap-3">
-                    <div><h3 class="text-xl font-black text-slate-900">CONFERÊNCIA DE REMOÇÃO</h3><p class="text-sm text-slate-500 mt-1">Conferir materiais e excluir linhas não processadas.</p></div>
+                    <div><h3 class="text-lg font-black text-slate-900">CONFERÊNCIA DE REMOÇÃO</h3><p class="text-xs text-slate-500 mt-1">Conferir materiais e excluir linhas não processadas.</p></div>
                     <i data-lucide="arrow-up-right" class="w-5 h-5 text-slate-300 group-hover:text-rose-600"></i>
                 </div>
-                <div class="mt-6 text-xs font-extrabold text-rose-700 flex items-center gap-2"><span>Abrir Conferência</span><i data-lucide="arrow-right" class="w-4 h-4"></i></div>
+                <div class="mt-4 text-xs font-extrabold text-rose-700 flex items-center gap-2"><span>Abrir Conferência</span><i data-lucide="arrow-right" class="w-4 h-4"></i></div>
             </a>
 
         </div>
