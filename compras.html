@@ -140,8 +140,10 @@ const faltam=[...mats.values()].filter(r=>Number(r.falta_comprar)===1).length;
 const naoProc=[...mats.values()].filter(r=>r.status_processamento==='NAO_PROCESSADO').length;
 const semEntrada=unique(filtered.filter(r=>r.cod_oc!=null&&r.status_compra==='OC_SEM_ENTRADA'),r=>[keyOC(r),keyMaterial(r)].join('|'));
 const pagas=[...ocMap.values()].filter(r=>r.status_pagamento_oc==='PAGA').length;
+const pendentes=[...ocMap.values()].filter(r=>['EM_ABERTO','PARCIAL'].includes(r.status_pagamento_oc)).length;
 $('k_os').textContent=unique(filtered,r=>[r.cod_empresa,r.cod_os].join('|')).toLocaleString('pt-BR');
-$('k_orc').textContent=unique(filtered.filter(r=>Number(r.qtd_orcamentos)>0),r=>[r.cod_empresa,r.cod_os].join('|')).toLocaleString('pt-BR');
+$('k_ocs').textContent=ocMap.size.toLocaleString('pt-BR');
+$('k_pendentes').textContent=pendentes.toLocaleString('pt-BR');
 $('k_nao_proc').textContent=naoProc.toLocaleString('pt-BR');$('k_falta').textContent=faltam.toLocaleString('pt-BR');$('k_sem_entrada').textContent=semEntrada.toLocaleString('pt-BR');$('k_pagas').textContent=pagas.toLocaleString('pt-BR');
 $('k_lt_os').textContent=avg([...mats.values()].map(r=>r.lead_time_os_processamento_dias).filter(v=>v!==null));
 $('k_lt_lista').textContent=avg([...new Map(filtered.filter(r=>r.lead_time_solicitacao_oc_dias!==null&&r.cod_oc!=null).map(r=>[[keyMaterial(r),keyOC(r)].join('|'),r.lead_time_solicitacao_oc_dias])).values()]);
@@ -154,11 +156,12 @@ body.innerHTML=filtered.slice(0,n).map(r=>{let days=val(r.dias_ate_entrega_clien
 escapeHtml(r.orcamentos||'—'),
 escapeHtml(r.cliente||'—'),
 '<div class="wrap"><strong>'+escapeHtml(r.produto||'')+'</strong><br><small class="muted">'+escapeHtml(r.cod_interno||r.cod_produto||'')+' • Qtd. '+escapeHtml(r.qtde_lista??'—')+'</small></div>',
+pill(r.status_cotacao_material)+(r.cotacoes?'<br><small>'+escapeHtml(r.cotacoes)+'</small>':''),
 pill(r.status_processamento),
 fmt(r.dt_entrada_os),fmt(r.dt_processamento_referencia),
 val(r.lead_time_os_processamento_dias)===null?'—':r.lead_time_os_processamento_dias+' d',
 val(r.dias_aguardando_processamento)===null?'—':r.dias_aguardando_processamento+' d',
-pill(r.status_compra),escapeHtml(r.cod_oc??'—'),escapeHtml(r.fornecedor||'—'),fmt(r.dt_oc),fmt(r.dt_primeira_entrada),fmt(r.previsao_entrega_cliente),
+pill(r.status_compra),escapeHtml(r.cod_oc??'—'),escapeHtml(r.qtde_oc??'—'),escapeHtml(r.fornecedor||'—'),fmt(r.dt_oc),fmt(r.dt_primeira_entrada),fmt(r.dt_prevista_os),fmt(r.previsao_entrega_cliente),
 '<span class="'+tag+'">'+(days===null?'—':days+' d')+'</span>',
 val(r.lead_time_solicitacao_oc_dias)===null?'—':r.lead_time_solicitacao_oc_dias+' d',
 val(r.lead_time_oc_primeira_entrada_dias)===null?'—':r.lead_time_oc_primeira_entrada_dias+' d',pill(r.status_pagamento_oc),escapeHtml(r.nfs_entrada||'—')].map((v,i)=>'<td'+(i===2?' class="wrap"':'')+'>'+v+'</td>').join('')+'</tr>';}).join('');
@@ -167,7 +170,7 @@ if(n<filtered.length)body.innerHTML+='<tr><td colspan="23" class="empty">Exibind
 function dateMs(v){const s=String(v||'').slice(0,10);return /^\d{4}-\d{2}-\d{2}$/.test(s)?Date.parse(s+'T12:00:00Z'):NaN;}
 function dayDiff(a,b){const x=dateMs(a),y=dateMs(b);return Number.isFinite(x)&&Number.isFinite(y)?Math.round((y-x)/86400000):null;}
 function joinDatasets(ds){
-  const [orcamentos,materiais,solicitacoes,ocs,entradas,financeiro]=ds;
+  const [orcamentos,materiais,solicitacoes,ocs,entradas,financeiro,cotacoes]=ds;
   // Um pedido/OS pode conter mais de um item e mais de um orcamento.
   // Agrupar as previsoes por OS antes de juntar as linhas de materiais/OCs.
   const orcByOs=new Map();
@@ -175,8 +178,9 @@ function joinDatasets(ds){
     const k=[o.cod_empresa,o.cod_os].join('|');
     let x=orcByOs.get(k);
     if(!x){x={orcamentos:new Set(),codigos:new Set(),previsao_entrega_cliente:null,
-      prev_entrega_orcamento:null,dt_renegociacao_os:null,origem_previsao:null};orcByOs.set(k,x);}
+      prev_entrega_orcamento:null,dt_renegociacao_os:null,origem_previsao:null,cliente_orcamento:null};orcByOs.set(k,x);}
     if(o.orcamento)x.orcamentos.add(String(o.orcamento));
+    if(o.cliente_orcamento && !x.cliente_orcamento)x.cliente_orcamento=String(o.cliente_orcamento);
     if(o.cod_orcamento_vinculado!=null)x.codigos.add(String(o.cod_orcamento_vinculado));
     // Conserva a MAIOR previsao como prazo final entre os itens aprovados.
     // Renegociacao da OS tem prioridade sobre a previsao original.
@@ -195,6 +199,12 @@ function joinDatasets(ds){
   const key=x=>[x.cod_empresa,x.cod_os,x.cod_os_aux??'',x.guid_lm??''].join('|');
   const keyItem=x=>key(x)+'|'+(x.guid_item_oc??'');
   const keyOc=x=>[x.cod_empresa,x.cod_fornecedor,x.cod_oc].join('|');
+  const cotByMaterial=new Map();
+  if(Array.isArray(cotacoes))for(const c of cotacoes){
+    const k=key(c);let set=cotByMaterial.get(k);
+    if(!set){set=new Set();cotByMaterial.set(k,set);}
+    if(c.cod_cotacao!=null)set.add(String(c.cod_cotacao));
+  }
   const solByMaterial=new Map();
   for(const s of solicitacoes){const k=key(s),old=solByMaterial.get(k);if(s.dt_solicitacao&&(!old||s.dt_solicitacao<old))solByMaterial.set(k,s.dt_solicitacao);}
   const ocByMaterial=new Map();
@@ -223,6 +233,9 @@ function joinDatasets(ds){
     const b=orcByOs.get([m.cod_empresa,m.cod_os].join('|'))||null;
     const dadosOrc=b||{orcamentos:'',qtd_orcamentos:0,previsao_entrega_cliente:m.dt_renegociacao_os||m.dt_prevista_os||null,origem_previsao:m.dt_renegociacao_os?'OS_U_DT_RENEGOCIACAO':m.dt_prevista_os?'OS_DT_PREVISTA_FALLBACK':'SEM_PREVISAO'};
     const k=key(m),matOcs=ocByMaterial.get(k)||[null];
+    const cotIds=cotByMaterial.get(k);
+    const statusCotacao=cotacoesDisponiveis?(cotIds?.size?'COTADO':'SEM_COTACAO'):'SEM_DADOS_COTACAO';
+    const clienteDoOrc=dadosOrc.cliente_orcamento||'—';
     for(const oc of matOcs){const entrada=oc?inByItem.get(keyItem(oc)):null;
       const fin=oc?finByOc.get(keyOc(oc)):null;
       const dtSolic=oc?.dt_solicitacao_oc||solByMaterial.get(k)||null;
@@ -230,7 +243,7 @@ function joinDatasets(ds){
       const dtProcessamento=processado?(solByMaterial.get(k)||oc?.dt_solicitacao_oc||null):null;
       const statusCompra=!oc?(processado?'SEM_OC':'AGUARDANDO_PROCESSAMENTO'):!entrada?'OC_SEM_ENTRADA':Number(entrada.qtde_recebida)+0.0001<Number(oc.qtde_oc||0)?'ENTRADA_PARCIAL':'RECEBIDO';
       const statusPagamento=!oc?'SEM_OC':!fin?'SEM_TITULO_IDENTIFICADO':fin.saldo_pagar_oc<.01?'PAGA':fin.valor_pago_oc>0?'PARCIAL':'EM_ABERTO';
-      result.push({...m,...dadosOrc,...(oc||{}),dt_solicitacao_material:solByMaterial.get(k)||null,dt_processamento_referencia:dtProcessamento,
+      result.push({...m,...dadosOrc,...(oc||{}),cliente:clienteDoOrc,cotacoes:cotIds?[...cotIds].join(', '):'',status_cotacao_material:statusCotacao,qtd_cotacoes:cotIds?.size||0,dt_solicitacao_material:solByMaterial.get(k)||null,dt_processamento_referencia:dtProcessamento,
         status_processamento:processado?'PROCESSADO':'NAO_PROCESSADO',
         dt_primeira_entrada:entrada?.dt_primeira_entrada||null,dt_ultima_entrada:entrada?.dt_ultima_entrada||null,
         qtd_notas_entrada:entrada?.qtd_notas_entrada.size||0,qtde_recebida:entrada?.qtde_recebida||0,
@@ -250,17 +263,22 @@ function joinDatasets(ds){
   return result;
 }
 async function load(){if(updating)return;updating=true;$('refresh').disabled=true;setStatus('Sincronizando…','warn');try{
-const respostas=await Promise.all(Object.values(APIS).map(async caminho=>{
-  const resp=await fetch(API_ROOT+caminho+'?_t='+Date.now(),{cache:'no-store',headers:{Accept:'application/json'}});
-  if(!resp.ok)throw Error(caminho+' retornou '+resp.status);
-  const dados=unpack(await resp.json());if(!Array.isArray(dados))throw Error('Formato invalido: '+caminho);
-  return dados;
+const respostas=await Promise.all(Object.entries(APIS).map(async ([tipo,caminho])=>{
+  try{
+    const resp=await fetch(API_ROOT+caminho+'?_t='+Date.now(),{cache:'no-store',headers:{Accept:'application/json'}});
+    if(!resp.ok)throw Error(caminho+' retornou '+resp.status);
+    return unpack(await resp.json());
+  }catch(e){
+    if(tipo==='cotacoes'){console.warn('Cotacoes indisponiveis:',e);return null;}
+    throw e;
+  }
 }));
-const a=joinDatasets(respostas);all=a;companies();apply();setStatus('API • '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),'ok');
+cotacoesDisponiveis=Array.isArray(respostas[6]);
+const a=joinDatasets(respostas);all=a;companies();apply();setStatus((cotacoesDisponiveis?'Atualizado • ':'Atualizado • cotações pendentes • ')+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),cotacoesDisponiveis?'ok':'warn');
 try{await window.PstecCache?.write(CACHE,a)}catch{}
 }catch(e){console.warn('Atualização de compras indisponível:',e);setStatus('Atualização indisponível','bad');if(!all.length)$('rows').innerHTML='<tr><td colspan="23" class="empty">Não foi possível carregar os dados. Tente atualizar novamente.</td></tr>';}
 finally{updating=false;$('refresh').disabled=false;}}
-function exportCsv(){const keys=['cod_empresa','n_os','orcamentos','qtd_orcamentos','origem_previsao','cliente','titulo_os','produto','cod_interno','cod_os_aux','qtde_lista','qtde_a_comprar_cps','cod_oc','fornecedor','dt_oc','dt_primeira_entrada','dt_ultima_entrada','nfs_entrada','previsao_entrega_cliente','dias_ate_entrega_cliente','lead_time_solicitacao_oc_dias','lead_time_oc_primeira_entrada_dias','lead_time_oc_ultima_entrada_dias','status_compra','status_pagamento_oc','saldo_pagar_oc'];const csv=[keys.join(';'),...filtered.map(r=>keys.map(k=>'"'+String(r[k]??'').replaceAll('"','""')+'"').join(';'))].join('\r\n');let a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));a.download='pstec_compras_'+new Date().toISOString().slice(0,10)+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),3000);}
+function exportCsv(){const keys=['cod_empresa','n_os','orcamentos','qtd_orcamentos','cliente','cotacoes','status_cotacao_material','dt_prevista_os','dt_entrada_os','dt_processamento_referencia','lead_time_os_processamento_dias','origem_previsao','titulo_os','produto','cod_interno','cod_os_aux','qtde_lista','qtde_a_comprar_cps','cod_oc','qtde_oc','fornecedor','dt_oc','dt_primeira_entrada','dt_ultima_entrada','nfs_entrada','previsao_entrega_cliente','dias_ate_entrega_cliente','lead_time_solicitacao_oc_dias','lead_time_oc_primeira_entrada_dias','lead_time_oc_ultima_entrada_dias','status_compra','status_pagamento_oc','saldo_pagar_oc'];const csv=[keys.join(';'),...filtered.map(r=>keys.map(k=>'"'+String(r[k]??'').replaceAll('"','""')+'"').join(';'))].join('\r\n');let a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));a.download='pstec_compras_'+new Date().toISOString().slice(0,10)+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),3000);}
 restore();$('search').addEventListener('input',apply);$('refresh').addEventListener('click',load);$('export').addEventListener('click',exportCsv);$('reset').addEventListener('click',()=>{$('search').value='';for(const id of multiIds){$(id).querySelectorAll('.multi-opt input').forEach(c=>c.checked=false);multiLabel(id);}apply();});
 (async()=>{try{const v=await window.PstecCache?.read(CACHE);if(Array.isArray(v?.data)){all=v.data;companies();apply();setStatus('CACHE LOCAL • atualizando…','warn');}}catch{}await load();})();
 })();
