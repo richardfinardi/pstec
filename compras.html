@@ -405,7 +405,7 @@ function joinDatasets(ds){
     const statusPag=!temOc?'SEM_OC':!titulos?'SEM_TITULO_IDENTIFICADO':saldo<.01?'PAGA':pago>0?'PARCIAL':'EM_ABERTO';
     result.push({...s,...dadosOrc,
       tipo_item:'SERVICO',
-      guid_lm:'SERVICO:'+String(s.aut_servico??('SEM_COD_'+s.aut_item_oc)),
+      guid_lm:s.aut_servico_cps!=null?'SERVICO:'+s.aut_servico_cps:'AVULSO:'+s.cod_oc+':'+s.aut_item_oc,
       guid_item_oc:s.aut_item_oc!=null?'SERV_ITEM:'+s.aut_item_oc:null,
       cliente:dadosOrc.cliente_orcamento||s.cliente||'—',
       qtde_a_comprar_cps:s.qtde_lista,
