@@ -377,6 +377,56 @@ function joinDatasets(ds){
       });
     }
   }
+  // Serviços terceirizados pertencem a TSERV_TE/TORD_SERV, não à TLIS_MAT.
+  // O endpoint 07 já agrega entradas e financeiro sem multiplicar valores.
+  for(const s of (Array.isArray(servicos)?servicos:[])){
+    const kOs=[s.cod_empresa,s.cod_os].join('|');
+    const b=orcByOs.get(kOs)||null;
+    const dadosOrc=b||{orcamentos:'',qtd_orcamentos:0,
+      previsao_entrega_cliente:s.dt_renegociacao_os||s.dt_prevista_os||null,
+      origem_previsao:s.dt_renegociacao_os?'OS_U_DT_RENEGOCIACAO':'OS_DT_PREVISTA_FALLBACK'};
+    const temOc=s.cod_oc!=null;
+    const processado=Number(s.solicitado)===1||Boolean(s.dt_solicitacao)||temOc;
+    const dtProc=s.dt_solicitacao||null; // Sem data efetiva, não inferir lead time.
+    const dtCotVinculada=temOc?s.dt_cotacao_vinculada_oc:null;
+    const dtCotMaterial=temOc?dtCotVinculada:s.dt_primeira_cotacao;
+    const diasProcCot=positiveDiff(dtProc,dtCotMaterial);
+    const diasCotOc=positiveDiff(dtCotVinculada,s.dt_oc);
+    const diasProcOc=positiveDiff(dtProc,s.dt_oc);
+    const cadeiaValida=Boolean(temOc&&dtCotVinculada&&diasProcCot!==null&&
+      diasCotOc!==null&&diasProcOc!==null&&diasProcCot+diasCotOc===diasProcOc);
+    const qtd=Number(s.qtde_recebida)||0;
+    const prevista=Number(s.qtde_oc)||0;
+    const statusCompra=!temOc?(processado?'SEM_OC':'AGUARDANDO_PROCESSAMENTO'):
+      qtd<=0?'OC_SEM_ENTRADA':qtd+0.0001<prevista?'ENTRADA_PARCIAL':'RECEBIDO';
+    const titulos=Number(s.qtd_titulos_oc)||0;
+    const saldo=Number(s.saldo_pagar_oc)||0;
+    const pago=Number(s.valor_pago_oc)||0;
+    const statusPag=!temOc?'SEM_OC':!titulos?'SEM_TITULO_IDENTIFICADO':saldo<.01?'PAGA':pago>0?'PARCIAL':'EM_ABERTO';
+    result.push({...s,...dadosOrc,
+      tipo_item:'SERVICO',
+      guid_lm:'SERVICO:'+String(s.aut_servico??('SEM_COD_'+s.aut_item_oc)),
+      guid_item_oc:s.aut_item_oc!=null?'SERV_ITEM:'+s.aut_item_oc:null,
+      cliente:dadosOrc.cliente_orcamento||s.cliente||'—',
+      qtde_a_comprar_cps:s.qtde_lista,
+      cotacoes:s.cotacoes||'',
+      qtd_cotacoes:Number(s.qtd_cotacoes)||0,
+      status_cotacao_material:Number(s.qtd_cotacoes)>0?'COTADO':'SEM_COTACAO',
+      dt_processamento_referencia:dtProc,
+      status_processamento:processado?'PROCESSADO':'NAO_PROCESSADO',
+      dias_aguardando_processamento:processado?null:dayDiff(s.dt_entrada_os,new Date().toISOString().slice(0,10)),
+      lead_time_os_processamento_dias:positiveDiff(s.dt_entrada_os,dtProc),
+      lead_time_processamento_cotacao_dias:diasProcCot,
+      lead_time_cotacao_oc_dias:diasCotOc,
+      lead_time_compras_dias:diasProcOc,
+      cadeia_compras_valida:cadeiaValida,
+      lead_time_oc_primeira_entrada_dias:positiveDiff(s.dt_oc,s.dt_primeira_entrada),
+      lead_time_suprimentos_dias:positiveDiff(dtProc,s.dt_primeira_entrada),
+      dias_ate_entrega_cliente:dayDiff(new Date().toISOString().slice(0,10),dadosOrc.previsao_entrega_cliente),
+      status_compra:statusCompra,status_pagamento_oc:statusPag,
+      falta_comprar:processado&&!temOc?1:0
+    });
+  }
   return result;
 }
 async function load(){if(updating)return;updating=true;$('refresh').disabled=true;setStatus('Sincronizando…','warn');try{
