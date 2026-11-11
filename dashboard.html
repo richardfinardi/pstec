@@ -7,6 +7,7 @@
 <title>Dashboard Gerencial | PSTEC</title>
 <script>if(!localStorage.getItem('pstec_token'))location.replace('login-pstec.html');</script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
 <script src="pstec-cache.js"></script>
 <style>
@@ -43,9 +44,9 @@ button{font:inherit}.button{display:flex;gap:6px;align-items:center;border:0;bor
 .panel-head{display:flex;align-items:start;justify-content:space-between;gap:10px;margin-bottom:14px}
 .panel-head p{margin:4px 0 0;font-size:11px;color:#7788a0;line-height:1.4}
 .panel-head a{display:flex;align-items:center;gap:3px;color:#004bbb;white-space:nowrap;font-size:11px;font-weight:800}.panel-head a svg{width:13px;height:13px}
-.chart-area{height:255px;position:relative}.chart-area.short{height:225px}.chart-area canvas{max-width:100%;max-height:100%}
+.chart-area{height:310px;position:relative}.chart-area.short{height:260px}.chart-area canvas{max-width:100%;max-height:100%}
 .emptychart{position:absolute;inset:0;display:grid;place-items:center;color:#8a9ab0;font-size:12px;background:#fff}
-.subkpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:15px}
+.subkpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:15px}
 .subkpi{border:1px solid var(--line);border-radius:14px;background:#fff;padding:13px 15px}
 .subkpi small{display:block;color:#6b7e97;font-size:11px;font-weight:700;margin-bottom:7px}.subkpi strong{font-size:20px;color:#173560;font-weight:900}
 .badge{font-size:10px;border-radius:30px;padding:4px 8px;font-weight:800;background:#e9f2ff;color:#004bbb}
@@ -58,7 +59,19 @@ button{font:inherit}.button{display:flex;gap:6px;align-items:center;border:0;bor
 .module:hover{box-shadow:0 6px 19px #163b6e24;border-color:#9db8e9}.module svg{width:19px;color:#004bbb}.module span{flex:1}.module .right{width:14px;color:#a4b5cc}
 .foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin:22px 0 0;font-size:10px;color:#8b99ab}
 @media(max-width:1000px){.kpis,.modules{grid-template-columns:repeat(2,minmax(0,1fr))}.grid{grid-template-columns:1fr}.subkpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:580px){.container{padding:17px 12px 30px}header .inner{padding:10px 12px;gap:9px}.brand strong{font-size:14px}.brand small{font-size:9px}.logo{width:42px;height:42px}.headbtn{padding:9px}.headbtn .text{display:none}.topline{display:block}.controls{margin:14px 0 0}.status{width:100%;text-align:center}.kpis{gap:8px}.kpi{padding:11px;min-height:111px}.kpi-label{font-size:9px}.kpi-value{font-size:18px}.kpi-note{font-size:9px}.icon{width:25px;height:25px}.subkpis{gap:8px}.subkpi{padding:10px}.subkpi strong{font-size:17px}.modules{gap:7px}.module{padding:11px 8px;gap:6px;font-size:11px}.module svg{width:16px}.panel{padding:13px}.chart-area{height:235px}h1{font-size:25px}}
+@media(max-width:580px){.container{padding:17px 12px 30px}header .inner{padding:10px 12px;gap:9px}.brand strong{font-size:14px}.brand small{font-size:9px}.logo{width:42px;height:42px}.headbtn{padding:9px}.headbtn .text{display:none}.topline{display:block}.controls{margin:14px 0 0}.status{width:100%;text-align:center}.kpis{gap:8px}.kpi{padding:11px;min-height:111px}.kpi-label{font-size:9px}.kpi-value{font-size:18px}.kpi-note{font-size:9px}.icon{width:25px;height:25px}.subkpis{gap:8px}.subkpi{padding:10px}.subkpi strong{font-size:17px}.modules{gap:7px}.module{padding:11px 8px;gap:6px;font-size:11px}.module svg{width:16px}.panel{padding:13px}.chart-area{height:280px}.chart-area.short{height:245px}h1{font-size:25px}}
+
+.kpi-heading,.subkpi-head,.chart-title-row{display:flex;align-items:center;gap:7px;min-width:0}
+.kpi-heading{flex:1}.subkpi-head{justify-content:space-between;margin-bottom:7px}
+.subkpi-head small{margin:0}.chart-title-row h2{line-height:1.3}
+.help-trigger{width:21px;height:21px;min-width:21px;border:1px solid #c4d6ef;border-radius:50%;background:#eef5ff;color:#0047ad;font-size:12px;font-weight:900;line-height:18px;text-align:center;cursor:pointer;display:inline-grid;place-items:center;flex-shrink:0;padding:0}
+.help-trigger:hover,.help-trigger[aria-expanded="true"],.help-trigger:focus-visible{background:#0047ad;color:#fff;border-color:#0047ad;outline-offset:2px}
+.help-popover{position:fixed;z-index:9999;max-height:min(75vh,500px);overflow-y:auto;background:#fff;border:1px solid #bbd0e9;border-radius:14px;box-shadow:0 18px 50px #102c5080;padding:16px;color:#19395d;line-height:1.55}
+.help-popover strong{font-size:14px;font-weight:800}.help-popover p{font-size:12px;line-height:1.55;margin:10px 0 12px;color:#475c76}
+.help-popover .help-source{font-size:11px;color:#6b819d;background:#f0f5fb;border-radius:8px;padding:8px}
+.help-popover .help-header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.help-close{height:27px;width:27px;flex:none;font-weight:800;font-size:17px;border:0;border-radius:7px;background:#eef3f9;color:#1e4475;cursor:pointer}
+@media(max-width:580px){.kpi-heading,.subkpi-head,.chart-title-row{gap:4px}.help-trigger{width:19px;height:19px;min-width:19px;font-size:11px}.subkpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 </head>
 <body>
@@ -71,33 +84,32 @@ button{font:inherit}.button{display:flex;gap:6px;align-items:center;border:0;bor
 </div></header>
 <main class="container">
   <section class="topline">
-    <div><div class="eyebrow">Inteligência de gestão</div><h1>Visão Geral PSTEC</h1><p class="desc">Todos os principais indicadores da empresa, sem precisar abrir oito telas.</p></div>
+    <div><div class="eyebrow">Inteligência de gestão</div><h1>Visão Geral PSTEC</h1><p class="desc">Todos os principais indicadores da empresa, sem precisar abrir vários módulos.</p></div>
     <div class="controls"><label class="control">Mês de referência<input type="month" id="referenceMonth" aria-label="Mês de referência"></label><button class="button" id="refreshBtn"><i data-lucide="refresh-cw"></i>Atualizar dados</button><div class="status" id="dataStatus" aria-live="polite">Carregando fontes...</div></div>
   </section>
-  <p class="sectionnote">Indicadores financeiros e faturamento usam o mês selecionado. Carteira, produção, compras, capital e remoções mostram a posição atual das operações.</p>
+  <p class="sectionnote">Indicadores financeiros e faturamento usam o mês selecionado. Carteira, produção, compras e capital mostram a posição atual das operações.</p>
   <section class="kpis" aria-label="Indicadores executivos">
-    <article class="kpi"><div class="kpi-top"><span class="kpi-label">Faturamento do mês</span><span class="icon"><i data-lucide="receipt-text"></i></span></div><strong class="kpi-value" id="k_fat">—</strong><div class="kpi-note">Vendas de produtos, serviços e sucata</div></article>
-    <article class="kpi green"><div class="kpi-top"><span class="kpi-label">Carteira a faturar</span><span class="icon"><i data-lucide="briefcase-business"></i></span></div><strong class="kpi-value" id="k_carteira">—</strong><div class="kpi-note">Pedidos aprovados com saldo em aberto</div></article>
-    <article class="kpi gold"><div class="kpi-top"><span class="kpi-label">Capital necessário</span><span class="icon"><i data-lucide="landmark"></i></span></div><strong class="kpi-value" id="k_capital">—</strong><div class="kpi-note">Materiais e impostos da carteira</div></article>
-    <article class="kpi purple"><div class="kpi-top"><span class="kpi-label">Saldo financeiro</span><span class="icon"><i data-lucide="wallet"></i></span></div><strong class="kpi-value" id="k_saldo">—</strong><div class="kpi-note">A receber menos a pagar no mês</div></article>
-    <article class="kpi"><div class="kpi-top"><span class="kpi-label">OS em produção</span><span class="icon"><i data-lucide="factory"></i></span></div><strong class="kpi-value" id="k_os">—</strong><div class="kpi-note">OS ativas fora do limbo</div></article>
-    <article class="kpi red"><div class="kpi-top"><span class="kpi-label">OS atrasadas</span><span class="icon"><i data-lucide="calendar-clock"></i></span></div><strong class="kpi-value" id="k_atrasadas">—</strong><div class="kpi-note">Conforme sinalização da produção</div></article>
-    <article class="kpi gold"><div class="kpi-top"><span class="kpi-label">Materiais sem OC</span><span class="icon"><i data-lucide="shopping-cart"></i></span></div><strong class="kpi-value" id="k_compras">—</strong><div class="kpi-note">Materiais solicitados e sem ordem</div></article>
-    <article class="kpi green"><div class="kpi-top"><span class="kpi-label">Pontualidade</span><span class="icon"><i data-lucide="gauge"></i></span></div><strong class="kpi-value" id="k_pontualidade">—</strong><div class="kpi-note">Qtde faturada no prazo no mês</div></article>
+    <article class="kpi"><div class="kpi-top"><span class="kpi-heading"><span class="kpi-label">Faturamento do mês</span><button type="button" class="help-trigger" data-help="k_fat" aria-label="Explicar Faturamento do mês" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o indicador">?</button></span><span class="icon"><i data-lucide="receipt-text"></i></span></div><strong class="kpi-value" id="k_fat">—</strong><div class="kpi-note">Vendas de produtos, serviços e sucata</div></article>
+    <article class="kpi green"><div class="kpi-top"><span class="kpi-heading"><span class="kpi-label">Carteira a faturar</span><button type="button" class="help-trigger" data-help="k_carteira" aria-label="Explicar Carteira a faturar" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o indicador">?</button></span><span class="icon"><i data-lucide="briefcase-business"></i></span></div><strong class="kpi-value" id="k_carteira">—</strong><div class="kpi-note">Pedidos aprovados com saldo em aberto</div></article>
+    <article class="kpi gold"><div class="kpi-top"><span class="kpi-heading"><span class="kpi-label">Capital necessário</span><button type="button" class="help-trigger" data-help="k_capital" aria-label="Explicar Capital necessário" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o indicador">?</button></span><span class="icon"><i data-lucide="landmark"></i></span></div><strong class="kpi-value" id="k_capital">—</strong><div class="kpi-note">Materiais e impostos da carteira</div></article>
+    <article class="kpi purple"><div class="kpi-top"><span class="kpi-heading"><span class="kpi-label">Saldo financeiro</span><button type="button" class="help-trigger" data-help="k_saldo" aria-label="Explicar Saldo financeiro" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o indicador">?</button></span><span class="icon"><i data-lucide="wallet"></i></span></div><strong class="kpi-value" id="k_saldo">—</strong><div class="kpi-note">A receber menos a pagar no mês</div></article>
+    <article class="kpi"><div class="kpi-top"><span class="kpi-heading"><span class="kpi-label">OS em produção</span><button type="button" class="help-trigger" data-help="k_os" aria-label="Explicar OS em produção" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o indicador">?</button></span><span class="icon"><i data-lucide="factory"></i></span></div><strong class="kpi-value" id="k_os">—</strong><div class="kpi-note">OS ativas fora do limbo</div></article>
+    <article class="kpi red"><div class="kpi-top"><span class="kpi-heading"><span class="kpi-label">OS atrasadas</span><button type="button" class="help-trigger" data-help="k_atrasadas" aria-label="Explicar OS atrasadas" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o indicador">?</button></span><span class="icon"><i data-lucide="calendar-clock"></i></span></div><strong class="kpi-value" id="k_atrasadas">—</strong><div class="kpi-note">Conforme sinalização da produção</div></article>
+    <article class="kpi gold"><div class="kpi-top"><span class="kpi-heading"><span class="kpi-label">Materiais sem OC</span><button type="button" class="help-trigger" data-help="k_compras" aria-label="Explicar Materiais sem OC" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o indicador">?</button></span><span class="icon"><i data-lucide="shopping-cart"></i></span></div><strong class="kpi-value" id="k_compras">—</strong><div class="kpi-note">Materiais solicitados e sem ordem</div></article>
+    <article class="kpi green"><div class="kpi-top"><span class="kpi-heading"><span class="kpi-label">Pontualidade</span><button type="button" class="help-trigger" data-help="k_pontualidade" aria-label="Explicar Pontualidade" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o indicador">?</button></span><span class="icon"><i data-lucide="gauge"></i></span></div><strong class="kpi-value" id="k_pontualidade">—</strong><div class="kpi-note">Qtde faturada no prazo no mês</div></article>
   </section>
   <section class="subkpis" aria-label="Complementos financeiros e operacionais">
-    <div class="subkpi"><small>Contas a pagar no mês</small><strong id="s_pagar">—</strong></div>
-    <div class="subkpi"><small>Contas a receber no mês</small><strong id="s_receber">—</strong></div>
-    <div class="subkpi"><small>Materiais não processados</small><strong id="s_naoprocessado">—</strong></div>
-    <div class="subkpi"><small>Remoções pendentes</small><strong id="s_remocao">—</strong></div>
+    <div class="subkpi"><div class="subkpi-head"><small>Contas a pagar no mês</small><button type="button" class="help-trigger" data-help="s_pagar" aria-label="Explicar Contas a pagar no mês" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o indicador">?</button></div><strong id="s_pagar">—</strong></div>
+    <div class="subkpi"><div class="subkpi-head"><small>Contas a receber no mês</small><button type="button" class="help-trigger" data-help="s_receber" aria-label="Explicar Contas a receber no mês" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o indicador">?</button></div><strong id="s_receber">—</strong></div>
+    <div class="subkpi"><div class="subkpi-head"><small>Materiais não processados</small><button type="button" class="help-trigger" data-help="s_naoprocessado" aria-label="Explicar Materiais não processados" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o indicador">?</button></div><strong id="s_naoprocessado">—</strong></div>
   </section>
   <section class="grid">
-    <article class="panel"><div class="panel-head"><div><h2>Evolução financeira</h2><p>Faturamento realizado e vencimentos a pagar/receber. Últimos 6 meses até o mês de referência.</p></div><a href="financeiro.html">Financeiro <i data-lucide="arrow-up-right"></i></a></div><div class="chart-area"><canvas id="chartMonthly"></canvas><div class="emptychart" id="emptyMonthly" hidden>Sem dados disponíveis para o gráfico.</div></div></article>
-    <article class="panel"><div class="panel-head"><div><h2>Carteira por cliente</h2><p>Sete maiores saldos a faturar, pedidos aprovados.</p></div><a href="carteira.html">Carteira <i data-lucide="arrow-up-right"></i></a></div><div class="chart-area"><canvas id="chartClients"></canvas><div class="emptychart" id="emptyClients" hidden>Sem dados disponíveis para o gráfico.</div></div></article>
+    <article class="panel"><div class="panel-head"><div><div class="chart-title-row"><h2>Evolução financeira</h2><button type="button" class="help-trigger" data-help="chartMonthly" aria-label="Explicar gráfico Evolução financeira" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o gráfico">?</button></div><p>Faturamento realizado e vencimentos a pagar/receber. Últimos 6 meses até o mês de referência.</p></div><a href="financeiro.html">Financeiro <i data-lucide="arrow-up-right"></i></a></div><div class="chart-area"><canvas id="chartMonthly"></canvas><div class="emptychart" id="emptyMonthly" hidden>Sem dados disponíveis para o gráfico.</div></div></article>
+    <article class="panel"><div class="panel-head"><div><div class="chart-title-row"><h2>Carteira por cliente</h2><button type="button" class="help-trigger" data-help="chartClients" aria-label="Explicar gráfico Carteira por cliente" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o gráfico">?</button></div><p>Sete maiores saldos a faturar, pedidos aprovados.</p></div><a href="carteira.html">Carteira <i data-lucide="arrow-up-right"></i></a></div><div class="chart-area"><canvas id="chartClients"></canvas><div class="emptychart" id="emptyClients" hidden>Sem dados disponíveis para o gráfico.</div></div></article>
   </section>
   <section class="grid">
     <article class="panel"><div class="panel-head"><div><h2>Atenções gerenciais</h2><p>Pontos que precisam de acompanhamento. Alertas calculados com os dados efetivamente carregados.</p></div><span class="badge" id="alertCount">—</span></div><div class="alerts" id="alerts"><div class="alert"><div class="dot"></div><div><strong>Consultando operações...</strong></div></div></div></article>
-    <article class="panel"><div class="panel-head"><div><h2>Situação da produção</h2><p>Distribuição das OS ativas por status de produção.</p></div><a href="producao.html">Produção <i data-lucide="arrow-up-right"></i></a></div><div class="chart-area short"><canvas id="chartProduction"></canvas><div class="emptychart" id="emptyProduction" hidden>Sem dados disponíveis para o gráfico.</div></div></article>
+    <article class="panel"><div class="panel-head"><div><div class="chart-title-row"><h2>Situação da produção</h2><button type="button" class="help-trigger" data-help="chartProduction" aria-label="Explicar gráfico Situação da produção" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o gráfico">?</button></div><p>Distribuição das OS fora do limbo, incluindo finalizadas.</p></div><a href="producao.html">Produção <i data-lucide="arrow-up-right"></i></a></div><div class="chart-area short"><canvas id="chartProduction"></canvas><div class="emptychart" id="emptyProduction" hidden>Sem dados disponíveis para o gráfico.</div></div></article>
   </section>
   <section class="panel"><div class="panel-head"><div><h2>Explorar os módulos</h2><p>Acesse o detalhamento operacional de cada área com um clique.</p></div><span class="badge" id="sourceDetail">Aguardando APIs</span></div>
     <nav class="modules" aria-label="Módulos PSTEC">
@@ -108,11 +120,14 @@ button{font:inherit}.button{display:flex;gap:6px;align-items:center;border:0;bor
       <a class="module" href="financeiro.html"><i data-lucide="wallet"></i><span>Financeiro</span><i class="right" data-lucide="arrow-up-right"></i></a>
       <a class="module" href="faturamento.html"><i data-lucide="receipt-text"></i><span>Faturamento</span><i class="right" data-lucide="arrow-up-right"></i></a>
       <a class="module" href="indicadores-faturamento.html"><i data-lucide="chart-no-axes-combined"></i><span>Indicadores</span><i class="right" data-lucide="arrow-up-right"></i></a>
-      <a class="module" href="conferencia-remocao.html"><i data-lucide="clipboard-check"></i><span>Conferência</span><i class="right" data-lucide="arrow-up-right"></i></a>
     </nav>
   </section>
   <div class="foot"><span>GRUPO PSTEC · Painel de leitura gerencial</span><span id="lastUpdated">Aguardando sincronização</span></div>
 </main>
-<script src="dashboard.js"></script>
+<div id="helpPopover" class="help-popover" role="dialog" aria-modal="false" aria-labelledby="helpTitle" hidden>
+  <div class="help-header"><strong id="helpTitle"></strong><button type="button" class="help-close" id="helpClose" aria-label="Fechar explicação">×</button></div>
+  <p id="helpDescription"></p><div id="helpSource" class="help-source"></div>
+</div>
+<script src="dashboard.js?v=2"></script>
 </body>
 </html>
