@@ -77,27 +77,36 @@ button{font:inherit}.button{display:flex;gap:6px;align-items:center;border:0;bor
 .section-heading small{font-size:11px;font-weight:600;color:#8090a8}
 .settled{background:#f4fcf9;border-color:#cdecdc}
 .settled strong{color:#087955}
-.freshness{border:1px solid #c9def2;background:#edf6ff;border-radius:13px;margin:13px 0;padding:11px 14px;color:#1e4575}
-.freshness.has-stale{background:#fff9e9;border-color:#efd59b;color:#875813}
-.freshness.has-error{background:#fff4f3;border-color:#f0c6c6;color:#9b332f}
-.freshness-main{display:flex;align-items:center;gap:9px}
-.freshness-dot{width:9px;height:9px;flex:none;border-radius:50%;background:#428bd5}
-.freshness.has-stale .freshness-dot{background:#d69c1c}
-.freshness.has-error .freshness-dot{background:#d84c53}
-.freshness-text{display:flex;flex-wrap:wrap;align-items:baseline;gap:7px;font-size:11px}
-.freshness-text strong{font-size:12px}
-.freshness-details{margin-top:8px;font-size:11px}
-.freshness-details summary{font-weight:800;cursor:pointer;color:#004bbb;display:inline-block}
-.freshness-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:9px}
-.source-row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:5px;border:1px solid #dce7f1;background:white;border-radius:8px;padding:8px;color:#5c6d86}
-.source-row strong{font-size:11px;color:#223e5c}
-.source-row .source-time{font-weight:700}
+
+/* Atualização: discreta no cabeçalho, detalhes somente ao clicar. */
+.sync-wrap{position:relative;flex:none}
+.status-chip{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;background:#e8f8ee;border:1px solid #bfe8cf;border-radius:999px;padding:9px 12px;color:#15663b;font-size:12px;font-weight:800;cursor:pointer;min-height:35px;line-height:1}
+.status-chip:hover{filter:brightness(.975)}
+.status-chip .status-dot{width:8px;height:8px;border-radius:50%;background:#22a163;flex:none}
+.status-chip .sync-chevron{font-size:13px;opacity:.65;margin-left:1px}
+.status-chip.cache{background:#fff7e9;border-color:#f4ddb4;color:#966416}
+.status-chip.cache .status-dot{background:#d69b25}
+.status-chip.bad{background:#fff1f1;border-color:#f1cacc;color:#a8373e}
+.status-chip.bad .status-dot{background:#ce434b}
+.status-chip.loading{background:#f1f5fa;border-color:#dce5ef;color:#5a6f89}
+.status-chip.loading .status-dot{background:#95a9bf}
+.sync-popover{position:absolute;top:calc(100% + 9px);right:0;z-index:200;width:355px;max-width:calc(100vw - 24px);max-height:min(450px,70vh);overflow:auto;background:white;border:1px solid #dbe5f1;border-radius:14px;box-shadow:0 14px 38px #132d4c2b;padding:14px;color:#173357}
+.sync-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sync-head strong{font-size:13px}
+.sync-close{background:#eff3f8;border:0;border-radius:7px;padding:2px 9px;font-size:18px;line-height:25px;color:#48607b;cursor:pointer}
+.sync-desc{font-size:11px;line-height:1.45;color:#6b7d94;margin:6px 0 10px}
+.sync-sources{display:flex;flex-direction:column;gap:4px}
+.source-row{display:flex;align-items:center;justify-content:space-between;gap:10px;border-radius:7px;padding:7px 8px;background:#f7f9fc;color:#596e8b;font-size:11px}
+.source-row strong{font-size:11px;color:#264361}
+.source-row .source-time{white-space:nowrap;font-weight:700;color:#12815a}
+.source-row .source-time.cache{color:#a36b15}
+.source-row .source-time.bad{color:#b13b44}
 .freshness-tag{display:block;font-size:10px;color:#7890ab;font-weight:750;margin-top:5px;line-height:1.25;min-height:12px}
 .freshness-tag.stale{color:#af7412}
 .freshness-tag.failed{color:#a33139}
 .graph-freshness{margin-top:-10px;margin-bottom:8px}
-@media(max-width:1100px){.freshness-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:600px){.freshness-grid{grid-template-columns:1fr}.freshness-main{align-items:start}.freshness-text{display:block}.freshness-text span{display:block;margin-top:4px}.subkpis{grid-template-columns:repeat(2,minmax(0,1fr))}.freshness-tag{font-size:9px}.subkpi strong{font-size:15px}}
+
+@media(max-width:600px){.subkpis{grid-template-columns:repeat(2,minmax(0,1fr))}.freshness-tag{font-size:9px}.subkpi strong{font-size:15px}.sync-popover{position:fixed;top:125px;right:12px;width:min(355px,calc(100vw - 24px))}.status-chip{padding:9px 11px}}
 </style>
 </head>
 <body>
@@ -111,13 +120,18 @@ button{font:inherit}.button{display:flex;gap:6px;align-items:center;border:0;bor
 <main class="container">
   <section class="topline">
     <div><div class="eyebrow">Inteligência de gestão</div><h1>Visão Geral PSTEC</h1><p class="desc">Todos os principais indicadores da empresa, sem precisar abrir vários módulos.</p></div>
-    <div class="controls"><label class="control">Mês de referência<input type="month" id="referenceMonth" aria-label="Mês de referência"></label><button class="button" id="refreshBtn"><i data-lucide="refresh-cw"></i>Atualizar dados</button><div class="status" id="dataStatus" aria-live="polite">Carregando fontes...</div></div>
+    <div class="controls"><label class="control">Mês de referência<input type="month" id="referenceMonth" aria-label="Mês de referência"></label><button class="button" id="refreshBtn"><i data-lucide="refresh-cw"></i>Atualizar dados</button><div class="sync-wrap">
+  <button type="button" class="status-chip loading" id="dataStatus" aria-expanded="false" aria-controls="freshnessPopover" aria-label="Ver atualização dos dados">
+    <span class="status-dot"></span><span id="syncLabel" aria-live="polite">Carregando...</span><span class="sync-chevron">⌄</span>
+  </button>
+  <div class="sync-popover" id="freshnessPopover" hidden>
+    <div class="sync-head"><strong>Atualização dos dados</strong><button type="button" class="sync-close" id="closeFreshness" aria-label="Fechar detalhes">×</button></div>
+    <p class="sync-desc" id="freshnessDescription"></p>
+    <div class="sync-sources" id="freshnessGrid"></div>
+  </div>
+</div></div>
   </section>
   <p class="sectionnote">Indicadores financeiros e faturamento usam o mês selecionado. Pagas e recebidas são classificadas pelo mês de vencimento dos títulos, não pela data de baixa. Carteira, produção, compras e capital mostram a posição atual das operações.</p>
-  <section class="freshness" id="freshness" aria-live="polite">
-    <div class="freshness-main"><span class="freshness-dot" id="freshnessDot"></span><div class="freshness-text"><strong id="freshnessTitle">Verificando atualização das fontes...</strong><span id="freshnessDescription">Aguardando dados do sistema.</span></div></div>
-    <details class="freshness-details" id="freshnessDetails"><summary>Ver todas as fontes e horários</summary><div class="freshness-grid" id="freshnessGrid"></div></details>
-  </section>
   <section class="kpis" aria-label="Indicadores executivos">
     <article class="kpi"><div class="kpi-top"><span class="kpi-heading"><span class="kpi-label">Faturamento do mês</span><button type="button" class="help-trigger" data-help="k_fat" aria-label="Explicar Faturamento do mês" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o indicador">?</button></span><span class="icon"><i data-lucide="receipt-text"></i></span></div><strong class="kpi-value" id="k_fat">—</strong><div class="kpi-note">Vendas de produtos, serviços e sucata</div><div class="freshness-tag" data-freshness="faturamento"></div></article>
     <article class="kpi green"><div class="kpi-top"><span class="kpi-heading"><span class="kpi-label">Carteira a faturar</span><button type="button" class="help-trigger" data-help="k_carteira" aria-label="Explicar Carteira a faturar" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o indicador">?</button></span><span class="icon"><i data-lucide="briefcase-business"></i></span></div><strong class="kpi-value" id="k_carteira">—</strong><div class="kpi-note">Pedidos aprovados com saldo em aberto</div><div class="freshness-tag" data-freshness="carteira"></div></article>
@@ -160,6 +174,6 @@ button{font:inherit}.button{display:flex;gap:6px;align-items:center;border:0;bor
   <div class="help-header"><strong id="helpTitle"></strong><button type="button" class="help-close" id="helpClose" aria-label="Fechar explicação">×</button></div>
   <p id="helpDescription"></p><div id="helpSource" class="help-source"></div>
 </div>
-<script src="dashboard.js?v=3"></script>
+<script src="dashboard.js?v=4"></script>
 </body>
 </html>
