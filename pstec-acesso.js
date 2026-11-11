@@ -12,7 +12,8 @@
         'faturamento.html': 'fat',
         'indicadores-faturamento.html': 'indicadores',
         'dashboard.html': 'gestor',
-        'conferencia-remocao.html': 'gestor'
+        'conferencia-remocao.html': 'gestor',
+        'gerenciar-acessos.html': 'gestor'
     };
     function habilitado(valor) {
         return valor === 1 || valor === true || String(valor).trim().toLowerCase() === '1' || String(valor).trim().toLowerCase() === 'true';
