@@ -76,11 +76,32 @@
                     throw new Error(data.detail || 'Usuário ou senha inválidos.');
                 }
 
-                // Salva Token, Nome do Usuário e Permissões U_FATURAMENTO / U_FINALIZACAO no localStorage
+                // As permissoes novas sao disponibilizadas pela API e/ou JWT assinado.
+                const modulos = ['carteira','compras','producao','capital','financeiro','fat','indicadores','gestor'];
+                let claims = {};
+                try {
+                    const part = data.access_token.split('.')[1];
+                    const binary = atob(part.replace(/-/g,'+').replace(/_/g,'/'));
+                    claims = JSON.parse(new TextDecoder().decode(Uint8Array.from(binary, ch => ch.charCodeAt(0))));
+                } catch (_) {}
+                const servidor = data.permissoes || {};
+                if (!modulos.some(modulo => ['u_' + modulo].some(key => key in data || key in servidor || key in claims))) {
+                    throw new Error('A API de login precisa ser atualizada para retornar os novos campos de permissao CSENHA.U_*.');
+                }
+                const ligado = valor => valor === 1 || valor === true || String(valor).trim().toLowerCase() === '1' || String(valor).trim().toLowerCase() === 'true';
+                const perms = {};
+                for (const modulo of modulos) {
+                    const chave = 'u_' + modulo;
+                    const valor = Object.prototype.hasOwnProperty.call(claims, chave) ? claims[chave] :
+                        (data[chave] ?? servidor[chave] ?? 0);
+                    perms[chave] = ligado(valor) ? 1 : 0;
+                }
+                if (perms.u_gestor === 1) modulos.forEach(modulo => perms['u_' + modulo] = 1);
                 localStorage.setItem('pstec_token', data.access_token);
-                localStorage.setItem('pstec_usuario_nome', data.usuario);
+                localStorage.setItem('pstec_usuario_nome', data.usuario || claims.sub || usuario);
                 localStorage.setItem('pstec_perm_faturamento', data.u_faturamento ?? 0);
                 localStorage.setItem('pstec_perm_finalizacao', data.u_finalizacao ?? 0);
+                localStorage.setItem('pstec_permissoes', JSON.stringify(perms));
 
                 window.location.href = 'index.html';
 
