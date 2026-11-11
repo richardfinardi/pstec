@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="LOGO MINIMALISTA.png" type="image/png">
+<title>Dashboard Gerencial | PSTEC</title>
+<script>if(!localStorage.getItem('pstec_token'))location.replace('login-pstec.html');</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="pstec-cache.js"></script>
+<style>
+:root{--blue:#003b96;--ink:#132b4e;--muted:#62748e;--line:#dfE7f1;--bg:#f1f5fa;--green:#178058;--red:#c93847;--orange:#b87517}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:"Segoe UI",Arial,sans-serif;color:var(--ink)}a{text-decoration:none;color:inherit}
+header{background:linear-gradient(110deg,#002967,#004bbb);color:#fff;box-shadow:0 3px 10px #092c6430}
+header .inner{max-width:1600px;margin:auto;display:flex;align-items:center;gap:18px;padding:12px 22px}
+.logo{width:49px;height:49px;border-radius:13px;background:#fff;padding:7px;object-fit:contain}
+.brand strong{font-size:19px;letter-spacing:.4px;display:block}.brand small{font-size:11px;color:#cbdfff}
+.spacer{flex:1}.headbtn{display:flex;align-items:center;gap:7px;background:#ffffff1f;border:1px solid #ffffff35;border-radius:10px;color:#fff;padding:9px 12px;font-size:12px;font-weight:700;cursor:pointer}
+.headbtn:hover{background:#ffffff35}.headbtn svg{width:15px;height:15px}
+.container{max-width:1600px;padding:24px 22px 48px;margin:auto}
+.topline{display:flex;align-items:end;gap:16px;flex-wrap:wrap;margin-bottom:19px}
+.eyebrow{text-transform:uppercase;letter-spacing:2px;font-size:11px;color:#004bbb;font-weight:800}
+h1{font-size:29px;letter-spacing:-.7px;margin:5px 0 5px}h2{font-size:15px;margin:0;font-weight:800}
+.desc{color:var(--muted);font-size:13px;margin:0}
+.controls{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto;align-items:end}
+.control{display:flex;flex-direction:column;gap:4px;font-size:10px;font-weight:800;text-transform:uppercase;color:#50627f}
+.control input{padding:9px 11px;border:1px solid #cfdae9;background:#fff;border-radius:10px;color:#132b4e;font:700 13px "Segoe UI",sans-serif;min-height:39px}
+button{font:inherit}.button{display:flex;gap:6px;align-items:center;border:0;border-radius:10px;padding:11px 15px;background:#0046ad;color:#fff;font-size:12px;font-weight:800;cursor:pointer;min-height:39px}
+.button:disabled{opacity:.6;cursor:wait}.button svg{width:15px}
+.status{border:1px solid #d7e1ed;background:#fff;padding:9px 12px;border-radius:11px;font-size:11px;font-weight:700;color:#536581}
+.status.ok{color:#0b7953;background:#ecfdf5;border-color:#b8ecd6}.status.warn{color:#996213;background:#fffaeb;border-color:#f4dba4}.status.bad{color:#b42335;background:#fff3f4;border-color:#f2b3bd}
+.sectionnote{font-size:11px;color:#74859a;font-weight:600}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0 20px}
+.kpi{background:#fff;border:1px solid var(--line);box-shadow:0 2px 6px #132b4e09;border-radius:17px;padding:16px;min-height:125px;position:relative;overflow:hidden}
+.kpi:before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:#0047cc}.kpi.green:before{background:#14a17e}.kpi.gold:before{background:#e5a332}.kpi.red:before{background:#e35b64}.kpi.purple:before{background:#8b5cf6}
+.kpi-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.kpi-label{text-transform:uppercase;font-size:10px;letter-spacing:.7px;color:#526987;font-weight:800}
+.icon{width:29px;height:29px;border-radius:9px;background:#eff5ff;color:#004bbb;display:grid;place-items:center;flex:none}.icon svg{width:16px;height:16px}
+.kpi-value{display:block;font-size:24px;letter-spacing:-.6px;color:#0d274d;font-weight:900;margin:10px 0 2px;white-space:nowrap}
+.kpi-note{font-size:10.5px;color:#8291a4;line-height:1.4;font-weight:600}
+.grid{display:grid;grid-template-columns:1.6fr 1fr;gap:14px;margin:14px 0}.panel{background:#fff;border:1px solid var(--line);border-radius:17px;box-shadow:0 2px 7px #132b4e09;padding:17px;min-width:0}
+.panel-head{display:flex;align-items:start;justify-content:space-between;gap:10px;margin-bottom:14px}
+.panel-head p{margin:4px 0 0;font-size:11px;color:#7788a0;line-height:1.4}
+.panel-head a{display:flex;align-items:center;gap:3px;color:#004bbb;white-space:nowrap;font-size:11px;font-weight:800}.panel-head a svg{width:13px;height:13px}
+.chart-area{height:255px;position:relative}.chart-area.short{height:225px}.chart-area canvas{max-width:100%;max-height:100%}
+.emptychart{position:absolute;inset:0;display:grid;place-items:center;color:#8a9ab0;font-size:12px;background:#fff}
+.subkpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:15px}
+.subkpi{border:1px solid var(--line);border-radius:14px;background:#fff;padding:13px 15px}
+.subkpi small{display:block;color:#6b7e97;font-size:11px;font-weight:700;margin-bottom:7px}.subkpi strong{font-size:20px;color:#173560;font-weight:900}
+.badge{font-size:10px;border-radius:30px;padding:4px 8px;font-weight:800;background:#e9f2ff;color:#004bbb}
+.alerts{display:flex;flex-direction:column;gap:9px}.alert{display:flex;gap:11px;padding:11px;border-radius:12px;background:#f8fafc;border:1px solid #ecf1f7;align-items:flex-start}
+.alert.red{background:#fff5f5;border-color:#f6d7d8}.alert.gold{background:#fff9e9;border-color:#f4e1b1}
+.alert .dot{height:9px;width:9px;margin-top:5px;border-radius:50%;background:#6194db;flex:none}.alert.red .dot{background:#dd5969}.alert.gold .dot{background:#e1aa35}
+.alert strong{display:block;font-size:12px}.alert p{font-size:11px;line-height:1.45;margin:3px 0 0;color:#5d718d}.alert a{font-weight:800;color:#004bbb}
+.modules{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:15px}
+.module{border:1px solid var(--line);border-radius:12px;padding:13px;background:#fff;display:flex;align-items:center;gap:10px;font-size:12px;font-weight:800;transition:box-shadow .15s}
+.module:hover{box-shadow:0 6px 19px #163b6e24;border-color:#9db8e9}.module svg{width:19px;color:#004bbb}.module span{flex:1}.module .right{width:14px;color:#a4b5cc}
+.foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin:22px 0 0;font-size:10px;color:#8b99ab}
+@media(max-width:1000px){.kpis,.modules{grid-template-columns:repeat(2,minmax(0,1fr))}.grid{grid-template-columns:1fr}.subkpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:580px){.container{padding:17px 12px 30px}header .inner{padding:10px 12px;gap:9px}.brand strong{font-size:14px}.brand small{font-size:9px}.logo{width:42px;height:42px}.headbtn{padding:9px}.headbtn .text{display:none}.topline{display:block}.controls{margin:14px 0 0}.status{width:100%;text-align:center}.kpis{gap:8px}.kpi{padding:11px;min-height:111px}.kpi-label{font-size:9px}.kpi-value{font-size:18px}.kpi-note{font-size:9px}.icon{width:25px;height:25px}.subkpis{gap:8px}.subkpi{padding:10px}.subkpi strong{font-size:17px}.modules{gap:7px}.module{padding:11px 8px;gap:6px;font-size:11px}.module svg{width:16px}.panel{padding:13px}.chart-area{height:235px}h1{font-size:25px}}
+</style>
+</head>
+<body>
+<header><div class="inner">
+  <a href="index.html" title="Menu"><img src="./logo.png" class="logo" alt="PSTEC"></a>
+  <div class="brand"><strong>GRUPO PSTEC</strong><small>Painel gerencial integrado</small></div>
+  <div class="spacer"></div>
+  <a href="index.html" class="headbtn"><i data-lucide="layout-grid"></i><span class="text">Menu</span></a>
+  <button class="headbtn" id="logout"><i data-lucide="log-out"></i><span class="text">Sair</span></button>
+</div></header>
+<main class="container">
+  <section class="topline">
+    <div><div class="eyebrow">Inteligência de gestão</div><h1>Visão Geral PSTEC</h1><p class="desc">Todos os principais indicadores da empresa, sem precisar abrir oito telas.</p></div>
+    <div class="controls"><label class="control">Mês de referência<input type="month" id="referenceMonth" aria-label="Mês de referência"></label><button class="button" id="refreshBtn"><i data-lucide="refresh-cw"></i>Atualizar dados</button><div class="status" id="dataStatus" aria-live="polite">Carregando fontes...</div></div>
+  </section>
+  <p class="sectionnote">Indicadores financeiros e faturamento usam o mês selecionado. Carteira, produção, compras, capital e remoções mostram a posição atual das operações.</p>
+  <section class="kpis" aria-label="Indicadores executivos">
+    <article class="kpi"><div class="kpi-top"><span class="kpi-label">Faturamento do mês</span><span class="icon"><i data-lucide="receipt-text"></i></span></div><strong class="kpi-value" id="k_fat">—</strong><div class="kpi-note">Vendas de produtos, serviços e sucata</div></article>
+    <article class="kpi green"><div class="kpi-top"><span class="kpi-label">Carteira a faturar</span><span class="icon"><i data-lucide="briefcase-business"></i></span></div><strong class="kpi-value" id="k_carteira">—</strong><div class="kpi-note">Pedidos aprovados com saldo em aberto</div></article>
+    <article class="kpi gold"><div class="kpi-top"><span class="kpi-label">Capital necessário</span><span class="icon"><i data-lucide="landmark"></i></span></div><strong class="kpi-value" id="k_capital">—</strong><div class="kpi-note">Materiais e impostos da carteira</div></article>
+    <article class="kpi purple"><div class="kpi-top"><span class="kpi-label">Saldo financeiro</span><span class="icon"><i data-lucide="wallet"></i></span></div><strong class="kpi-value" id="k_saldo">—</strong><div class="kpi-note">A receber menos a pagar no mês</div></article>
+    <article class="kpi"><div class="kpi-top"><span class="kpi-label">OS em produção</span><span class="icon"><i data-lucide="factory"></i></span></div><strong class="kpi-value" id="k_os">—</strong><div class="kpi-note">OS ativas fora do limbo</div></article>
+    <article class="kpi red"><div class="kpi-top"><span class="kpi-label">OS atrasadas</span><span class="icon"><i data-lucide="calendar-clock"></i></span></div><strong class="kpi-value" id="k_atrasadas">—</strong><div class="kpi-note">Conforme sinalização da produção</div></article>
+    <article class="kpi gold"><div class="kpi-top"><span class="kpi-label">Materiais sem OC</span><span class="icon"><i data-lucide="shopping-cart"></i></span></div><strong class="kpi-value" id="k_compras">—</strong><div class="kpi-note">Materiais solicitados e sem ordem</div></article>
+    <article class="kpi green"><div class="kpi-top"><span class="kpi-label">Pontualidade</span><span class="icon"><i data-lucide="gauge"></i></span></div><strong class="kpi-value" id="k_pontualidade">—</strong><div class="kpi-note">Qtde faturada no prazo no mês</div></article>
+  </section>
+  <section class="subkpis" aria-label="Complementos financeiros e operacionais">
+    <div class="subkpi"><small>Contas a pagar no mês</small><strong id="s_pagar">—</strong></div>
+    <div class="subkpi"><small>Contas a receber no mês</small><strong id="s_receber">—</strong></div>
+    <div class="subkpi"><small>Materiais não processados</small><strong id="s_naoprocessado">—</strong></div>
+    <div class="subkpi"><small>Remoções pendentes</small><strong id="s_remocao">—</strong></div>
+  </section>
+  <section class="grid">
+    <article class="panel"><div class="panel-head"><div><h2>Evolução financeira</h2><p>Faturamento realizado e vencimentos a pagar/receber. Últimos 6 meses até o mês de referência.</p></div><a href="financeiro.html">Financeiro <i data-lucide="arrow-up-right"></i></a></div><div class="chart-area"><canvas id="chartMonthly"></canvas><div class="emptychart" id="emptyMonthly" hidden>Sem dados disponíveis para o gráfico.</div></div></article>
+    <article class="panel"><div class="panel-head"><div><h2>Carteira por cliente</h2><p>Sete maiores saldos a faturar, pedidos aprovados.</p></div><a href="carteira.html">Carteira <i data-lucide="arrow-up-right"></i></a></div><div class="chart-area"><canvas id="chartClients"></canvas><div class="emptychart" id="emptyClients" hidden>Sem dados disponíveis para o gráfico.</div></div></article>
+  </section>
+  <section class="grid">
+    <article class="panel"><div class="panel-head"><div><h2>Atenções gerenciais</h2><p>Pontos que precisam de acompanhamento. Alertas calculados com os dados efetivamente carregados.</p></div><span class="badge" id="alertCount">—</span></div><div class="alerts" id="alerts"><div class="alert"><div class="dot"></div><div><strong>Consultando operações...</strong></div></div></div></article>
+    <article class="panel"><div class="panel-head"><div><h2>Situação da produção</h2><p>Distribuição das OS ativas por status de produção.</p></div><a href="producao.html">Produção <i data-lucide="arrow-up-right"></i></a></div><div class="chart-area short"><canvas id="chartProduction"></canvas><div class="emptychart" id="emptyProduction" hidden>Sem dados disponíveis para o gráfico.</div></div></article>
+  </section>
+  <section class="panel"><div class="panel-head"><div><h2>Explorar os módulos</h2><p>Acesse o detalhamento operacional de cada área com um clique.</p></div><span class="badge" id="sourceDetail">Aguardando APIs</span></div>
+    <nav class="modules" aria-label="Módulos PSTEC">
+      <a class="module" href="producao.html"><i data-lucide="factory"></i><span>Produção</span><i class="right" data-lucide="arrow-up-right"></i></a>
+      <a class="module" href="carteira.html"><i data-lucide="briefcase-business"></i><span>Carteira</span><i class="right" data-lucide="arrow-up-right"></i></a>
+      <a class="module" href="compras.html"><i data-lucide="shopping-cart"></i><span>Compras</span><i class="right" data-lucide="arrow-up-right"></i></a>
+      <a class="module" href="capital.html"><i data-lucide="landmark"></i><span>Capital</span><i class="right" data-lucide="arrow-up-right"></i></a>
+      <a class="module" href="financeiro.html"><i data-lucide="wallet"></i><span>Financeiro</span><i class="right" data-lucide="arrow-up-right"></i></a>
+      <a class="module" href="faturamento.html"><i data-lucide="receipt-text"></i><span>Faturamento</span><i class="right" data-lucide="arrow-up-right"></i></a>
+      <a class="module" href="indicadores-faturamento.html"><i data-lucide="chart-no-axes-combined"></i><span>Indicadores</span><i class="right" data-lucide="arrow-up-right"></i></a>
+      <a class="module" href="conferencia-remocao.html"><i data-lucide="clipboard-check"></i><span>Conferência</span><i class="right" data-lucide="arrow-up-right"></i></a>
+    </nav>
+  </section>
+  <div class="foot"><span>GRUPO PSTEC · Painel de leitura gerencial</span><span id="lastUpdated">Aguardando sincronização</span></div>
+</main>
+<script src="dashboard.js"></script>
+</body>
+</html>
