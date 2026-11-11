@@ -102,6 +102,38 @@ button{font:inherit}.button{display:flex;gap:6px;align-items:center;border:0;bor
 .source-row .source-time.cache{color:#a36b15}
 .source-row .source-time.bad{color:#b13b44}
 @media(max-width:600px){.subkpis{grid-template-columns:repeat(2,minmax(0,1fr))}.subkpi strong{font-size:15px}.sync-popover{position:fixed;top:125px;right:12px;width:min(355px,calc(100vw - 24px))}.status-chip{padding:9px 11px}}
+
+/* Resumo financeiro gerencial: três blocos de composição, sem excesso de cor */
+.finance-summary{margin:16px 0 20px}
+.finance-summary-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 12px}
+.finance-summary-head h2{font-size:17px;font-weight:850;color:#16345a;letter-spacing:-.2px}
+.finance-summary-head p{margin:4px 0 0;color:#8290a3;font-size:11px}
+.finance-period{border:1px solid #dfe8f4;border-radius:7px;background:#fff;padding:6px 10px;font-size:11px;color:#69809c;font-weight:800;white-space:nowrap}
+.finance-group{margin:0 0 13px}
+.finance-group-head{display:flex;align-items:center;gap:10px;margin:0 0 7px 2px}
+.finance-group-head strong{color:#405a7b;font-size:11px;font-weight:900;letter-spacing:.55px;text-transform:uppercase}
+.finance-group-head span{font-size:10px;color:#97a3b4}
+.finance-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.finance-tile{min-width:0;border:1px solid #dfe7f0;background:#fff;border-radius:14px;padding:12px 15px 11px;box-shadow:0 2px 6px #132b4e06}
+.finance-tile-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.finance-tile-head span{color:#57708d;font-size:11px;font-weight:750}
+.finance-tile strong{display:block;font-size:clamp(18px,1.45vw,24px);font-weight:900;color:#143760;letter-spacing:-.4px;margin:7px 0 2px;white-space:nowrap}
+.finance-tile small{font-size:10px;font-weight:600;color:#8a9ab0}
+.finance-tile.is-settled strong{color:#08775c}
+.finance-tile.is-total{background:#f0f5fd;border-color:#c4d7ef}
+.finance-tile.is-total strong{color:#003b96}
+.finance-tile.is-result strong.negative{color:#b23847}
+.finance-tile.is-result strong.positive{color:#087958}
+.finance-tile .help-trigger{width:19px;height:19px;min-width:19px}
+.finance-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:8px;padding:8px 12px;background:#f8fafc;border-radius:9px;border:1px solid #e6ecf4}
+.finance-material{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;color:#69809c}
+.finance-material strong{font-size:12px;color:#213f64}
+.finance-material .help-trigger{width:18px;height:18px;min-width:18px}
+.finance-equation{font-size:10px;color:#8191a7;line-height:1.3}
+.finance-chart-section{margin:14px 0}
+.finance-chart{height:295px}
+@media(max-width:760px){.finance-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.finance-tile{padding:10px 12px}.finance-tile.is-total{grid-column:1/-1}.finance-chart{height:275px}}
+@media(max-width:450px){.finance-row{grid-template-columns:1fr}.finance-tile.is-total{grid-column:auto}.finance-tile strong{font-size:22px}.finance-summary-head{align-items:flex-start}.finance-period{font-size:10px}.finance-footer{align-items:flex-start}.finance-chart{height:245px}}
 </style>
 </head>
 <body>
@@ -131,22 +163,49 @@ button{font:inherit}.button{display:flex;gap:6px;align-items:center;border:0;bor
     <article class="kpi"><div class="kpi-top"><span class="kpi-heading"><span class="kpi-label">Faturamento do mês</span><button type="button" class="help-trigger" data-help="k_fat" aria-label="Explicar Faturamento do mês" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o indicador">?</button></span><span class="icon"><i data-lucide="receipt-text"></i></span></div><strong class="kpi-value" id="k_fat">—</strong><div class="kpi-note">Vendas de produtos, serviços e sucata</div></article>
     <article class="kpi green"><div class="kpi-top"><span class="kpi-heading"><span class="kpi-label">Carteira a faturar</span><button type="button" class="help-trigger" data-help="k_carteira" aria-label="Explicar Carteira a faturar" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o indicador">?</button></span><span class="icon"><i data-lucide="briefcase-business"></i></span></div><strong class="kpi-value" id="k_carteira">—</strong><div class="kpi-note">Pedidos aprovados com saldo em aberto</div></article>
     <article class="kpi gold"><div class="kpi-top"><span class="kpi-heading"><span class="kpi-label">Capital necessário</span><button type="button" class="help-trigger" data-help="k_capital" aria-label="Explicar Capital necessário" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o indicador">?</button></span><span class="icon"><i data-lucide="landmark"></i></span></div><strong class="kpi-value" id="k_capital">—</strong><div class="kpi-note">Materiais e impostos da carteira</div></article>
-    <article class="kpi purple"><div class="kpi-top"><span class="kpi-heading"><span class="kpi-label">Saldo financeiro</span><button type="button" class="help-trigger" data-help="k_saldo" aria-label="Explicar Saldo financeiro" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o indicador">?</button></span><span class="icon"><i data-lucide="wallet"></i></span></div><strong class="kpi-value" id="k_saldo">—</strong><div class="kpi-note">A receber menos a pagar no mês</div></article>
+    <article class="kpi purple"><div class="kpi-top"><span class="kpi-heading"><span class="kpi-label">Saldo financeiro total</span><button type="button" class="help-trigger" data-help="k_saldo" aria-label="Explicar Saldo financeiro" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o indicador">?</button></span><span class="icon"><i data-lucide="wallet"></i></span></div><strong class="kpi-value" id="k_saldo">—</strong><div class="kpi-note">Créditos totais − compromissos totais</div></article>
     <article class="kpi"><div class="kpi-top"><span class="kpi-heading"><span class="kpi-label">OS em produção</span><button type="button" class="help-trigger" data-help="k_os" aria-label="Explicar OS em produção" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o indicador">?</button></span><span class="icon"><i data-lucide="factory"></i></span></div><strong class="kpi-value" id="k_os">—</strong><div class="kpi-note">OS ativas fora do limbo</div></article>
     <article class="kpi red"><div class="kpi-top"><span class="kpi-heading"><span class="kpi-label">OS atrasadas</span><button type="button" class="help-trigger" data-help="k_atrasadas" aria-label="Explicar OS atrasadas" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o indicador">?</button></span><span class="icon"><i data-lucide="calendar-clock"></i></span></div><strong class="kpi-value" id="k_atrasadas">—</strong><div class="kpi-note">Conforme sinalização da produção</div></article>
     <article class="kpi gold"><div class="kpi-top"><span class="kpi-heading"><span class="kpi-label">Materiais sem OC</span><button type="button" class="help-trigger" data-help="k_compras" aria-label="Explicar Materiais sem OC" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o indicador">?</button></span><span class="icon"><i data-lucide="shopping-cart"></i></span></div><strong class="kpi-value" id="k_compras">—</strong><div class="kpi-note">Materiais solicitados e sem ordem</div></article>
     <article class="kpi green"><div class="kpi-top"><span class="kpi-heading"><span class="kpi-label">Pontualidade</span><button type="button" class="help-trigger" data-help="k_pontualidade" aria-label="Explicar Pontualidade" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o indicador">?</button></span><span class="icon"><i data-lucide="gauge"></i></span></div><strong class="kpi-value" id="k_pontualidade">—</strong><div class="kpi-note">Qtde faturada no prazo no mês</div></article>
   </section>
-  <section class="subkpis" aria-label="Situação financeira e materiais"><h2 class="section-heading">Situação financeira <small>e materiais pendentes</small></h2>
-    <div class="subkpi"><div class="subkpi-head"><small>Contas a pagar</small><button type="button" class="help-trigger" data-help="s_pagar" aria-label="Explicar contas a pagar" aria-haspopup="dialog" aria-expanded="false">?</button></div><strong id="s_pagar">—</strong></div>
-    <div class="subkpi settled"><div class="subkpi-head"><small>Contas pagas</small><button type="button" class="help-trigger" data-help="s_pagas" aria-label="Explicar contas pagas" aria-haspopup="dialog" aria-expanded="false">?</button></div><strong id="s_pagas">—</strong></div>
-    <div class="subkpi"><div class="subkpi-head"><small>Contas a receber</small><button type="button" class="help-trigger" data-help="s_receber" aria-label="Explicar contas a receber" aria-haspopup="dialog" aria-expanded="false">?</button></div><strong id="s_receber">—</strong></div>
-    <div class="subkpi settled"><div class="subkpi-head"><small>Contas recebidas</small><button type="button" class="help-trigger" data-help="s_recebidas" aria-label="Explicar contas recebidas" aria-haspopup="dialog" aria-expanded="false">?</button></div><strong id="s_recebidas">—</strong></div>
-    <div class="subkpi"><div class="subkpi-head"><small>Materiais não processados</small><button type="button" class="help-trigger" data-help="s_naoprocessado" aria-label="Explicar Materiais não processados" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o indicador">?</button></div><strong id="s_naoprocessado">—</strong></div>
+  <section class="finance-summary" aria-label="Panorama financeiro">
+    <div class="finance-summary-head"><div><h2>Panorama financeiro</h2><p>Valores dos títulos com vencimento no mês selecionado, sem previsões.</p></div><span id="financePeriod" class="finance-period">—</span></div>
+    <div class="finance-group">
+      <div class="finance-group-head"><strong>Saídas</strong><span>Compromissos financeiros</span></div>
+      <div class="finance-row">
+        <article class="finance-tile "><div class="finance-tile-head"><span>Contas a pagar</span><button type="button" class="help-trigger" data-help="s_pagar" aria-label="Explicar Contas a pagar" aria-haspopup="dialog" aria-expanded="false" title="Entenda este indicador">?</button></div><strong id="s_pagar">—</strong><small>Saldo pendente de pagamento</small></article>
+        <article class="finance-tile is-settled"><div class="finance-tile-head"><span>Contas pagas</span><button type="button" class="help-trigger" data-help="s_pagas" aria-label="Explicar Contas pagas" aria-haspopup="dialog" aria-expanded="false" title="Entenda este indicador">?</button></div><strong id="s_pagas">—</strong><small>Valor já liquidado</small></article>
+        <article class="finance-tile is-total"><div class="finance-tile-head"><span>Pagas + a pagar</span><button type="button" class="help-trigger" data-help="s_total_pagar" aria-label="Explicar Pagas + a pagar" aria-haspopup="dialog" aria-expanded="false" title="Entenda este indicador">?</button></div><strong id="s_total_pagar">—</strong><small>Total dos compromissos</small></article>
+      </div>
+    </div>
+    <div class="finance-group">
+      <div class="finance-group-head"><strong>Entradas</strong><span>Direitos a receber</span></div>
+      <div class="finance-row">
+        <article class="finance-tile "><div class="finance-tile-head"><span>Contas a receber</span><button type="button" class="help-trigger" data-help="s_receber" aria-label="Explicar Contas a receber" aria-haspopup="dialog" aria-expanded="false" title="Entenda este indicador">?</button></div><strong id="s_receber">—</strong><small>Saldo pendente de recebimento</small></article>
+        <article class="finance-tile is-settled"><div class="finance-tile-head"><span>Contas recebidas</span><button type="button" class="help-trigger" data-help="s_recebidas" aria-label="Explicar Contas recebidas" aria-haspopup="dialog" aria-expanded="false" title="Entenda este indicador">?</button></div><strong id="s_recebidas">—</strong><small>Valor já recebido</small></article>
+        <article class="finance-tile is-total"><div class="finance-tile-head"><span>Recebidas + a receber</span><button type="button" class="help-trigger" data-help="s_total_receber" aria-label="Explicar Recebidas + a receber" aria-haspopup="dialog" aria-expanded="false" title="Entenda este indicador">?</button></div><strong id="s_total_receber">—</strong><small>Total dos créditos</small></article>
+      </div>
+    </div>
+    <div class="finance-group">
+      <div class="finance-group-head"><strong>Resultado</strong><span>Entradas menos saídas</span></div>
+      <div class="finance-row">
+        <article class="finance-tile is-result"><div class="finance-tile-head"><span>Saldo pendente</span><button type="button" class="help-trigger" data-help="s_saldo_aberto" aria-label="Explicar Saldo pendente" aria-haspopup="dialog" aria-expanded="false" title="Entenda este indicador">?</button></div><strong id="s_saldo_aberto">—</strong><small>A receber − a pagar</small></article>
+        <article class="finance-tile is-result"><div class="finance-tile-head"><span>Saldo realizado</span><button type="button" class="help-trigger" data-help="s_saldo_realizado" aria-label="Explicar Saldo realizado" aria-haspopup="dialog" aria-expanded="false" title="Entenda este indicador">?</button></div><strong id="s_saldo_realizado">—</strong><small>Recebidas − pagas</small></article>
+        <article class="finance-tile is-total is-result"><div class="finance-tile-head"><span>Saldo consolidado</span><button type="button" class="help-trigger" data-help="s_saldo_geral" aria-label="Explicar Saldo consolidado" aria-haspopup="dialog" aria-expanded="false" title="Entenda este indicador">?</button></div><strong id="s_saldo_geral">—</strong><small>Total a receber − total a pagar</small></article>
+      </div>
+    </div>
+    <div class="finance-footer">
+      <div class="finance-material">Materiais não processados <strong id="s_naoprocessado">—</strong> <button type="button" class="help-trigger" data-help="s_naoprocessado" aria-label="Explicar materiais não processados" aria-haspopup="dialog" aria-expanded="false" title="Entenda este indicador">?</button></div>
+      <span id="financeEquation" class="finance-equation">Consolidado = saldo pendente + saldo realizado</span>
+    </div>
   </section>
   <section class="grid">
     <article class="panel"><div class="panel-head"><div><div class="chart-title-row"><h2>Evolução financeira</h2><button type="button" class="help-trigger" data-help="chartMonthly" aria-label="Explicar gráfico Evolução financeira" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o gráfico">?</button></div><p>Faturamento realizado e saldos em aberto por vencimento. Últimos 6 meses até o mês de referência.</p></div><a href="financeiro.html">Financeiro <i data-lucide="arrow-up-right"></i></a></div><div class="chart-area"><canvas id="chartMonthly"></canvas><div class="emptychart" id="emptyMonthly" hidden>Sem dados disponíveis para o gráfico.</div></div></article>
     <article class="panel"><div class="panel-head"><div><div class="chart-title-row"><h2>Carteira por cliente</h2><button type="button" class="help-trigger" data-help="chartClients" aria-label="Explicar gráfico Carteira por cliente" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o gráfico">?</button></div><p>Sete maiores saldos a faturar, pedidos aprovados.</p></div><a href="carteira.html">Carteira <i data-lucide="arrow-up-right"></i></a></div><div class="chart-area"><canvas id="chartClients"></canvas><div class="emptychart" id="emptyClients" hidden>Sem dados disponíveis para o gráfico.</div></div></article>
+  </section>
+  <section class="finance-chart-section">
+    <article class="panel"><div class="panel-head"><div><div class="chart-title-row"><h2>Pagamentos e recebimentos: composição mensal</h2><button type="button" class="help-trigger" data-help="chartFinanceComposition" aria-label="Explicar gráfico de composição financeira" aria-haspopup="dialog" aria-expanded="false" title="Entenda este indicador">?</button></div><p>Pagas + a pagar e recebidas + a receber, separadas por situação. Últimos 6 meses.</p></div><a href="financeiro.html">Financeiro <i data-lucide="arrow-up-right"></i></a></div><div class="chart-area finance-chart"><canvas id="chartFinanceComposition"></canvas><div class="emptychart" id="emptyFinanceComposition" hidden>Sem dados financeiros disponíveis para o gráfico.</div></div></article>
   </section>
   <section class="grid">
     <article class="panel"><div class="panel-head"><div><h2>Atenções gerenciais</h2><p>Pontos que precisam de acompanhamento. Alertas calculados com os dados efetivamente carregados.</p></div><span class="badge" id="alertCount">—</span></div><div class="alerts" id="alerts"><div class="alert"><div class="dot"></div><div><strong>Consultando operações...</strong></div></div></div></article>
@@ -169,6 +228,6 @@ button{font:inherit}.button{display:flex;gap:6px;align-items:center;border:0;bor
   <div class="help-header"><strong id="helpTitle"></strong><button type="button" class="help-close" id="helpClose" aria-label="Fechar explicação">×</button></div>
   <p id="helpDescription"></p><div id="helpSource" class="help-source"></div>
 </div>
-<script src="dashboard.js?v=5"></script>
+<script src="dashboard.js?v=6"></script>
 </body>
 </html>
