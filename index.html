@@ -6,6 +6,7 @@
     <link rel="icon" type="image/png" href="LOGO MINIMALISTA.png">
     <link rel="apple-touch-icon" href="LOGO MINIMALISTA.png">
     <title>Portal PSTEC | Consultoria RF</title>
+    <script src="./pstec-acesso.js?v=1"></script>
     <script>
         if (!localStorage.getItem('pstec_token')) window.location.href = 'login-pstec.html';
     </script>
@@ -40,6 +41,7 @@
                     <i data-lucide="user-check" class="w-4 h-4 text-pstecgreen-500"></i>
                     <span id="userDisplayName">Usuário</span>
                 </div>
+                <a id="linkGestaoAcessos" href="gerenciar-acessos.html" hidden class="items-center gap-1.5 px-3 py-2 bg-white/15 hover:bg-white/25 border border-white/20 rounded-xl text-xs font-bold shadow-sm" title="Gerenciar permissões dos usuários"><i data-lucide="shield-check" class="w-4 h-4"></i><span>Gerenciar acessos</span></a>
                 <button onclick="logout()" class="flex items-center gap-1.5 px-3 py-2 bg-red-600 hover:bg-red-700 rounded-xl text-xs font-bold shadow-sm">
                     <i data-lucide="log-out" class="w-4 h-4"></i><span class="hidden sm:inline">Sair</span>
                 </button>
@@ -157,11 +159,16 @@
     </footer>
 <script>
 function logout(){
-    ['pstec_token','pstec_usuario_nome','pstec_perm_faturamento','pstec_perm_finalizacao'].forEach(k=>localStorage.removeItem(k));
+    ['pstec_token','pstec_usuario_nome','pstec_perm_faturamento','pstec_perm_finalizacao','pstec_permissoes'].forEach(k=>localStorage.removeItem(k));
     window.location.href='login-pstec.html';
 }
 document.addEventListener('DOMContentLoaded',()=>{
     document.getElementById('userDisplayName').textContent=localStorage.getItem('pstec_usuario_nome')||'Usuário';
+    const gestao = document.getElementById('linkGestaoAcessos');
+    if (window.PstecAcesso?.permissoes?.gestor) {
+        gestao.hidden = false;
+        gestao.classList.add('inline-flex');
+    }
     lucide.createIcons();
 });
 </script>
