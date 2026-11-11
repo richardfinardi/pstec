@@ -10,8 +10,7 @@ var SOURCES = {
   receber: {path:'financeiro_receber',cache:'pstec_financeiro_analitico_v1_receber',name:'A receber'},
   indicadores: {path:'faturamento_indicadores',cache:'pstec_faturamento_indicadores_v1',name:'Pontualidade'},
   materiais: {path:'01_compras_materiais',cache:'pstec_dashboard_materiais_v1',name:'Materiais'},
-  ocs: {path:'03_compras_ocs',cache:'pstec_dashboard_ocs_v1',name:'Ordens de compra'},
-  remocao: {path:'remocao',cache:'pstec_dashboard_remocao_v1',name:'Remoções'}
+  ocs: {path:'03_compras_ocs',cache:'pstec_dashboard_ocs_v1',name:'Ordens de compra'}
 };
 var names=Object.keys(SOURCES),data={},status={},charts={};
 var fetching=false,lastStart=0,renderTimer=null;
@@ -23,6 +22,42 @@ monthEl.value=/^\d{4}-\d{2}$/.test(storedMonth||'')?storedMonth:defaultMonth;
 names.forEach(function(k){data[k]=[];status[k]={ready:false,live:false,savedAt:null,error:null};});
 var brl=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
 var integer=new Intl.NumberFormat('pt-BR',{maximumFractionDigits:0});
+
+var HELP_DEFINITIONS = {"k_fat":{"title":"Faturamento do mês","detail":"Soma dos valores faturados com data de emissão no mês selecionado. Considera VENDA DE PRODUTOS, VENDA DE SERVIÇOS e VENDA DE SUCATA quando essas contas são identificadas. Se nenhuma dessas contas aparecer no retorno, considera os registros válidos disponíveis, seguindo a regra atual do painel.","source":"Fonte: /faturamento. Período: mês selecionado."},"k_carteira":{"title":"Carteira a faturar","detail":"Soma do campo 'Vl. a faturar' dos itens com Status OS = APROVADO e Saldo a entregar maior que zero. É a posição atual da carteira, sem limitar ao mês selecionado.","source":"Fonte: /CARTEIRA. Posição atual."},"k_capital":{"title":"Capital necessário","detail":"Para cada item aprovado com saldo a entregar, calcula (Cotação Prata Atual × Qtde. AG por pedido × 1,15) + Vl. MP comum + Impostos a pagar. Depois soma os resultados. É capital estimado para atender a carteira, não saldo bancário.","source":"Fonte: /capital_carteira. Posição atual."},"k_saldo":{"title":"Saldo financeiro","detail":"Contas a receber menos contas a pagar, considerando vencimentos do mês escolhido e títulos em aberto ou parciais, sem previsão. Não representa o saldo bancário, pois não inclui saldo inicial.","source":"Fontes: /financeiro_receber e /financeiro_pagar. Vencimento no mês selecionado."},"k_os":{"title":"OS em produção","detail":"Quantidade de OS que não estão no limbo e não possuem status FINALIZADO, CONCLUÍDO nem 100%. É a posição atual da produção, não apenas do mês selecionado.","source":"Fonte: /producao. Posição atual."},"k_atrasadas":{"title":"OS atrasadas","detail":"Conta, entre as OS em produção, aquelas sinalizadas pela API como atrasadas (campo 'atrasada' = SIM, S, 1 ou TRUE). Exclui as finalizadas e as OS no limbo.","source":"Fonte: /producao. Posição atual."},"k_compras":{"title":"Materiais sem OC","detail":"Conta materiais distintos por empresa, OS, OS auxiliar e GUID da lista, já processados e com quantidade solicitada maior que zero, mas sem ordem de compra vinculada. Exclui destino 3, família 22 e produtos inativos.","source":"Fontes: /01_compras_materiais e /03_compras_ocs. Posição atual."},"k_pontualidade":{"title":"Pontualidade de faturamento","detail":"Percentual de unidades faturadas dentro do prazo sobre todas as unidades com prazo classificado. 'DENTRO DO PRAZO' e 'PARCIAL NO PRAZO' contam como pontuais. 'FORA DO PRAZO' e 'PARCIAL EM ATRASO' entram no denominador como atrasadas.","source":"Fonte: /faturamento_indicadores. Data de emissão no mês escolhido."},"s_pagar":{"title":"Contas a pagar no mês","detail":"Soma dos saldos rateados das contas com vencimento no mês escolhido, em aberto ou parciais, cuja previsão é zero. Não é o total já pago.","source":"Fonte: /financeiro_pagar. Mês de vencimento."},"s_receber":{"title":"Contas a receber no mês","detail":"Soma do saldo a receber dos títulos com vencimento no mês escolhido, em aberto ou parciais, cuja previsão é zero. Não equivale a receitas já recebidas.","source":"Fonte: /financeiro_receber. Mês de vencimento."},"s_naoprocessado":{"title":"Materiais não processados","detail":"Quantidade de materiais distintos cujo campo processado é diferente de 1, excluindo destino 3, família 22 e itens inativos. Apresenta a posição atual das listas.","source":"Fonte: /01_compras_materiais. Posição atual."},"chartMonthly":{"title":"Evolução financeira","detail":"Seis meses, até o mês selecionado. Azul: faturamento pela data de emissão. Vermelho: saldo a pagar pelo vencimento. Verde: saldo a receber pelo vencimento. A pagar e a receber consideram títulos em aberto ou parciais com previsão igual a zero.","source":"Fontes: /faturamento, /financeiro_pagar e /financeiro_receber. Valores em R$."},"chartClients":{"title":"Carteira por cliente","detail":"Os sete clientes com maior saldo total 'Vl. a faturar' na carteira. Considera somente OS aprovadas e itens com saldo a entregar maior que zero. Não se limita ao mês selecionado.","source":"Fonte: /CARTEIRA. Valores em R$."},"chartProduction":{"title":"Situação da produção","detail":"Distribuição das OS fora do limbo entre Em andamento, Não iniciadas, Finalizadas e Sem status, conforme o campo status_producao. Inclui finalizadas para exibir a composição completa.","source":"Fonte: /producao. Quantidade de OS, posição atual."}};
+var helpOpenTrigger=null;
+function hideHelp(){
+ var pop=byId('helpPopover');if(!pop)return;
+ pop.hidden=true;
+ if(helpOpenTrigger)helpOpenTrigger.setAttribute('aria-expanded','false');
+ helpOpenTrigger=null;
+}
+function showHelp(trigger){
+ var id=trigger.getAttribute('data-help'),def=HELP_DEFINITIONS[id];if(!def)return;
+ var pop=byId('helpPopover');
+ if(helpOpenTrigger===trigger&&!pop.hidden){hideHelp();return;}
+ if(helpOpenTrigger)helpOpenTrigger.setAttribute('aria-expanded','false');
+ helpOpenTrigger=trigger;trigger.setAttribute('aria-expanded','true');
+ byId('helpTitle').textContent=def.title;
+ byId('helpDescription').textContent=def.detail;
+ byId('helpSource').textContent=def.source;
+ pop.hidden=false;
+ var rect=trigger.getBoundingClientRect(),width=Math.min(365,window.innerWidth-24);
+ pop.style.width=width+'px';
+ pop.style.left=Math.max(12,Math.min(rect.left-8,window.innerWidth-width-12))+'px';
+ var below=rect.bottom+8;
+ pop.style.top=(below+pop.offsetHeight+12<window.innerHeight?below:Math.max(12,rect.top-pop.offsetHeight-8))+'px';
+}
+document.addEventListener('click',function(e){
+ var trigger=e.target.closest('.help-trigger');
+ if(trigger){e.preventDefault();showHelp(trigger);return;}
+ if(e.target.closest('#helpClose')){hideHelp();return;}
+ if(!e.target.closest('#helpPopover'))hideHelp();
+});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')hideHelp();});
+window.addEventListener('resize',hideHelp);
+window.addEventListener('scroll',hideHelp,true);
+
+if(window.Chart && window.ChartDataLabels)window.Chart.register(window.ChartDataLabels);
 function byId(id){return document.getElementById(id);}
 function text(v){return String(v==null?'':v).trim();}
 function norm(v){return text(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();}
@@ -204,10 +239,6 @@ function qualityModel(ref){
  });
  return {rate:eligible?100*inside/eligible:null,qty:eligible,late:late};
 }
-function removalModel(){
- if(!available('remocao'))return null;
- return data.remocao.filter(function(r){return ['0','NAO','NÃO'].indexOf(norm(field(r,['PROCESSADO','processado'])))>=0;}).length;
-}
 function productionState(r){
  var st=norm(r.status_producao);
  if(st.indexOf('FINALIZADO')>=0||st.indexOf('100%')>=0||st.indexOf('CONCLUID')>=0)return 'Finalizadas';
@@ -261,7 +292,7 @@ function renderCharts(ref,fat,carteira,production){
  var confP={type:'doughnut',data:{labels:groups.map(function(r){return r[0];}),datasets:[{label:'OS',data:groups.map(function(r){return r[1];}),backgroundColor:groups.map(function(r){return colors[r[0]]||'#9db1c8';}),borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'67%',plugins:{legend:{position:'right',labels:{boxWidth:12,font:{size:11},padding:10}},tooltip:{callbacks:{label:function(ctx){return ctx.label+': '+ctx.raw+' OS';}}}}}};
  upsertChart('chartProduction',confP,'emptyProduction',groups.length>0);
 }
-function renderAlerts(production,carteira,purchase,quality,removal,net){
+function renderAlerts(production,carteira,purchase,quality,net){
  var alerts=[];
  if(production&&production.late.length){
   var examples=production.late.slice(0,3).map(function(r){return text(r.n_os||r.cod_os_completo||r.os);}).filter(Boolean).join(', ');
@@ -274,7 +305,6 @@ function renderAlerts(production,carteira,purchase,quality,removal,net){
  if(purchase&&purchase.withoutOC)alerts.push({level:'gold',title:integer.format(purchase.withoutOC)+' materiais ainda sem OC',body:'Materiais processados e solicitados, mas sem ordem de compra vinculada.',url:'compras.html',link:'Ver compras'});
  if(purchase&&purchase.notProcessed)alerts.push({level:'gold',title:integer.format(purchase.notProcessed)+' materiais não processados',body:'Itens da lista de materiais aguardando processamento.',url:'compras.html',link:'Ver materiais'});
  if(quality&&quality.late>0)alerts.push({level:'gold',title:integer.format(quality.late)+' unidades faturadas fora do prazo',body:'Quantidade faturada com atraso no mês selecionado.',url:'indicadores-faturamento.html',link:'Ver indicadores'});
- if(removal>0)alerts.push({level:'gold',title:integer.format(removal)+' linhas pendentes de remoção',body:'Materiais não processados que podem exigir exclusão/conferência.',url:'conferencia-remocao.html',link:'Ver conferência'});
  if(net!==null&&net<0)alerts.push({level:'red',title:'Saldo financeiro negativo no mês',body:'Diferença projetada entre contas a receber e a pagar: '+fmtBRL(net)+'.',url:'financeiro.html',link:'Ver financeiro'});
  var failed=names.filter(function(k){return status[k].error&&!status[k].ready;});
  if(failed.length)alerts.push({level:'gold',title:'Fontes temporariamente indisponíveis',body:failed.map(function(k){return SOURCES[k].name;}).join(', ')+'. Indicadores dessas fontes aparecem com travessão.',url:'',link:''});
@@ -286,7 +316,7 @@ function renderAlerts(production,carteira,purchase,quality,removal,net){
 }
 function render(){
  var ref=monthEl.value||defaultMonth,fat=revenueModel(),carteira=carteiraModel(),production=productionModel();
- var capital=capitalModel(),purchase=purchaseModel(),quality=qualityModel(ref),removal=removalModel();
+ var capital=capitalModel(),purchase=purchaseModel(),quality=qualityModel(ref);
  var pagar=payModel(ref),receber=receiveModel(ref),net=pagar===null||receber===null?null:receber-pagar;
  var fatMonth=fat===null?null:fat.reduce(function(s,r){return s+(r.month===ref?r.value:0);},0);
  var carteiraVal=carteira===null?null:carteira.reduce(function(s,r){return s+amount(r,['Vl. a faturar']);},0);
@@ -298,9 +328,8 @@ function render(){
  setValue('k_pontualidade',quality?quality.rate:null,'percent');
  setValue('s_pagar',pagar,'money');setValue('s_receber',receber,'money');
  setValue('s_naoprocessado',purchase?purchase.notProcessed:null);
- setValue('s_remocao',removal);
  renderCharts(ref,fat,carteira,production);
- renderAlerts(production,carteira,purchase,quality,removal,net);
+ renderAlerts(production,carteira,purchase,quality,net);
 }
 monthEl.addEventListener('change',function(){if(!monthEl.value)monthEl.value=defaultMonth;localStorage.setItem('pstec_dashboard_mes',monthEl.value);render();});
 byId('refreshBtn').addEventListener('click',fetchAll);
