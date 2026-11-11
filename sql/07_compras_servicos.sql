@@ -103,7 +103,7 @@ SELECT 'SERVICO'::text AS tipo_item,
        os.dt_renegociacao_os,
        COALESCE(s.cod_os_aux,oc.cod_os_aux,0) AS cod_os_aux,
        aux.subtitulo AS titulo_subos,
-       COALESCE(s.aut_,oc.cod_ser_aut, -oc.aut_item_oc) AS aut_servico,
+       COALESCE(s.aut_,NULLIF(oc.cod_ser_aut,0),-oc.aut_item_oc) AS aut_servico,
        COALESCE(NULLIF(oc.titulo_servico,''),
                 NULLIF(s.operacao_executada,''),
                 NULLIF(s.sub_grupo_serv_ter,''),
@@ -139,7 +139,8 @@ SELECT 'SERVICO'::text AS tipo_item,
        oc.cod_fornecedor,oc.fornecedor,oc.valor_total_oc,
        CASE WHEN ent.qtde_recebida IS NOT NULL THEN ent.qtde_recebida
             WHEN oc.cod_oc IS NOT NULL AND conta.qtd_itens_oc = 1
-              THEN COALESCE(s.qtde_recebida,0)
+              THEN GREATEST(COALESCE(s.qtde_recebida,0),COALESCE(oc.qtde_entregue_oc_cps,0))
+            WHEN oc.cod_oc IS NOT NULL THEN COALESCE(oc.qtde_entregue_oc_cps,0)
             ELSE 0 END AS qtde_recebida,
        COALESCE(ent.dt_primeira_entrada,
                 CASE WHEN oc.cod_oc IS NOT NULL AND conta.qtd_itens_oc = 1
@@ -194,4 +195,4 @@ LEFT JOIN contagem_oc conta
  AND conta.cod_os_aux = COALESCE(s.cod_os_aux,oc.cod_os_aux,0)
  AND conta.cod_ser_aut = COALESCE(s.aut_,oc.cod_ser_aut)
 ORDER BY os.cod_empresa,os.n_os,COALESCE(s.cod_os_aux,oc.cod_os_aux,0),
-         COALESCE(s.aut_,oc.cod_ser_aut, -oc.aut_item_oc),oc.cod_oc;
+         COALESCE(s.aut_,NULLIF(oc.cod_ser_aut,0),-oc.aut_item_oc),oc.cod_oc;
