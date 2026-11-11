@@ -91,7 +91,7 @@ function scheduleRender(){clearTimeout(renderTimer);renderTimer=setTimeout(rende
 function loadCache(){
  if(!window.PstecCache)return Promise.resolve();
  return Promise.all(names.map(async function(k){
-  try{var value=await PstecCache.read(SOURCES[k].cache);
+  try{var value=await window.PstecCache.read(SOURCES[k].cache);
    if(value&&Array.isArray(value.data)){data[k]=value.data;status[k].ready=true;status[k].live=false;status[k].savedAt=value.savedAt||null;}
   }catch(e){console.warn('Cache dashboard '+k,e);}
  })).then(function(){setStatus();render();});
@@ -103,7 +103,7 @@ async function getOne(k){
   if(!res.ok)throw Error('HTTP '+res.status);
   var rows=sourceArray(await res.json()),saved=new Date().toISOString();
   data[k]=rows;status[k]={ready:true,live:true,savedAt:saved,error:null};
-  if(window.PstecCache)PstecCache.write(SOURCES[k].cache,rows,saved).catch(function(e){console.warn('Cache '+k,e);});
+  if(window.PstecCache)window.PstecCache.write(SOURCES[k].cache,rows,saved).catch(function(e){console.warn('Cache '+k,e);});
  }catch(e){status[k].live=false;status[k].error=e.message||String(e);console.warn('Dashboard '+k,e);}
  finally{clearTimeout(timer);setStatus();scheduleRender();}
 }
