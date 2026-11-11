@@ -80,7 +80,7 @@ const flag = v => v === 1 || v === true || String(v).toLowerCase() === '1' || St
 let usuarios = [], carregando = false, salvando = false;
 $('usuarioLogado').textContent = localStorage.getItem('pstec_usuario_nome') || 'Usuário';
 function authHeaders() { return { 'Authorization':'Bearer ' + localStorage.getItem('pstec_token'), 'Content-Type':'application/json' }; }
-function mensagem(t, tipo='ok') { const el=$('message');el.className=tipo;el.textContent=t; }
+function mensagem(t, tipo='ok') { const el=$('message');el.className=t?tipo:'';el.textContent=t; }
 function mudou(u) { return CAMPOS.some(k => u['u_'+k] !== u.original['u_'+k]); }
 function qtdPendentes(){return usuarios.filter(mudou).length}
 function atualizarEstado(){
