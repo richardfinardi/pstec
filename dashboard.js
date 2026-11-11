@@ -23,7 +23,7 @@ names.forEach(function(k){data[k]=[];status[k]={ready:false,live:false,savedAt:n
 var brl=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
 var integer=new Intl.NumberFormat('pt-BR',{maximumFractionDigits:0});
 
-var HELP_DEFINITIONS = {"k_fat":{"title":"Faturamento do mês","detail":"Soma dos valores faturados com data de emissão no mês selecionado. Considera VENDA DE PRODUTOS, VENDA DE SERVIÇOS e VENDA DE SUCATA quando essas contas são identificadas. Se nenhuma dessas contas aparecer no retorno, considera os registros válidos disponíveis, seguindo a regra atual do painel.","source":"Fonte: /faturamento. Período: mês selecionado."},"k_carteira":{"title":"Carteira a faturar","detail":"Soma do campo 'Vl. a faturar' dos itens com Status OS = APROVADO e Saldo a entregar maior que zero. É a posição atual da carteira, sem limitar ao mês selecionado.","source":"Fonte: /CARTEIRA. Posição atual."},"k_capital":{"title":"Capital necessário","detail":"Para cada item aprovado com saldo a entregar, calcula (Cotação Prata Atual × Qtde. AG por pedido × 1,15) + Vl. MP comum + Impostos a pagar. Depois soma os resultados. É capital estimado para atender a carteira, não saldo bancário.","source":"Fonte: /capital_carteira. Posição atual."},"k_saldo":{"title":"Saldo financeiro consolidado","detail":"Saldo consolidado dos títulos com vencimento no mês: (Contas recebidas + Contas a receber) − (Contas pagas + Contas a pagar). Inclui valores já liquidados e pendentes, mas NÃO é saldo bancário. Não considera saldo inicial nem data efetiva de baixa.","source":"Fontes: /financeiro_pagar e /financeiro_receber. Critério: vencimento no mês selecionado; previsão = 0."},"k_os":{"title":"OS em produção","detail":"Quantidade de OS que não estão no limbo e não possuem status FINALIZADO, CONCLUÍDO nem 100%. É a posição atual da produção, não apenas do mês selecionado.","source":"Fonte: /producao. Posição atual."},"k_atrasadas":{"title":"OS atrasadas","detail":"Conta, entre as OS em produção, aquelas sinalizadas pela API como atrasadas (campo 'atrasada' = SIM, S, 1 ou TRUE). Exclui as finalizadas e as OS no limbo.","source":"Fonte: /producao. Posição atual."},"k_compras":{"title":"Materiais sem OC","detail":"Conta materiais distintos por empresa, OS, OS auxiliar e GUID da lista, já processados e com quantidade solicitada maior que zero, mas sem ordem de compra vinculada. Exclui destino 3, família 22 e produtos inativos.","source":"Fontes: /01_compras_materiais e /03_compras_ocs. Posição atual."},"k_pontualidade":{"title":"Pontualidade de faturamento","detail":"Percentual de unidades faturadas dentro do prazo sobre todas as unidades com prazo classificado. 'DENTRO DO PRAZO' e 'PARCIAL NO PRAZO' contam como pontuais. 'FORA DO PRAZO' e 'PARCIAL EM ATRASO' entram no denominador como atrasadas.","source":"Fonte: /faturamento_indicadores. Data de emissão no mês escolhido."},"s_pagar":{"title":"Contas a pagar no mês","detail":"Saldo pendente de títulos a pagar com vencimento no mês selecionado. Inclui títulos em aberto e saldo não liquidado dos parciais; desconsidera previsões. É apenas o valor ainda a pagar.","source":"Fonte: /financeiro_pagar. Mês de vencimento."},"s_receber":{"title":"Contas a receber no mês","detail":"Saldo pendente de títulos a receber com vencimento no mês selecionado. Inclui títulos em aberto e saldo de títulos parciais; desconsidera previsões. É somente o valor ainda a receber.","source":"Fonte: /financeiro_receber. Mês de vencimento."},"s_naoprocessado":{"title":"Materiais não processados","detail":"Quantidade de materiais distintos cujo campo processado é diferente de 1, excluindo destino 3, família 22 e itens inativos. Apresenta a posição atual das listas.","source":"Fonte: /01_compras_materiais. Posição atual."},"chartMonthly":{"title":"Evolução financeira","detail":"Seis meses, até o mês selecionado. Azul: faturamento pela data de emissão. Vermelho: saldo a pagar pelo vencimento. Verde: saldo a receber pelo vencimento. A pagar e a receber consideram títulos em aberto ou parciais com previsão igual a zero.","source":"Fontes: /faturamento, /financeiro_pagar e /financeiro_receber. Valores em R$."},"chartClients":{"title":"Carteira por cliente","detail":"Os sete clientes com maior saldo total 'Vl. a faturar' na carteira. Considera somente OS aprovadas e itens com saldo a entregar maior que zero. Não se limita ao mês selecionado.","source":"Fonte: /CARTEIRA. Valores em R$."},"chartProduction":{"title":"Situação da produção","detail":"Distribuição das OS fora do limbo entre Em andamento, Não iniciadas, Finalizadas e Sem status, conforme o campo status_producao. Inclui finalizadas para exibir a composição completa.","source":"Fonte: /producao. Quantidade de OS, posição atual."},"s_pagas":{"title":"Contas pagas","detail":"Valor já liquidado de títulos com vencimento no mês selecionado, integral ou parcialmente. Obtido pelo valor pago rateado, pela diferença entre rateio e saldo ou pelo rateio proporcional do pagamento. Competência pelo vencimento, não pela data em que foi pago.","source":"Fonte: /financeiro_pagar. Competência: mês do VENCIMENTO (não da baixa)."},"s_recebidas":{"title":"Contas recebidas","detail":"Valor já recebido, parcial ou integralmente, de títulos com vencimento no mês selecionado. Usa valor_recebido ou diferença entre valor corrigido e saldo pendente. Competência pelo vencimento, não pela data da entrada bancária.","source":"Fonte: /financeiro_receber. Competência: mês do VENCIMENTO (não da baixa)."},"s_total_pagar":{"title":"Pagas + a pagar","detail":"Total dos compromissos financeiros com vencimento no mês selecionado. Soma o saldo ainda a pagar das contas em aberto/parciais com o valor já pago de títulos liquidados/parciais. Representa o total de pagamentos vinculados a esses vencimentos, incluindo liquidações.","source":"Fonte: /financeiro_pagar. Total = Contas pagas + Contas a pagar."},"s_total_receber":{"title":"Recebidas + a receber","detail":"Total de valores a receber vinculados aos títulos que vencem no mês selecionado. Soma o saldo pendente das contas em aberto/parciais ao valor recebido de títulos parciais/liquidados. Inclui créditos já recebidos.","source":"Fonte: /financeiro_receber. Total = Contas recebidas + Contas a receber."},"s_saldo_aberto":{"title":"Saldo pendente","detail":"Saldo ainda a realizar: contas a receber menos contas a pagar, considerando apenas os saldos em aberto ou parciais. Valor negativo significa que os compromissos pendentes superam os créditos pendentes; não é o saldo bancário.","source":"Fontes: /financeiro_pagar e /financeiro_receber. Mesmos critérios de vencimento e previsão."},"s_saldo_realizado":{"title":"Saldo realizado","detail":"Resultado dos títulos já liquidados: Contas recebidas menos Contas pagas. As liquidações são agrupadas pelo mês de vencimento do título, não pela data real de movimentação financeira.","source":"Fontes: /financeiro_pagar e /financeiro_receber. Competência: mês do vencimento."},"s_saldo_geral":{"title":"Saldo financeiro consolidado","detail":"(Recebidas + a receber) − (Pagas + a pagar). Também equivale ao saldo pendente + saldo realizado. Usa todas as parcelas efetivas com vencimento no mês escolhido. Não é o saldo disponível no banco.","source":"Fontes: /financeiro_pagar e /financeiro_receber. Sem previsões, por vencimento."},"chartFinanceComposition":{"title":"Composição financeira mensal","detail":"Para cada um dos últimos 6 meses, mostra dois grupos de colunas empilhadas. Saídas = contas pagas + contas ainda a pagar; Entradas = contas recebidas + contas ainda a receber. Cada cor indica a situação de liquidação. As datas usadas são os vencimentos, não as datas efetivas de pagamento/recebimento.","source":"Fontes: /financeiro_pagar e /financeiro_receber. Valores por mês de vencimento, sem previsões."}};
+var HELP_DEFINITIONS = {"k_fat":{"title":"Faturamento do mês","detail":"Soma dos valores faturados com data de emissão no mês selecionado. Considera VENDA DE PRODUTOS, VENDA DE SERVIÇOS e VENDA DE SUCATA quando essas contas são identificadas. Se nenhuma dessas contas aparecer no retorno, considera os registros válidos disponíveis, seguindo a regra atual do painel.","source":"Fonte: /faturamento. Período: mês selecionado."},"k_carteira":{"title":"Carteira a faturar","detail":"Soma do campo 'Vl. a faturar' dos itens com Status OS = APROVADO e Saldo a entregar maior que zero. É a posição atual da carteira, sem limitar ao mês selecionado.","source":"Fonte: /CARTEIRA. Posição atual."},"k_capital":{"title":"Capital necessário","detail":"Para cada item aprovado com saldo a entregar, calcula (Cotação Prata Atual × Qtde. AG por pedido × 1,15) + Vl. MP comum + Impostos a pagar. Depois soma os resultados. É capital estimado para atender a carteira, não saldo bancário.","source":"Fonte: /capital_carteira. Posição atual."},"k_saldo":{"title":"Saldo financeiro consolidado","detail":"Saldo consolidado dos títulos com vencimento no mês: (Contas recebidas + Contas a receber) − (Contas pagas + Contas a pagar). Inclui valores já liquidados e pendentes, mas NÃO é saldo bancário. Não considera saldo inicial nem data efetiva de baixa.","source":"Fontes: /financeiro_pagar e /financeiro_receber. Critério: vencimento no mês selecionado; previsão = 0."},"k_os":{"title":"OS em produção","detail":"Quantidade de OS que não estão no limbo e não possuem status FINALIZADO, CONCLUÍDO nem 100%. É a posição atual da produção, não apenas do mês selecionado.","source":"Fonte: /producao. Posição atual."},"k_atrasadas":{"title":"OS atrasadas","detail":"Conta, entre as OS em produção, aquelas sinalizadas pela API como atrasadas (campo 'atrasada' = SIM, S, 1 ou TRUE). Exclui as finalizadas e as OS no limbo.","source":"Fonte: /producao. Posição atual."},"k_compras":{"title":"Materiais sem OC","detail":"Conta materiais distintos por empresa, OS, OS auxiliar e GUID da lista, já processados e com quantidade solicitada maior que zero, mas sem ordem de compra vinculada. Exclui destino 3, família 22 e produtos inativos.","source":"Fontes: /01_compras_materiais e /03_compras_ocs. Posição atual."},"k_pontualidade":{"title":"Pontualidade de faturamento","detail":"Percentual de unidades faturadas dentro do prazo sobre todas as unidades com prazo classificado. 'DENTRO DO PRAZO' e 'PARCIAL NO PRAZO' contam como pontuais. 'FORA DO PRAZO' e 'PARCIAL EM ATRASO' entram no denominador como atrasadas.","source":"Fonte: /faturamento_indicadores. Data de emissão no mês escolhido."},"s_pagar":{"title":"Contas a pagar no mês","detail":"Saldo pendente de títulos a pagar com vencimento no mês selecionado. Inclui títulos em aberto e saldo não liquidado dos parciais; desconsidera previsões. É apenas o valor ainda a pagar.","source":"Fonte: /financeiro_pagar. Mês de vencimento."},"s_receber":{"title":"Contas a receber no mês","detail":"Saldo pendente de títulos a receber com vencimento no mês selecionado. Inclui títulos em aberto e saldo de títulos parciais; desconsidera previsões. É somente o valor ainda a receber.","source":"Fonte: /financeiro_receber. Mês de vencimento."},"s_naoprocessado":{"title":"Materiais não processados","detail":"Quantidade de materiais distintos cujo campo processado é diferente de 1, excluindo destino 3, família 22 e itens inativos. Apresenta a posição atual das listas.","source":"Fonte: /01_compras_materiais. Posição atual."},"chartMonthly":{"title":"Evolução financeira","detail":"Evolução mensal do faturamento e das contas com vencimento em cada mês. As saídas são representadas sempre em vermelho e as entradas em verde. Ative ou desative livremente: A pagar, Pagas, Pagas + a pagar, A receber, Recebidas e Recebidas + a receber. As séries combinadas somam valores pagos/recebidos com os respectivos saldos pendentes, sem duplicá-los. O faturamento é independente do financeiro e fica em azul.","source":"Fontes: /faturamento, /financeiro_pagar e /financeiro_receber. Valores em R$, mês de vencimento; as opções escolhidas ficam salvas neste navegador."},"chartClients":{"title":"Carteira por cliente","detail":"Os sete clientes com maior saldo total 'Vl. a faturar' na carteira. Considera somente OS aprovadas e itens com saldo a entregar maior que zero. Não se limita ao mês selecionado.","source":"Fonte: /CARTEIRA. Valores em R$."},"chartProduction":{"title":"Situação da produção","detail":"Distribuição das OS fora do limbo entre Em andamento, Não iniciadas, Finalizadas e Sem status, conforme o campo status_producao. Inclui finalizadas para exibir a composição completa.","source":"Fonte: /producao. Quantidade de OS, posição atual."},"s_pagas":{"title":"Contas pagas","detail":"Valor já liquidado de títulos com vencimento no mês selecionado, integral ou parcialmente. Obtido pelo valor pago rateado, pela diferença entre rateio e saldo ou pelo rateio proporcional do pagamento. Competência pelo vencimento, não pela data em que foi pago.","source":"Fonte: /financeiro_pagar. Competência: mês do VENCIMENTO (não da baixa)."},"s_recebidas":{"title":"Contas recebidas","detail":"Valor já recebido, parcial ou integralmente, de títulos com vencimento no mês selecionado. Usa valor_recebido ou diferença entre valor corrigido e saldo pendente. Competência pelo vencimento, não pela data da entrada bancária.","source":"Fonte: /financeiro_receber. Competência: mês do VENCIMENTO (não da baixa)."},"s_total_pagar":{"title":"Pagas + a pagar","detail":"Total dos compromissos financeiros com vencimento no mês selecionado. Soma o saldo ainda a pagar das contas em aberto/parciais com o valor já pago de títulos liquidados/parciais. Representa o total de pagamentos vinculados a esses vencimentos, incluindo liquidações.","source":"Fonte: /financeiro_pagar. Total = Contas pagas + Contas a pagar."},"s_total_receber":{"title":"Recebidas + a receber","detail":"Total de valores a receber vinculados aos títulos que vencem no mês selecionado. Soma o saldo pendente das contas em aberto/parciais ao valor recebido de títulos parciais/liquidados. Inclui créditos já recebidos.","source":"Fonte: /financeiro_receber. Total = Contas recebidas + Contas a receber."},"s_saldo_aberto":{"title":"Saldo pendente","detail":"Saldo ainda a realizar: contas a receber menos contas a pagar, considerando apenas os saldos em aberto ou parciais. Valor negativo significa que os compromissos pendentes superam os créditos pendentes; não é o saldo bancário.","source":"Fontes: /financeiro_pagar e /financeiro_receber. Mesmos critérios de vencimento e previsão."},"s_saldo_realizado":{"title":"Saldo realizado","detail":"Resultado dos títulos já liquidados: Contas recebidas menos Contas pagas. As liquidações são agrupadas pelo mês de vencimento do título, não pela data real de movimentação financeira.","source":"Fontes: /financeiro_pagar e /financeiro_receber. Competência: mês do vencimento."},"s_saldo_geral":{"title":"Saldo financeiro consolidado","detail":"(Recebidas + a receber) − (Pagas + a pagar). Também equivale ao saldo pendente + saldo realizado. Usa todas as parcelas efetivas com vencimento no mês escolhido. Não é o saldo disponível no banco.","source":"Fontes: /financeiro_pagar e /financeiro_receber. Sem previsões, por vencimento."},"chartFinanceComposition":{"title":"Composição financeira mensal","detail":"As barras empilhadas separam pagamentos já realizados e pendentes, sempre em tons de vermelho, e recebimentos realizados e pendentes, sempre em tons de verde. As linhas de total mostram Pagas + a pagar e Recebidas + a receber. Use as opções acima para habilitar ou desabilitar cada informação independentemente. Todas as classificações financeiras seguem o vencimento dos títulos.","source":"Fontes: /financeiro_pagar e /financeiro_receber. Valores em R$, último semestre, opções persistidas neste navegador."}};
 var helpOpenTrigger=null;
 function hideHelp(){
  var pop=byId('helpPopover');if(!pop)return;
@@ -391,24 +391,106 @@ function chartCommon(money){
   scales:{x:{grid:{display:false},ticks:{font:{size:10},color:'#667b95'}},y:{beginAtZero:true,grid:{color:'#eff2f7'},ticks:{font:{size:10},callback:function(v){return new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1}).format(v);}}}}
  };
 }
-function renderCharts(ref,fat,carteira,production){
- var months=monthList(ref,6);
- var revenue=new Map(),pay=new Map(),receiv=new Map();
- if(fat)fat.forEach(function(r){revenue.set(r.month,(revenue.get(r.month)||0)+r.value);});
- if(available('pagar')&&available('receber')){
-  months.forEach(function(m){pay.set(m,payModel(m));receiv.set(m,receiveModel(m));});
+
+var FINANCE_COLORS={
+ outgoingPending:'#cc4b60',outgoingPaid:'#e3939e',outgoingTotal:'#a52b42',
+ incomingPending:'#83cbb2',incomingReceived:'#0e8b6a',incomingTotal:'#007453',
+ revenue:'#004bc4'
+};
+var FINANCE_SERIES={
+ monthly:[
+  {key:'faturamento',label:'Faturamento',color:FINANCE_COLORS.revenue,initial:true},
+  {key:'payOpen',label:'A pagar',color:FINANCE_COLORS.outgoingPending,initial:false},
+  {key:'paid',label:'Pagas',color:FINANCE_COLORS.outgoingPaid,initial:false},
+  {key:'payTotal',label:'Pagas + a pagar',color:FINANCE_COLORS.outgoingTotal,initial:true,total:true},
+  {key:'receiveOpen',label:'A receber',color:FINANCE_COLORS.incomingPending,initial:false},
+  {key:'received',label:'Recebidas',color:FINANCE_COLORS.incomingReceived,initial:false},
+  {key:'receiveTotal',label:'Recebidas + a receber',color:FINANCE_COLORS.incomingTotal,initial:true,total:true}
+ ],
+ composition:[
+  {key:'paid',label:'Pagas',color:FINANCE_COLORS.outgoingPaid,initial:true},
+  {key:'payOpen',label:'A pagar',color:FINANCE_COLORS.outgoingPending,initial:true},
+  {key:'payTotal',label:'Pagas + a pagar',color:FINANCE_COLORS.outgoingTotal,initial:true,total:true},
+  {key:'received',label:'Recebidas',color:FINANCE_COLORS.incomingReceived,initial:true},
+  {key:'receiveOpen',label:'A receber',color:FINANCE_COLORS.incomingPending,initial:true},
+  {key:'receiveTotal',label:'Recebidas + a receber',color:FINANCE_COLORS.incomingTotal,initial:true,total:true}
+ ]
+};
+var FINANCE_SERIES_STORAGE='pstec_dashboard_series_v1';
+var financeSeriesState={monthly:{},composition:{}};
+try{
+ var savedFinanceSeries=JSON.parse(localStorage.getItem(FINANCE_SERIES_STORAGE)||'{}');
+ if(savedFinanceSeries&&typeof savedFinanceSeries==='object'){
+  ['monthly','composition'].forEach(function(group){
+   FINANCE_SERIES[group].forEach(function(opt){
+    if(typeof savedFinanceSeries[group]?.[opt.key]==='boolean')financeSeriesState[group][opt.key]=savedFinanceSeries[group][opt.key];
+   });
+  });
  }
- var finReady=fat!==null||available('pagar')||available('receber');
- var monthlyDatasets=[];
- if(fat!==null)monthlyDatasets.push({label:'Faturamento realizado',data:months.map(function(m){return revenue.get(m)||0;}),borderColor:'#0047cc',backgroundColor:'#0047cc',borderWidth:2.5,tension:.25,fill:false});
- if(available('pagar'))monthlyDatasets.push({label:'A pagar',data:months.map(function(m){return payModel(m);}),borderColor:'#d66367',backgroundColor:'#d66367',borderWidth:2,tension:.25,fill:false});
- if(available('receber'))monthlyDatasets.push({label:'A receber',data:months.map(function(m){return receiveModel(m);}),borderColor:'#0c9a72',backgroundColor:'#0c9a72',borderWidth:2,tension:.25,fill:false});
- var configM={type:'line',data:{labels:months.map(fmtMonth),datasets:monthlyDatasets},options:chartCommon(true)};
+}catch(e){}
+function financeEnabled(group,key){
+ var stored=financeSeriesState[group][key];
+ if(typeof stored==='boolean')return stored;
+ var opt=FINANCE_SERIES[group].find(function(o){return o.key===key;});
+ return !!opt?.initial;
+}
+function setupFinanceControls(group,containerId){
+ var box=byId(containerId);if(!box)return;
+ box.innerHTML=FINANCE_SERIES[group].map(function(o){
+  var checked=financeEnabled(group,o.key);
+  return '<label class="series-control'+(checked?'':' is-off')+(o.total?' is-total':'')+'" style="--series-color:'+o.color+'">'+
+   '<input type="checkbox" data-finance-group="'+group+'" data-finance-key="'+o.key+'" '+(checked?'checked':'')+' aria-label="Mostrar '+esc(o.label)+'">'+
+   '<span class="swatch" aria-hidden="true"></span><span>'+esc(o.label)+'</span></label>';
+ }).join('');
+}
+function combineFinance(a,b){return a===null||b===null?null:a+b;}
+function financialMonths(months){
+ return {
+  payOpen:months.map(payModel),paid:months.map(paidModel),
+  receiveOpen:months.map(receiveModel),received:months.map(receivedModel)
+ };
+}
+document.addEventListener('change',function(e){
+ var input=e.target.closest('input[data-finance-group][data-finance-key]');if(!input)return;
+ var group=input.getAttribute('data-finance-group'),key=input.getAttribute('data-finance-key');
+ if(!FINANCE_SERIES[group]?.some(function(o){return o.key===key;}))return;
+ financeSeriesState[group][key]=input.checked;
+ try{localStorage.setItem(FINANCE_SERIES_STORAGE,JSON.stringify(financeSeriesState));}catch(err){}
+ render();
+});
+
+function renderCharts(ref,fat,carteira,production){
+ setupFinanceControls('monthly','controlsMonthly');
+ var months=monthList(ref,6);
+ var revenue=new Map();
+ if(fat)fat.forEach(function(r){revenue.set(r.month,(revenue.get(r.month)||0)+r.value);});
+ var values=financialMonths(months);
+ values.payTotal=months.map(function(m,i){return combineFinance(values.payOpen[i],values.paid[i]);});
+ values.receiveTotal=months.map(function(m,i){return combineFinance(values.receiveOpen[i],values.received[i]);});
+ values.faturamento=months.map(function(m){return fat===null?null:revenue.get(m)||0;});
+ var datasets=FINANCE_SERIES.monthly.filter(function(o){
+  return (o.key==='faturamento'?fat!==null:
+   o.key.startsWith('pay')||o.key==='paid'?available('pagar'):available('receber'));
+ }).map(function(o){
+  return {financeKey:o.key,label:o.label,data:values[o.key],borderColor:o.color,
+   backgroundColor:o.color,borderWidth:o.total?3:2,
+   borderDash:o.total?[]:o.key==='faturamento'?[]:[4,4],
+   tension:.25,fill:false,pointRadius:o.total?3.3:2.6,pointHoverRadius:5,
+   hidden:!financeEnabled('monthly',o.key),spanGaps:false};
+ });
+ var configM={type:'line',data:{labels:months.map(fmtMonth),datasets:datasets},options:chartCommon(true)};
+ configM.options.plugins.legend.display=false;
+ configM.options.layout={padding:{top:34,right:15,bottom:6,left:7}};
  configM.options.plugins.tooltip.callbacks.label=function(ctx){return ctx.dataset.label+': '+fmtBRL(ctx.parsed.y||0);};
- configM.options.plugins.datalabels.align=function(ctx){return ['top','bottom','right'][ctx.datasetIndex]||'top';};
- configM.options.plugins.datalabels.offset=function(ctx){return ctx.datasetIndex===2?5:3;};
- configM.options.elements={point:{radius:3,hoverRadius:5}};
- upsertChart('chartMonthly',configM,'emptyMonthly',finReady&&monthlyDatasets.length>0);
+ configM.options.plugins.datalabels={
+  display:function(ctx){var v=ctx.dataset.data[ctx.dataIndex];return v!=null&&Number(v)!==0?'auto':false;},
+  formatter:chartMoney,color:function(ctx){return ctx.dataset.borderColor;},
+  align:function(ctx){return ['receiveTotal','receiveOpen','received'].includes(ctx.dataset.financeKey)?'bottom':'top';},
+  anchor:'end',offset:4,clamp:true,clip:false,font:{size:9,weight:'800'}
+ };
+ var selected=datasets.some(function(d){return !d.hidden;});
+ byId('emptyMonthly').textContent=selected?'Sem dados financeiros para o período.':'Selecione ao menos uma série acima.';
+ upsertChart('chartMonthly',configM,'emptyMonthly',selected);
  var grouped=new Map();
  if(carteira)carteira.forEach(function(r){var c=text(field(r,['Cliente','cliente']))||'Sem cliente',v=amount(r,['Vl. a faturar']);grouped.set(c,(grouped.get(c)||0)+v);});
  var top=Array.from(grouped.entries()).sort(function(a,b){return b[1]-a[1];}).slice(0,7);
@@ -431,44 +513,66 @@ function renderCharts(ref,fat,carteira,production){
 }
 
 function renderFinanceComposition(ref){
- var months=monthList(ref,6);
- var havePay=available('pagar'),haveRec=available('receber');
- var ds=[];
- if(havePay){
-  ds.push({label:'Contas pagas',data:months.map(paidModel),stack:'saidas',backgroundColor:'#9dbde5',borderRadius:3,barPercentage:.88,categoryPercentage:.68});
-  ds.push({label:'Contas a pagar',data:months.map(payModel),stack:'saidas',backgroundColor:'#cc6670',borderRadius:3,barPercentage:.88,categoryPercentage:.68});
- }
- if(haveRec){
-  ds.push({label:'Contas recebidas',data:months.map(receivedModel),stack:'entradas',backgroundColor:'#13846d',borderRadius:3,barPercentage:.88,categoryPercentage:.68});
-  ds.push({label:'Contas a receber',data:months.map(receiveModel),stack:'entradas',backgroundColor:'#a2d8c8',borderRadius:3,barPercentage:.88,categoryPercentage:.68});
- }
+ setupFinanceControls('composition','controlsFinanceComposition');
+ var months=monthList(ref,6),values=financialMonths(months);
+ values.payTotal=months.map(function(m,i){return combineFinance(values.payOpen[i],values.paid[i]);});
+ values.receiveTotal=months.map(function(m,i){return combineFinance(values.receiveOpen[i],values.received[i]);});
+ var ds=FINANCE_SERIES.composition.filter(function(o){
+  return ['paid','payOpen','payTotal'].includes(o.key)?available('pagar'):available('receber');
+ }).map(function(o){
+  if(o.total)return {
+   type:'line',financeKey:o.key,label:o.label,data:values[o.key],
+   yAxisID:'yTotals',borderColor:o.color,backgroundColor:o.color,borderWidth:2.4,
+   borderDash:[5,3],tension:.22,pointRadius:3.2,pointHoverRadius:5,
+   pointBackgroundColor:'#fff',pointBorderColor:o.color,pointBorderWidth:2,
+   order:0,fill:false,spanGaps:false,hidden:!financeEnabled('composition',o.key)
+  };
+  return {
+   type:'bar',financeKey:o.key,label:o.label,data:values[o.key],
+   stack:['paid','payOpen'].includes(o.key)?'saidas':'entradas',
+   backgroundColor:o.color,borderRadius:3,barPercentage:.86,categoryPercentage:.66,
+   maxBarThickness:40,order:2,hidden:!financeEnabled('composition',o.key)
+  };
+ });
+ var maxSum=0;
+ months.forEach(function(m,i){
+  var vals=[values.payTotal[i],values.receiveTotal[i]];
+  vals.forEach(function(v){if(v!==null)maxSum=Math.max(maxSum,v);});
+ });
  var opts=chartCommon(true);
- opts.indexAxis='x';
- opts.layout={padding:{top:25,right:14,bottom:4,left:7}};
- opts.plugins.legend={position:'bottom',labels:{usePointStyle:true,boxWidth:9,padding:15,font:{size:11}}};
+ opts.layout={padding:{top:30,right:14,bottom:4,left:7}};
+ opts.interaction={mode:'index',intersect:false};
+ opts.plugins.legend.display=false;
  opts.plugins.datalabels={
   display:function(ctx){
-   var value=Number(ctx.dataset.data[ctx.dataIndex]||0);
-   if(value===0)return false;
-   return 'auto';
+   var v=ctx.dataset.data[ctx.dataIndex];
+   return v!==null&&v!==undefined&&Number(v)!==0?'auto':false;
   },
-  anchor:'center',align:'center',offset:0,clamp:true,clip:false,
-  formatter:chartMoney,color:function(ctx){return ctx.dataset.stack==='saidas'&&ctx.dataset.label==='Contas a pagar'||ctx.dataset.label==='Contas recebidas'?'#fff':'#203e62';},
+  anchor:function(ctx){return ctx.dataset.type==='line'?'end':'center';},
+  align:function(ctx){return ctx.dataset.type==='line'?'top':'center';},
+  offset:function(ctx){return ctx.dataset.type==='line'?5:0;},
+  clamp:true,clip:false,
+  formatter:chartMoney,
+  color:function(ctx){var ds=ctx.dataset;
+   if(ds.type==='line')return ds.borderColor;
+   return ['payOpen','received'].includes(ds.financeKey)?'#fff':'#25485b';
+  },
   font:{size:9,weight:'800'}
  };
  opts.plugins.tooltip={callbacks:{
-  label:function(ctx){return ctx.dataset.label+': '+fmtBRL(ctx.parsed.y||0);},
-  footer:function(ctx){
-   if(!ctx.length)return '';
-   var i=ctx[0].dataIndex,m=months[i],tp=payModel(m),pg=paidModel(m),tr=receiveModel(m),rb=receivedModel(m);
-   if([tp,pg,tr,rb].some(function(v){return v===null;}))return '';
-   return 'Total a pagar: '+fmtBRL(tp+pg)+' | Total a receber: '+fmtBRL(tr+rb);
-  }
+  label:function(ctx){return ctx.dataset.label+': '+fmtBRL(ctx.parsed.y||0);}
  }};
- opts.scales.x.stacked=true;opts.scales.x.ticks.color='#64748b';
- opts.scales.y.stacked=true;opts.scales.y.grace='12%';
+ opts.scales.x.stacked=true;
+ opts.scales.x.ticks.color='#64748b';
+ opts.scales.y.stacked=true;
+ opts.scales.y.min=0;
+ opts.scales.y.max=maxSum>0?maxSum*1.18:undefined;
+ opts.scales.yTotals={position:'right',display:false,stacked:false,min:0,max:maxSum>0?maxSum*1.18:undefined,
+  grid:{display:false}};
  var conf={type:'bar',data:{labels:months.map(fmtMonth),datasets:ds},options:opts};
- upsertChart('chartFinanceComposition',conf,'emptyFinanceComposition',(havePay||haveRec)&&ds.length>0);
+ var selected=ds.some(function(d){return !d.hidden;});
+ byId('emptyFinanceComposition').textContent=selected?'Sem dados financeiros disponíveis para o gráfico.':'Selecione ao menos uma série acima.';
+ upsertChart('chartFinanceComposition',conf,'emptyFinanceComposition',selected);
 }
 function displaySigned(id,v){
  setValue(id,v,'money');
