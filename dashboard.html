@@ -136,6 +136,32 @@ button{font:inherit}.button{display:flex;gap:6px;align-items:center;border:0;bor
 .finance-chart{height:295px}
 @media(max-width:760px){.finance-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.finance-tile{padding:10px 12px}.finance-tile.is-total{grid-column:1/-1}.finance-chart{height:275px}}
 @media(max-width:450px){.finance-row{grid-template-columns:1fr}.finance-tile.is-total{grid-column:auto}.finance-tile strong{font-size:22px}.finance-summary-head{align-items:flex-start}.finance-period{font-size:10px}.finance-footer{align-items:flex-start}.finance-chart{height:245px}}
+
+/* Vermelho é sempre saída; verde é sempre entrada, inclusive o que já foi liquidado. */
+.finance-group.outgoing .finance-group-head strong{color:#ad3849}
+.finance-group.incoming .finance-group-head strong{color:#087956}
+.finance-group.outgoing .finance-tile strong,
+.finance-group.outgoing .finance-tile.is-settled strong,
+.finance-group.outgoing .finance-tile.is-total strong{color:#b33e4d}
+.finance-group.incoming .finance-tile strong,
+.finance-group.incoming .finance-tile.is-settled strong,
+.finance-group.incoming .finance-tile.is-total strong{color:#087a57}
+.finance-group.outgoing .finance-tile.is-total{background:#fff1f2;border-color:#f0c8cf}
+.finance-group.incoming .finance-tile.is-total{background:#eefbf5;border-color:#bce5d2}
+.finance-group.outgoing .finance-tile.is-settled{background:#fffafb}
+.finance-group.incoming .finance-tile.is-settled{background:#f8fdfa}
+/* Controles leves, sempre visíveis; seleção guardada no navegador. */
+.series-controls{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 12px;min-height:27px}
+.series-control{display:inline-flex;align-items:center;gap:6px;cursor:pointer;border:1px solid #dce6f1;background:#fff;border-radius:7px;padding:6px 9px;color:#405773;font-size:10.5px;font-weight:750;line-height:1.15;white-space:nowrap;transition:background-color .15s,border-color .15s,opacity .15s}
+.series-control:hover{background:#f6f9fd}
+.series-control input{position:absolute;opacity:0;width:1px;height:1px}
+.series-control:has(input:focus-visible){outline:2px solid #0054c9;outline-offset:2px}
+.series-control .swatch{width:9px;height:9px;border-radius:3px;background:var(--series-color);flex:none}
+.series-control.is-off{opacity:.45;background:#f7f9fc}
+.series-control.is-off .swatch{background:transparent;border:1px solid var(--series-color)}
+.series-control.is-total{border-style:dashed}
+.series-control.is-total .swatch{border-radius:50%}
+@media(max-width:650px){.series-controls{gap:5px}.series-control{padding:6px 7px;font-size:10px}}
 </style>
 </head>
 <body>
@@ -173,7 +199,7 @@ button{font:inherit}.button{display:flex;gap:6px;align-items:center;border:0;bor
   </section>
   <section class="finance-summary" aria-label="Panorama financeiro">
     <div class="finance-summary-head"><div><h2>Panorama financeiro</h2><p>Valores dos títulos com vencimento no mês selecionado, sem previsões.</p></div><span id="financePeriod" class="finance-period">—</span></div>
-    <div class="finance-group">
+    <div class="finance-group outgoing">
       <div class="finance-group-head"><strong>Saídas</strong><span>Compromissos financeiros</span></div>
       <div class="finance-row">
         <article class="finance-tile "><div class="finance-tile-head"><span>Contas a pagar</span><button type="button" class="help-trigger" data-help="s_pagar" aria-label="Explicar Contas a pagar" aria-haspopup="dialog" aria-expanded="false" title="Entenda este indicador">?</button></div><strong id="s_pagar">—</strong><small>Saldo pendente de pagamento</small></article>
@@ -181,7 +207,7 @@ button{font:inherit}.button{display:flex;gap:6px;align-items:center;border:0;bor
         <article class="finance-tile is-total"><div class="finance-tile-head"><span>Pagas + a pagar</span><button type="button" class="help-trigger" data-help="s_total_pagar" aria-label="Explicar Pagas + a pagar" aria-haspopup="dialog" aria-expanded="false" title="Entenda este indicador">?</button></div><strong id="s_total_pagar">—</strong><small>Total dos compromissos</small></article>
       </div>
     </div>
-    <div class="finance-group">
+    <div class="finance-group incoming">
       <div class="finance-group-head"><strong>Entradas</strong><span>Direitos a receber</span></div>
       <div class="finance-row">
         <article class="finance-tile "><div class="finance-tile-head"><span>Contas a receber</span><button type="button" class="help-trigger" data-help="s_receber" aria-label="Explicar Contas a receber" aria-haspopup="dialog" aria-expanded="false" title="Entenda este indicador">?</button></div><strong id="s_receber">—</strong><small>Saldo pendente de recebimento</small></article>
@@ -203,11 +229,11 @@ button{font:inherit}.button{display:flex;gap:6px;align-items:center;border:0;bor
     </div>
   </section>
   <section class="grid">
-    <article class="panel"><div class="panel-head"><div><div class="chart-title-row"><h2>Evolução financeira</h2><button type="button" class="help-trigger" data-help="chartMonthly" aria-label="Explicar gráfico Evolução financeira" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o gráfico">?</button></div><p>Faturamento realizado e saldos em aberto por vencimento. Últimos 6 meses até o mês de referência.</p></div><a href="financeiro.html">Financeiro <i data-lucide="arrow-up-right"></i></a></div><div class="chart-area"><canvas id="chartMonthly"></canvas><div class="emptychart" id="emptyMonthly" hidden>Sem dados disponíveis para o gráfico.</div></div></article>
+    <article class="panel"><div class="panel-head"><div><div class="chart-title-row"><h2>Evolução financeira</h2><button type="button" class="help-trigger" data-help="chartMonthly" aria-label="Explicar gráfico Evolução financeira" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o gráfico">?</button></div><p>Faturamento, pagamentos e recebimentos com totais por vencimento. Últimos 6 meses.</p></div><a href="financeiro.html">Financeiro <i data-lucide="arrow-up-right"></i></a></div><div class="series-controls" id="controlsMonthly" role="group" aria-label="Exibir ou ocultar indicadores da evolução financeira"></div><div class="chart-area"><canvas id="chartMonthly"></canvas><div class="emptychart" id="emptyMonthly" hidden>Sem dados disponíveis para o gráfico.</div></div></article>
     <article class="panel"><div class="panel-head"><div><div class="chart-title-row"><h2>Carteira por cliente</h2><button type="button" class="help-trigger" data-help="chartClients" aria-label="Explicar gráfico Carteira por cliente" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o gráfico">?</button></div><p>Sete maiores saldos a faturar, pedidos aprovados.</p></div><a href="carteira.html">Carteira <i data-lucide="arrow-up-right"></i></a></div><div class="chart-area"><canvas id="chartClients"></canvas><div class="emptychart" id="emptyClients" hidden>Sem dados disponíveis para o gráfico.</div></div></article>
   </section>
   <section class="finance-chart-section">
-    <article class="panel"><div class="panel-head"><div><div class="chart-title-row"><h2>Pagamentos e recebimentos: composição mensal</h2><button type="button" class="help-trigger" data-help="chartFinanceComposition" aria-label="Explicar gráfico de composição financeira" aria-haspopup="dialog" aria-expanded="false" title="Entenda este indicador">?</button></div><p>Pagas + a pagar e recebidas + a receber, separadas por situação. Últimos 6 meses.</p></div><a href="financeiro.html">Financeiro <i data-lucide="arrow-up-right"></i></a></div><div class="chart-area finance-chart"><canvas id="chartFinanceComposition"></canvas><div class="emptychart" id="emptyFinanceComposition" hidden>Sem dados financeiros disponíveis para o gráfico.</div></div></article>
+    <article class="panel"><div class="panel-head"><div><div class="chart-title-row"><h2>Pagamentos e recebimentos: composição mensal</h2><button type="button" class="help-trigger" data-help="chartFinanceComposition" aria-label="Explicar gráfico de composição financeira" aria-haspopup="dialog" aria-expanded="false" title="Entenda este indicador">?</button></div><p>Contas pagas e pendentes, recebidas e pendentes, com totais opcionais. Últimos 6 meses.</p></div><a href="financeiro.html">Financeiro <i data-lucide="arrow-up-right"></i></a></div><div class="series-controls" id="controlsFinanceComposition" role="group" aria-label="Exibir ou ocultar indicadores financeiros no gráfico de composição"></div><div class="chart-area finance-chart"><canvas id="chartFinanceComposition"></canvas><div class="emptychart" id="emptyFinanceComposition" hidden>Sem dados financeiros disponíveis para o gráfico.</div></div></article>
   </section>
   <section class="grid">
     <article class="panel"><div class="panel-head"><div><h2>Atenções gerenciais</h2><p>Pontos que precisam de acompanhamento. Alertas calculados com os dados efetivamente carregados.</p></div><span class="badge" id="alertCount">—</span></div><div class="alerts" id="alerts"><div class="alert"><div class="dot"></div><div><strong>Consultando operações...</strong></div></div></div></article>
@@ -230,6 +256,6 @@ button{font:inherit}.button{display:flex;gap:6px;align-items:center;border:0;bor
   <div class="help-header"><strong id="helpTitle"></strong><button type="button" class="help-close" id="helpClose" aria-label="Fechar explicação">×</button></div>
   <p id="helpDescription"></p><div id="helpSource" class="help-source"></div>
 </div>
-<script src="dashboard.js?v=6"></script>
+<script src="dashboard.js?v=7"></script>
 </body>
 </html>
