@@ -119,66 +119,79 @@ function sourceLabel(k,short) {
  if(!st||!st.ready)return 'SEM DADOS'+(st?.error?' · atualização falhou':'');
  return (st.live?'API':'CACHE')+' · '+formatSyncDate(st.savedAt,!short)+(st.error?' · atualização falhou':'');
 }
+function syncStamp(iso){
+ if(!iso)return 's/ horário';
+ var d=new Date(iso);
+ if(!Number.isFinite(d.getTime()))return 's/ horário';
+ var now=new Date(),sameDay=d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth()&&d.getDate()===now.getDate();
+ var time=d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+ return sameDay?time:d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' '+time;
+}
 function updateFreshness(){
  var cached=names.filter(function(k){return status[k].ready&&!status[k].live;});
  var failed=names.filter(function(k){return !status[k].ready&&!!status[k].error;});
- var loading=names.filter(function(k){return !status[k].ready&&!status[k].error;});
- var box=byId('freshness'),ttl=byId('freshnessTitle'),desc=byId('freshnessDescription'),detail=byId('freshnessGrid');
- if(!box||!detail)return;
- box.classList.toggle('has-stale',cached.length>0);
- box.classList.toggle('has-error',failed.length>0);
- if(cached.length) {
-   ttl.textContent='Atenção: exibindo dados de cache em '+cached.length+' fonte(s)';
-   desc.textContent=cached.map(function(k){return SOURCES[k].name+' ('+formatSyncDate(status[k].savedAt,true)+')';}).join(' · ')+(failed.length?' · '+failed.length+' fonte(s) sem dados.':'');
- } else if(failed.length) {
-   ttl.textContent='Atenção: '+failed.length+' fonte(s) sem dados disponíveis';
-   desc.textContent=failed.map(function(k){return SOURCES[k].name;}).join(', ')+'. As informações dependentes dessas fontes aparecem indisponíveis.';
- } else if(loading.length){
-   ttl.textContent=fetching?'Consultando as APIs...':'Carregando as fontes do painel...';
-   desc.textContent=(names.length-loading.length)+' de '+names.length+' fontes carregadas.';
- } else{
-   ttl.textContent='Dados atualizados diretamente pelas APIs';
-   desc.textContent='Última sincronização por fonte disponível abaixo. O mês de referência não altera a data de atualização.';
+ var pending=names.filter(function(k){return !status[k].ready&&!status[k].error;});
+ var latestLive=names.filter(function(k){return status[k].live&&status[k].savedAt;})
+   .map(function(k){return Date.parse(status[k].savedAt);}).filter(Number.isFinite);
+ var oldestCache=cached.map(function(k){return Date.parse(status[k].savedAt);}).filter(Number.isFinite);
+ var chip=byId('dataStatus'),label=byId('syncLabel'),description=byId('freshnessDescription'),details=byId('freshnessGrid');
+ if(!chip||!label||!details)return;
+ var time=latestLive.length?syncStamp(new Date(Math.max.apply(null,latestLive))):'';
+ if(cached.length){
+   label.textContent='Cache ('+cached.length+')'+(oldestCache.length?' · '+syncStamp(new Date(Math.min.apply(null,oldestCache))):'');
+   chip.className='status-chip cache';
+   description.textContent=cached.length+' de '+names.length+' fontes usando cache. Toque em cada fonte abaixo para conferir o horário. '+(failed.length?failed.length+' fonte(s) indisponível(is).':'');
+ }else if(failed.length){
+   label.textContent='Falha ('+failed.length+')';
+   chip.className='status-chip bad';
+   description.textContent=failed.length+' fonte(s) sem dados. As demais informações disponíveis continuam sendo exibidas.';
+ }else if(pending.length){
+   label.textContent=fetching?'Atualizando...':'Carregando...';
+   chip.className='status-chip loading';
+   description.textContent='Carregando os dados dos módulos.';
+ }else{
+   label.textContent='Atualizado'+(time?' · '+time:'');
+   chip.className='status-chip ok';
+   description.textContent='Fontes sincronizadas com as APIs. Horários detalhados abaixo.';
  }
- detail.innerHTML=names.map(function(k){
-   var st=status[k],state=st.live?'API':st.ready?'CACHE':st.error?'ERRO':'CARREGANDO';
-   return '<div class="source-row"><strong>'+esc(SOURCES[k].name)+'</strong><span class="source-time">'+esc(state)+' · '+esc(formatSyncDate(st.savedAt,true))+'</span></div>';
+ details.innerHTML=names.map(function(k){
+   var st=status[k];
+   var state=st.live?'API':st.ready?'CACHE':st.error?'ERRO':'CARREGANDO';
+   var color=state==='CACHE'?' cache':state==='ERRO'?' bad':'';
+   return '<div class="source-row"><strong>'+esc(SOURCES[k].name)+'</strong><span class="source-time'+color+'" title="'+esc(st.error||'')+'">'+esc(state)+' · '+esc(formatSyncDate(st.savedAt,true))+'</span></div>';
  }).join('');
- var tags=document.querySelectorAll('[data-freshness]');
- tags.forEach(function(el) {
-  var ids=el.getAttribute('data-freshness').split(',').filter(function(k){return SOURCES[k]});
-  var cs=ids.filter(function(k){return status[k].ready&&!status[k].live;});
-  var missing=ids.filter(function(k){return !status[k].ready});
-  var stale=cs.length>0,missingError=missing.some(function(k){return status[k].error});
-  el.classList.toggle('stale',stale);el.classList.toggle('failed',missingError);
-  if(cs.length){
-   el.textContent=cs.map(function(k){return 'CACHE '+(ids.length>1?SOURCES[k].name+' ':'')+formatSyncDate(status[k].savedAt,false);}).join(' · ')+(missing.length?' · fonte pendente':'');
-  }else if(missing.length){
-   el.textContent=missingError?'Fonte indisponível':'Aguardando API';
-  }else{
-   var times=ids.map(function(k){return status[k].savedAt;}).filter(Boolean).map(function(x){return new Date(x).getTime();}).filter(Number.isFinite);
-   el.textContent=times.length?'API · '+formatSyncDate(new Date(Math.min.apply(null,times)).toISOString(),false):'API · sem horário';
-  }
-  el.title=ids.map(function(k){return SOURCES[k].name+': '+sourceLabel(k,false);}).join('\n');
- });
+ var summary=cached.length?cached.length+' fonte(s) em cache':failed.length?failed.length+' fonte(s) indisponível(is)':'Fontes atualizadas';
+ chip.title=summary+'. Clique para ver data e hora por fonte.';
+ chip.setAttribute('aria-label',summary+'. Abrir detalhes de atualização.');
 }
-
 function setStatus(){
  var ready=names.filter(function(k){return status[k].ready;}).length;
  var live=names.filter(function(k){return status[k].live;}).length;
  var failures=names.filter(function(k){return !!status[k].error;}).length;
  var stale=names.filter(function(k){return status[k].ready&&!status[k].live;}).length;
- var label=(fetching?'Sincronizando · ':'')+ready+'/'+names.length+' fontes disponíveis';
- if(failures)label+=' · '+failures+' falha(s)';
- else if(stale)label+=' · '+stale+' em cache';
- var el=byId('dataStatus');el.textContent=label;
- el.className='status '+(failures?'warn':ready===names.length&&!fetching?'ok':'');
- el.title=names.map(function(k){var s=status[k];return SOURCES[k].name+': '+(s.error?'Falhou ('+s.error+')':s.live?'API':s.ready?'Cache local':'Pendente');}).join(' | ');
- byId('sourceDetail').textContent=live+'/'+names.length+' APIs online'+(stale?' · '+stale+' cache':'')+(failures?' · '+failures+' falha(s)':'');
+ var detail=byId('sourceDetail');
+ if(detail)detail.textContent=live+'/'+names.length+' APIs online'+(stale?' · '+stale+' cache':'')+(failures?' · '+failures+' falha(s)':'');
  var dates=names.filter(function(k){return status[k].savedAt;}).map(function(k){return new Date(status[k].savedAt).getTime();}).filter(Number.isFinite);
  byId('lastUpdated').textContent=dates.length?'Última atualização registrada em '+new Date(Math.max.apply(null,dates)).toLocaleString('pt-BR'):'Sem dados recebidos';
  updateFreshness();
 }
+function closeFreshness(){
+ var box=byId('freshnessPopover');if(!box)return;
+ box.hidden=true;
+ byId('dataStatus').setAttribute('aria-expanded','false');
+}
+function toggleFreshness(){
+ var box=byId('freshnessPopover');if(!box)return;
+ var open=box.hidden;
+ box.hidden=!open;
+ byId('dataStatus').setAttribute('aria-expanded',open?'true':'false');
+}
+byId('dataStatus').addEventListener('click',toggleFreshness);
+byId('closeFreshness').addEventListener('click',closeFreshness);
+document.addEventListener('click',function(e){
+ if(!e.target.closest('.sync-wrap'))closeFreshness();
+});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeFreshness();});
 function scheduleRender(){clearTimeout(renderTimer);renderTimer=setTimeout(render,140);}
 function loadCache(){
  if(!window.PstecCache)return Promise.resolve();
