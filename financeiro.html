@@ -402,6 +402,16 @@ function sourceArray(v){
 }
 // Usa exatamente as colunas, o valor e a data de pesquisa da aba Carteira do Capital de Giro.
 // A conversão existe apenas para manter o detalhamento e o restante do Financeiro intactos.
+function capitalNumber(v){
+ if(v===null||v===undefined||v==='')return 0;
+ if(typeof v==='number')return Number.isFinite(v)?v:0;
+ let s=String(v).replace(/R\$/g,'').replace(/%/g,'').replace(/\s/g,'');
+ if(/^\(.*\)$/.test(s))s='-'+s.slice(1,-1);
+ if(s.includes(',')&&s.includes('.'))s=s.replace(/\./g,'').replace(',','.');
+ else if(s.includes(','))s=s.replace(',','.');
+ const x=parseFloat(s);
+ return Number.isFinite(x)?x:0;
+}
 function normalizeCarteiraCapital(rows){
  if(rows.some(r=>!r||typeof r!=='object'||!Object.hasOwn(r,'Vl. a faturar')||
     !Object.hasOwn(r,'Saldo a entregar')||!Object.hasOwn(r,'Status orçamento')||
@@ -419,10 +429,10 @@ function normalizeCarteiraCapital(rows){
   n_pedido:r['Nº Pedido']??'',
   produto:r.Item??'',
   status_orcamento:r['Status orçamento']??'',
-  qtde_pendente:r['Saldo a entregar'],
+  qtde_pendente:capitalNumber(r['Saldo a entregar']),
   situacao_carteira:r['Status OS']??'',
-  vl_unitario:r['Vl. Unitário']??0,
-  vl_a_faturar:r['Vl. a faturar']
+  vl_unitario:capitalNumber(r['Vl. Unitário']),
+  vl_a_faturar:capitalNumber(r['Vl. a faturar'])
  }));
 }
 function fillCompanies(){
