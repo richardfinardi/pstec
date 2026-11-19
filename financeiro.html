@@ -70,7 +70,7 @@
    <div class="field"><label>Valor a pagar</label><select id="f_valorP"><option value="rateio">Valor do plano (original)</option><option value="saldo">Saldo pendente rateado</option></select></div>
    <div class="field"><label>Categoria A pagar</label><select id="f_grupo"><option value="all">Todas</option><option value="MP">Matéria-prima</option><option value="IMPOSTOS">Impostos</option><option value="FINANCEIRO">Geral</option></select></div>
    <div class="field"><label>Plano de contas (buscar)</label><input id="f_plano" placeholder="Todos os planos"></div>
-   <div class="field"><label>Carteira</label><select id="f_carteira"><option value="1">Aprovados com saldo</option><option value="all">Todos com saldo</option><option value="todos">Incluir sem saldo</option></select></div>
+   <div class="field"><label>Carteira</label><select id="f_carteira"><option value="1">Aprovados com saldo a entregar</option><option value="all">Todos com saldo a entregar</option><option value="todos">Incluir sem saldo</option></select></div>
    <div class="field"><label>Pesquisa no detalhe</label><input id="f_busca" placeholder="Cliente, documento, fornecedor..."></div>
    <div class="field"><label>Juros — ano de referência</label><select id="f_anoJ"></select></div>
   </div>
@@ -122,8 +122,10 @@
 
 'use strict';
 const API='https://pstec.consultoriarf.net/';
-const SOURCES={pagar:'financeiro_pagar',receber:'financeiro_receber',carteira:'financeiro_carteira'};
+const SOURCES={pagar:'financeiro_pagar',receber:'financeiro_receber',carteira:'capital_carteira'};
 const CACHE_PREFIX='pstec_financeiro_analitico_v1_';
+// O cache da Carteira precisa ser isolado do antigo financeiro_carteira.
+const CACHE_KEYS={pagar:CACHE_PREFIX+'pagar',receber:CACHE_PREFIX+'receber',carteira:'pstec_financeiro_carteira_capital_v2'};
 const STATE_KEY='pstec_financeiro_filtros_v1';
 const raw={pagar:[],receber:[],carteira:[]},sync={},charts={};
 const today=new Date(),year=today.getFullYear(),currentMonth=today.getMonth(),quarter=Math.floor(currentMonth/3)*3;
@@ -166,13 +168,30 @@ function monthsRange(){
  for(let i=0;i<120&&(y<ey||(y===ey&&m<=em));i++){out.push(ym(y,m));m++;if(m===12){m=0;y++}}
  return out;
 }
-function company(r){return !state.empresa||String(r.cod_empresa)===state.empresa}
+function company(r){
+ if(!state.empresa)return true;
+ if(r.cod_empresa!==null&&r.cod_empresa!==undefined&&String(r.cod_empresa)!=='')
+  return String(r.cod_empresa)===state.empresa;
+ // capital_carteira identifica a empresa por nome; os endpoints financeiros usam código.
+ const sel=document.getElementById('f_empresa');
+ const selected=sel?[...sel.options].find(o=>o.value===state.empresa):null;
+ const simplify=v=>norm(v).replace(/[^A-Z0-9]/g,'');
+ return !!selected&&simplify(r.empresa)===simplify(selected.textContent);
+}
 function prev(r,opt){return opt==='all'||String(n(r.previsao))===opt}
 function status(v,filter){const x=norm(v),f=norm(filter);return f==='ALL'||(f==='ABERTOS'?(x==='EM ABERTO'||x==='PARCIAL'):x===f)}
 function amountP(r){return n(state.valorP==='saldo'?r.saldo_rateado:r.valor_rateio)}
 function passesP(r){return company(r)&&inPeriod(r.dt_vencimento)&&prev(r,state.prevP)&&status(r.status_pagamento,state.statusP)&&(state.grupo==='all'||String(r.grupo_financeiro)===state.grupo)&&(!state.plano||norm(r.plano_contas).includes(norm(state.plano)))}
 function passesR(r){return company(r)&&inPeriod(r.dt_vencimento)&&prev(r,state.prevR)&&status(r.status_titulo,state.statusR)&&(state.nf==='all'||String(r.status_emissao_nf)===state.nf)}
-function passesC(r){return company(r)&&inPeriod(r.prazo)&&(state.carteira==='todos'||n(r.vl_a_faturar)>0)&&(state.carteira!=='1'||String(r.status_orcamento)==='1')}
+function passesC(r){
+ if(!company(r)||!inPeriod(r.prazo))return false;
+ if(state.carteira==='todos')return true;
+ // Repete a regra de baseRows() do Capital de Giro: APROVADO, quantidade
+ // pendente positiva e número de orçamento informado.
+ if(!(n(r.qtde_pendente)>0))return false;
+ if(state.carteira==='all')return true;
+ return norm(r.status_orcamento)==='APROVADO'&&String(r.orcamento??'').trim()!=='';
+}
 function buildModel(){
  const months=monthsRange(),index=new Map(months.map((k,i)=>[k,i]));
  const rows=months.map(m=>({mes:m,mp:0,impostos:0,financeiro:0,pagar:0,receber:0,carteira:0,saldo:0}));
@@ -204,7 +223,7 @@ function drawKpis(){
  const arr=[
   ['Total a pagar',x.pagar,'red','Títulos e rateios selecionados'],
   ['Total a receber',x.receber,'green','Saldo das parcelas filtradas'],
-  ['Carteira total',x.carteira,'blue','A faturar dos pedidos'],
+  ['Carteira total',x.carteira,'blue','Mesma base do Capital de Giro · previsão de entrega'],
   ['Saldo acumulado',x.saldo,'red','A receber − A pagar'],
   ['Saldo final do período',round(x.carteira+x.saldo),'gold','Carteira + saldo acumulado']
  ];
@@ -381,6 +400,31 @@ function sourceArray(v){
  for(const k of ['data','results','rows','items','registros'])if(Array.isArray(v?.[k]))return v[k];
  throw Error('Resposta da API não contém uma lista de registros');
 }
+// Usa exatamente as colunas, o valor e a data de pesquisa da aba Carteira do Capital de Giro.
+// A conversão existe apenas para manter o detalhamento e o restante do Financeiro intactos.
+function normalizeCarteiraCapital(rows){
+ if(rows.some(r=>!r||typeof r!=='object'||!Object.hasOwn(r,'Vl. a faturar')||
+    !Object.hasOwn(r,'Saldo a entregar')||!Object.hasOwn(r,'Status orçamento')||
+    !Object.hasOwn(r,'Nº Orçamento'))){
+  throw Error('capital_carteira retornou colunas incompatíveis; carteira não atualizada');
+ }
+ return rows.map(r=>({
+  cod_empresa:r.cod_empresa??r.COD_EMPRESA??r['Cód. Empresa']??null,
+  empresa:r.Empresa??'',
+  // Mesma prioridade da função rowDateForTab() em capital.html.
+  prazo:r.previsao_ent_pesq||r['Dt. Negociada']||r['Prev. entrega(original)']||'',
+  cliente:r.Cliente??'',
+  orcamento:r['Nº Orçamento']??'',
+  os:r['Nº OS']??'',
+  n_pedido:r['Nº Pedido']??'',
+  produto:r.Item??'',
+  status_orcamento:r['Status orçamento']??'',
+  qtde_pendente:r['Saldo a entregar'],
+  situacao_carteira:r['Status OS']??'',
+  vl_unitario:r['Vl. Unitário']??0,
+  vl_a_faturar:r['Vl. a faturar']
+ }));
+}
 function fillCompanies(){
  const list=new Map();
  for(const type of Object.keys(raw))for(const r of raw[type]){
@@ -394,7 +438,7 @@ function fillCompanies(){
 async function loadCache(){
  if(!window.PstecCache)return;
  for(const k of Object.keys(SOURCES)){
-  try{const value=await PstecCache.read(CACHE_PREFIX+k);if(value&&Array.isArray(value.data)){raw[k]=value.data;sync[k]={cache:true,ok:false,date:value.savedAt}}}
+  try{const value=await PstecCache.read(CACHE_KEYS[k]);if(value&&Array.isArray(value.data)){raw[k]=value.data;sync[k]={cache:true,ok:false,date:value.savedAt}}}
   catch(e){console.warn('Cache '+k,e)}
  }
  fillCompanies();scheduleRender();sourceBadge();
@@ -408,8 +452,9 @@ async function loadSource(k){
   finally{clearTimeout(timer)}
   if(!res.ok)throw Error('HTTP '+res.status);
   const data=sourceArray(await res.json());
-  raw[k]=data;sync[k]={ok:true,cache:false,date:Date.now()};
-  if(window.PstecCache)try{await PstecCache.write(CACHE_PREFIX+k,data,new Date().toISOString())}catch(e){console.warn('Falha no cache '+k,e)}
+  raw[k]=k==='carteira'?normalizeCarteiraCapital(data):data;
+  sync[k]={ok:true,cache:false,date:Date.now()};
+  if(window.PstecCache)try{await PstecCache.write(CACHE_KEYS[k],raw[k],new Date().toISOString())}catch(e){console.warn('Falha no cache '+k,e)}
   fillCompanies();scheduleRender();
  }catch(e){
   console.error('PSTEC '+k,e);raw[k]=previous;sync[k]={...sync[k],ok:false,error:String(e.message||e)};
