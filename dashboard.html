@@ -163,6 +163,16 @@ button{font:inherit}.button{display:flex;gap:6px;align-items:center;border:0;bor
 .series-control.is-total{border-style:dashed}
 .series-control.is-total .swatch{border-radius:50%}
 @media(max-width:650px){.series-controls{gap:5px}.series-control{padding:6px 7px;font-size:10px}}
+
+.finance-row-four{grid-template-columns:repeat(4,minmax(0,1fr))}
+.finance-tile.is-overdue{position:relative;border-color:#efd5d7;background:#fff9f9}
+.finance-group.outgoing .finance-tile.is-overdue strong{color:#b42e47}
+.finance-group.incoming .finance-tile.is-overdue{background:#f5fcf9;border-color:#c4e8dc}
+.finance-group.incoming .finance-tile.is-overdue strong{color:#078263}
+.finance-tile.is-overdue:before{content:"";position:absolute;left:0;top:16px;bottom:16px;width:3px;border-radius:3px;background:#d46b78}
+.finance-group.incoming .finance-tile.is-overdue:before{background:#3aa487}
+@media(max-width:1150px){.finance-row-four{grid-template-columns:repeat(2,minmax(0,1fr))}.finance-row-four .finance-tile.is-total{grid-column:auto}}
+@media(max-width:450px){.finance-row-four{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -199,21 +209,23 @@ button{font:inherit}.button{display:flex;gap:6px;align-items:center;border:0;bor
     <article class="kpi green"><div class="kpi-top"><span class="kpi-heading"><span class="kpi-label">Pontualidade</span><button type="button" class="help-trigger" data-help="k_pontualidade" aria-label="Explicar Pontualidade" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o indicador">?</button></span><span class="icon"><i data-lucide="gauge"></i></span></div><strong class="kpi-value" id="k_pontualidade">—</strong><div class="kpi-note">Qtde faturada no prazo no mês</div></article>
   </section>
   <section class="finance-summary" aria-label="Panorama financeiro">
-    <div class="finance-summary-head"><div><h2>Panorama financeiro</h2><p>Valores dos títulos com vencimento no mês selecionado, sem previsões.</p></div><span id="financePeriod" class="finance-period">—</span></div>
+    <div class="finance-summary-head"><div><h2>Panorama financeiro</h2><p>Valores por vencimento no mês selecionado, sem previsões. Atrasados mostram o acumulado até ontem.</p></div><span id="financePeriod" class="finance-period">—</span></div>
     <div class="finance-group outgoing">
       <div class="finance-group-head"><strong>Saídas</strong><span>Compromissos financeiros</span></div>
-      <div class="finance-row">
+      <div class="finance-row finance-row-four">
         <article class="finance-tile "><div class="finance-tile-head"><span>Contas a pagar</span><button type="button" class="help-trigger" data-help="s_pagar" aria-label="Explicar Contas a pagar" aria-haspopup="dialog" aria-expanded="false" title="Entenda este indicador">?</button></div><strong id="s_pagar">—</strong><small>Saldo pendente de pagamento</small></article>
         <article class="finance-tile is-settled"><div class="finance-tile-head"><span>Contas pagas</span><button type="button" class="help-trigger" data-help="s_pagas" aria-label="Explicar Contas pagas" aria-haspopup="dialog" aria-expanded="false" title="Entenda este indicador">?</button></div><strong id="s_pagas">—</strong><small>Valor já liquidado</small></article>
         <article class="finance-tile is-total"><div class="finance-tile-head"><span>Pagas + a pagar</span><button type="button" class="help-trigger" data-help="s_total_pagar" aria-label="Explicar Pagas + a pagar" aria-haspopup="dialog" aria-expanded="false" title="Entenda este indicador">?</button></div><strong id="s_total_pagar">—</strong><small>Total dos compromissos</small></article>
+        <article class="finance-tile is-overdue"><div class="finance-tile-head"><span>A pagar atrasadas</span><button type="button" class="help-trigger" data-help="s_pagar_atrasado" aria-label="Explicar contas a pagar atrasadas" aria-haspopup="dialog" aria-expanded="false" title="Entenda este indicador">?</button></div><strong id="s_pagar_atrasado">—</strong><small id="s_pagar_atrasado_info">Vencidas, ainda não pagas</small></article>
       </div>
     </div>
     <div class="finance-group incoming">
       <div class="finance-group-head"><strong>Entradas</strong><span>Direitos a receber</span></div>
-      <div class="finance-row">
+      <div class="finance-row finance-row-four">
         <article class="finance-tile "><div class="finance-tile-head"><span>Contas a receber</span><button type="button" class="help-trigger" data-help="s_receber" aria-label="Explicar Contas a receber" aria-haspopup="dialog" aria-expanded="false" title="Entenda este indicador">?</button></div><strong id="s_receber">—</strong><small>Saldo pendente de recebimento</small></article>
         <article class="finance-tile is-settled"><div class="finance-tile-head"><span>Contas recebidas</span><button type="button" class="help-trigger" data-help="s_recebidas" aria-label="Explicar Contas recebidas" aria-haspopup="dialog" aria-expanded="false" title="Entenda este indicador">?</button></div><strong id="s_recebidas">—</strong><small>Valor já recebido</small></article>
         <article class="finance-tile is-total"><div class="finance-tile-head"><span>Recebidas + a receber</span><button type="button" class="help-trigger" data-help="s_total_receber" aria-label="Explicar Recebidas + a receber" aria-haspopup="dialog" aria-expanded="false" title="Entenda este indicador">?</button></div><strong id="s_total_receber">—</strong><small>Total dos créditos</small></article>
+        <article class="finance-tile is-overdue"><div class="finance-tile-head"><span>A receber atrasadas</span><button type="button" class="help-trigger" data-help="s_receber_atrasado" aria-label="Explicar contas a receber atrasadas" aria-haspopup="dialog" aria-expanded="false" title="Entenda este indicador">?</button></div><strong id="s_receber_atrasado">—</strong><small id="s_receber_atrasado_info">Vencidas, ainda não recebidas</small></article>
       </div>
     </div>
     <div class="finance-group">
@@ -230,7 +242,7 @@ button{font:inherit}.button{display:flex;gap:6px;align-items:center;border:0;bor
     </div>
   </section>
   <section class="grid">
-    <article class="panel"><div class="panel-head"><div><div class="chart-title-row"><h2>Evolução financeira</h2><button type="button" class="help-trigger" data-help="chartMonthly" aria-label="Explicar gráfico Evolução financeira" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o gráfico">?</button></div><p>Faturamento, pagamentos e recebimentos com totais por vencimento. Últimos 6 meses.</p></div><a href="financeiro.html">Financeiro <i data-lucide="arrow-up-right"></i></a></div><div class="series-controls" id="controlsMonthly" role="group" aria-label="Exibir ou ocultar indicadores da evolução financeira"></div><div class="chart-area"><canvas id="chartMonthly"></canvas><div class="emptychart" id="emptyMonthly" hidden>Sem dados disponíveis para o gráfico.</div></div></article>
+    <article class="panel"><div class="panel-head"><div><div class="chart-title-row"><h2>Evolução financeira</h2><button type="button" class="help-trigger" data-help="chartMonthly" aria-label="Explicar gráfico Evolução financeira" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o gráfico">?</button></div><p>Faturamento, pagamentos, recebimentos e saldo de cada mês. Últimos 6 meses.</p></div><a href="financeiro.html">Financeiro <i data-lucide="arrow-up-right"></i></a></div><div class="series-controls" id="controlsMonthly" role="group" aria-label="Exibir ou ocultar indicadores da evolução financeira"></div><div class="chart-area"><canvas id="chartMonthly"></canvas><div class="emptychart" id="emptyMonthly" hidden>Sem dados disponíveis para o gráfico.</div></div></article>
     <article class="panel"><div class="panel-head"><div><div class="chart-title-row"><h2>Carteira por cliente</h2><button type="button" class="help-trigger" data-help="chartClients" aria-label="Explicar gráfico Carteira por cliente" aria-haspopup="dialog" aria-expanded="false" title="Clique para entender o gráfico">?</button></div><p>Sete maiores saldos a faturar, pedidos aprovados.</p></div><a href="carteira.html">Carteira <i data-lucide="arrow-up-right"></i></a></div><div class="chart-area"><canvas id="chartClients"></canvas><div class="emptychart" id="emptyClients" hidden>Sem dados disponíveis para o gráfico.</div></div></article>
   </section>
   <section class="finance-chart-section">
@@ -257,6 +269,6 @@ button{font:inherit}.button{display:flex;gap:6px;align-items:center;border:0;bor
   <div class="help-header"><strong id="helpTitle"></strong><button type="button" class="help-close" id="helpClose" aria-label="Fechar explicação">×</button></div>
   <p id="helpDescription"></p><div id="helpSource" class="help-source"></div>
 </div>
-<script src="dashboard.js?v=7"></script>
+<script src="dashboard.js?v=8"></script>
 </body>
 </html>
