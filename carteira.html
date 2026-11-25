@@ -180,6 +180,10 @@
 
     <!-- PAINEL DE CONTROLES E FILTROS COMPLETO -->
     <main class="max-w-[96%] w-full mx-auto p-3 flex flex-col gap-3 flex-1">
+    <div id="carteiraAlertBanner" class="hidden flex-wrap items-center justify-between gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-xs font-bold text-red-800" role="status">
+        <span>Filtro do Dashboard Gerencial: carteira aprovada com entrega vencida e saldo pendente.</span>
+        <button type="button" onclick="clearAllFilters()" class="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-red-700 hover:bg-red-100">Limpar filtro</button>
+    </div>
         
         <div class="carteira-filters-section bg-white p-3 rounded-2xl border border-slate-200 flex flex-col gap-3 shadow-sm">
             <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
@@ -626,7 +630,8 @@
         let carteiraLastApiSyncAt = 0;
         let carteiraAutoRefreshTimer = null;
         let currentFilteredData = [];
-        let carteiraViewMode = localStorage.getItem('pstec_carteira_view_mode') || 'table';
+        let carteiraAlertMode = new URLSearchParams(window.location.search).get('alert') === 'prazo_vencido';
+        let carteiraViewMode = carteiraAlertMode ? 'table' : (localStorage.getItem('pstec_carteira_view_mode') || 'table');
         let carteiraCharts = {};
         let carteiraDashboardClickState = {};
         
@@ -916,6 +921,20 @@
             }
 
             restoreCarteiraFiltersState();
+            if (carteiraAlertMode) {
+                // Este link substitui filtros pessoais que poderiam ocultar os itens do alerta.
+                Object.keys(filterState).forEach(k => filterState[k].clear());
+                Object.keys(colFilterState).forEach(k => delete colFilterState[k]);
+                filterState['Status OS'].add('APROVADO');
+                filterState.SaldoEntrega.add('com_saldo');
+                ['searchInput','dateFrom','dateTo'].forEach(id => {
+                    const el=document.getElementById(id);if(el)el.value='';
+                });
+                sortColumn='Dt. Pesquisa';
+                sortAsc=true;
+                const banner=document.getElementById('carteiraAlertBanner');
+                banner.classList.remove('hidden');banner.classList.add('flex');
+            }
 
             document.getElementById('tableScrollContainer')?.addEventListener('scroll', closeCarteiraColFilters, {passive:true});
             window.addEventListener('resize', closeCarteiraColFilters);
@@ -1837,6 +1856,14 @@
                 const rawDtPesquisa = item['Dt. Pesquisa'];
                 const dtPesquisa = (rawDtPesquisa && rawDtPesquisa !== 'NaT' && rawDtPesquisa !== 'None' && rawDtPesquisa !== 'null') ? String(rawDtPesquisa).substring(0, 10) : '';
 
+                if (carteiraAlertMode) {
+                    const actualDate = item['Dt. Pesquisa'] || item['Dt. Negociada'] || item['Prev. entrega(original)'];
+                    const due = actualDate ? String(actualDate).slice(0, 10) : '';
+                    const now = new Date();
+                    const today = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+                    if (!due || due >= today || parseNum(item['Saldo a entregar'])<=0 || String(item['Status OS']).toUpperCase()!=='APROVADO') continue;
+                }
+
                 if (hasDateFilter) {
                     if (!dtPesquisa) continue;
                     if (!mainFilterMatches('Ano', dtPesquisa.substring(0,4))) continue;
@@ -2734,6 +2761,12 @@
         }
 
         function clearAllFilters() {
+            if(carteiraAlertMode){
+                carteiraAlertMode=false;
+                history.replaceState(null,'',window.location.pathname);
+                const banner=document.getElementById('carteiraAlertBanner');
+                if(banner){banner.classList.add('hidden');banner.classList.remove('flex');}
+            }
             localStorage.removeItem(FILTER_CACHE_KEY);
             carteiraDashboardClickState = {};
             document.getElementById('searchInput').value = '';
