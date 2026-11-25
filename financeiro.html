@@ -102,7 +102,7 @@
   </div>
  </section>
  <section class="page" id="view_juros">
-  <div class="toolbar"><div><h2 class="sectiontitle" style="margin:0">Juros de antecipação</h2><p class="sectiondesc" style="margin:4px 0">Contas a pagar: JUROS DE ANTECIPAÇÃO + Contas a receber: DESCONTO (sinal invertido).</p></div><div class="inline"><span class="pill" id="jurosTotalAnterior"></span><span class="pill" id="jurosTotalAtual"></span></div></div>
+  <div class="toolbar"><div><h2 class="sectiontitle" style="margin:0">Juros de antecipação</h2><p class="sectiondesc" style="margin:4px 0">Contas a pagar: JUROS DE ANTECIPAÇÃO + Contas a receber: DESCONTOS (sinal invertido).</p></div><div class="inline"><span class="pill" id="jurosTotalAnterior"></span><span class="pill" id="jurosTotalAtual"></span></div></div>
   <div class="card chartcard"><div class="toolbar" style="margin:0 0 8px"><h3>Comparativo anual por mês</h3><div class="inline"><label for="jurosModo" class="muted">Exibir</label><select id="jurosModo" class="toggle"><option value="total">Total de antecipações</option><option value="pagar">Somente juros (a pagar)</option><option value="receber">Somente descontos (a receber)</option></select></div></div><div class="sub">Data de pagamento; na ausência, vencimento ou abertura. Respeita a empresa e o ano de referência; independe dos demais filtros.</div><div id="jurosComposicao" class="inline" style="margin:0 0 12px"></div><div id="jurosApiAviso" class="hintbar" style="display:none"></div><div id="jurosEmpty" class="hintbar" style="display:none"></div><div class="chartbox" id="jurosChartBox" style="height:350px"><canvas id="chartJuros"></canvas></div></div>
   <div class="card tablecard" style="margin-top:14px"><div class="toolbar"><strong style="font-size:13px">Lançamentos de juros e descontos</strong><span class="statline" id="jurosRowsLabel"></span></div><div class="tablewrap" id="jurosTable" style="max-height:65vh"></div></div>
  </section>
@@ -125,7 +125,7 @@ const API='https://pstec.consultoriarf.net/';
 const SOURCES={pagar:'financeiro_pagar',receber:'financeiro_receber',carteira:'capital_carteira'};
 const CACHE_PREFIX='pstec_financeiro_analitico_v1_';
 // O cache da Carteira precisa ser isolado do antigo financeiro_carteira.
-const CACHE_KEYS={pagar:CACHE_PREFIX+'pagar',receber:'pstec_financeiro_receber_planos_v2',carteira:'pstec_financeiro_carteira_capital_v2'};
+const CACHE_KEYS={pagar:CACHE_PREFIX+'pagar',receber:'pstec_financeiro_receber_planos_v3',carteira:'pstec_financeiro_carteira_capital_v2'};
 const STATE_KEY='pstec_financeiro_filtros_v1';
 const raw={pagar:[],receber:[],carteira:[]},sync={},charts={};
 const today=new Date(),year=today.getFullYear(),currentMonth=today.getMonth(),quarter=Math.floor(currentMonth/3)*3;
@@ -305,7 +305,7 @@ function interestDate(r){return datekey(r.dt_pagamento)||datekey(r.dt_vencimento
 function discountPlans(r){
  let plans=r.planos_contas;
  if(typeof plans==='string'){try{plans=JSON.parse(plans)}catch(e){plans=null}}
- return Array.isArray(plans)?plans.filter(p=>p&&norm(p.plano_contas)==='DESCONTO'):[];
+ return Array.isArray(plans)?plans.filter(p=>p&&['DESCONTO','DESCONTOS'].includes(norm(p.plano_contas))):[];
 }
 function allJurosRows(){
  const items=[];
@@ -319,7 +319,7 @@ function allJurosRows(){
    for(const p of plans)items.push({...r,origem:'Contas a receber',tipo_juros:'receber',parte:r.cliente,plano_contas:p.plano_contas,valor_antecipacao:-n(p.valor)});
   }else{
    const value=r.valor_juros_antecipacao!=null?n(r.valor_juros_antecipacao):-n(r.valor_desconto);
-   if(value!==0)items.push({...r,origem:'Contas a receber',tipo_juros:'receber',parte:r.cliente,plano_contas:'DESCONTO',valor_antecipacao:value});
+   if(value!==0)items.push({...r,origem:'Contas a receber',tipo_juros:'receber',parte:r.cliente,plano_contas:'DESCONTOS',valor_antecipacao:value});
   }
  }
  return items;
