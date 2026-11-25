@@ -49,6 +49,9 @@ main{max-width:1550px;margin:auto;padding:24px 22px 50px}.headline{display:flex;
 <body>
 <header><div class="top"><a href="index.html" aria-label="Menu PSTEC"><img src="./logo.png" alt="PSTEC"></a><div class="brand"><strong>CONTROLE DE COMPRAS</strong><small>GRUPO PSTEC • Materiais, serviços terceirizados, OCs, recebimentos e pagamentos</small></div><a href="index.html" class="btn navy small"><span class="namehide">Menu PSTEC</span><span>↩</span></a><button class="btn primary small" id="refresh">↻ Atualizar</button></div></header>
 <main>
+<div id="alertOrigin" hidden style="margin:8px 0 14px;padding:10px 14px;background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;border-radius:11px;font-size:12px;font-weight:700;display:none;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+ <span id="alertOriginText"></span><button type="button" id="clearAlertOrigin" style="background:#fff;border:1px solid #bfdbfe;border-radius:8px;padding:6px 12px;color:#1e40af;cursor:pointer;font-weight:700">Limpar filtros</button>
+</div>
 <section class="headline"><div><h1>Monitoramento de compras</h1><p>Materiais e serviços terceirizados: da solicitação à OC, recebimento e pagamento, com prazo da OS.</p></div><div id="dataStatus" class="status">Aguardando dados</div></section>
 <section class="cards kpi-summary" id="cards">
 <div class="card"><span class="tag">OS monitoradas</span><b id="k_os">—</b><small>com materiais ou serviços</small></div>
@@ -102,6 +105,8 @@ const $=id=>document.getElementById(id);
 const campos=['search','type','company','quote','buy','processing','pay','deadline'];
 const multiIds=campos.filter(x=>x!=='search');
 let savedFilters={};
+const comprasAlertMode=new URLSearchParams(window.location.search).get('alert');
+const comprasAlertActive=['sem_oc','nao_processados'].includes(comprasAlertMode);
 const filterCatalog={};
 const data=v=>{if(v==null||v==='')return null;const d=new Date(String(v).substring(0,10)+'T12:00:00');return Number.isNaN(d.getTime())?null:d;};
 const fmt=v=>{const d=data(v);return d?d.toLocaleDateString('pt-BR'):'—';};
@@ -133,6 +138,15 @@ function setMultiOptions(id,options,preserve=true){
 }
 function restore(){
  try{savedFilters=JSON.parse(localStorage.getItem(PREF)||'{}')||{}}catch{savedFilters={}}
+ if(comprasAlertActive){
+  savedFilters={search:'',type:['MATERIAL'],
+   ...(comprasAlertMode==='sem_oc'?{buy:['SEM_OC'],processing:['PROCESSADO']}:{processing:['NAO_PROCESSADO']})};
+  const banner=$('alertOrigin');
+  banner.hidden=false;banner.style.display='flex';
+  $('alertOriginText').textContent=comprasAlertMode==='sem_oc'
+   ?'Dashboard Gerencial: somente materiais processados e aguardando emissão de OC.'
+   :'Dashboard Gerencial: somente materiais aguardando processamento.';
+ }
  $('search').value=savedFilters.search||'';
  for(const id of multiIds){
   const sel=$(id),opts=[...sel.options].filter(o=>o.value).map(o=>({value:o.value,label:o.textContent}));
@@ -448,7 +462,15 @@ try{await window.PstecCache?.write(CACHE,a)}catch{}
 }catch(e){console.warn('Atualização de compras indisponível:',e);setStatus('Atualização indisponível','bad');if(!all.length)$('rows').innerHTML='<tr><td colspan="28" class="empty">Não foi possível carregar os dados. Tente atualizar novamente.</td></tr>';}
 finally{updating=false;$('refresh').disabled=false;}}
 function exportCsv(){const keys=['tipo_item','aut_servico','aut_item_oc','cod_empresa','n_os','orcamentos','qtd_orcamentos','cliente','cotacoes','status_cotacao_material','dt_primeira_cotacao','dt_cotacao_vinculada_oc','dt_prevista_os','dt_entrada_os','dt_processamento_referencia','lead_time_os_processamento_dias','origem_previsao','titulo_os','produto','cod_interno','cod_os_aux','qtde_lista','qtde_a_comprar_cps','cod_oc','qtde_oc','fornecedor','dt_oc','dt_primeira_entrada','dt_ultima_entrada','nfs_entrada','previsao_entrega_cliente','dias_ate_entrega_cliente','lead_time_solicitacao_oc_dias','lead_time_processamento_cotacao_dias','lead_time_cotacao_oc_dias','lead_time_compras_dias','cadeia_compras_valida','lead_time_suprimentos_dias','lead_time_oc_primeira_entrada_dias','lead_time_oc_ultima_entrada_dias','status_compra','status_pagamento_oc','saldo_pagar_oc'];const csv=[keys.join(';'),...filtered.map(r=>keys.map(k=>'"'+String(r[k]??'').replaceAll('"','""')+'"').join(';'))].join('\r\n');let a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));a.download='pstec_compras_'+new Date().toISOString().slice(0,10)+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),3000);}
-restore();$('search').addEventListener('input',()=>apply('search'));$('refresh').addEventListener('click',load);$('export').addEventListener('click',exportCsv);$('reset').addEventListener('click',()=>{$('search').value='';for(const id of multiIds){$(id).querySelectorAll('.multi-opt input').forEach(c=>c.checked=false);multiLabel(id);}apply();});
+restore();$('search').addEventListener('input',()=>apply('search'));$('refresh').addEventListener('click',load);$('export').addEventListener('click',exportCsv);function clearAlertOrigin(){
+ const banner=$('alertOrigin');banner.hidden=true;banner.style.display='none';
+ if(comprasAlertActive)history.replaceState(null,'',window.location.pathname);
+ $('search').value='';
+ for(const id of multiIds){$(id).querySelectorAll('.multi-opt input').forEach(c=>c.checked=false);multiLabel(id);}
+ apply();
+}
+$('clearAlertOrigin').addEventListener('click',clearAlertOrigin);
+$('reset').addEventListener('click',()=>{if(comprasAlertActive){$('alertOrigin').hidden=true;$('alertOrigin').style.display='none';history.replaceState(null,'',window.location.pathname);}$('search').value='';for(const id of multiIds){$(id).querySelectorAll('.multi-opt input').forEach(c=>c.checked=false);multiLabel(id);}apply();});
 (async()=>{try{const v=await window.PstecCache?.read(CACHE);if(Array.isArray(v?.data)){all=v.data;companies();apply();setStatus('CACHE LOCAL • atualizando…','warn');}}catch{}await load();})();
 })();
 </script>
