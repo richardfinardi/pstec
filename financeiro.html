@@ -151,6 +151,13 @@ let state={...defaults},page=0,model={rows:[],pagar:[],receber:[],carteira:[]},l
 try{const saved=JSON.parse(localStorage.getItem(STATE_KEY)||'{}');for(const k of Object.keys(defaults))if(Object.hasOwn(saved,k))state[k]=saved[k];}catch(e){}
 // Migra a seleção única salva pelas versões anteriores.
 state.empresa=Array.isArray(state.empresa)?[...new Set(state.empresa.map(String).filter(Boolean))]:state.empresa==null||state.empresa===''?null:[String(state.empresa)];
+const financeiroLink=new URLSearchParams(window.location.search);
+const financeiroAlertMonth=financeiroLink.get('alert')==='saldo_negativo' && /^\d{4}-(0[1-9]|1[0-2])$/.test(financeiroLink.get('mes')||'')?financeiroLink.get('mes'):null;
+if(financeiroAlertMonth){
+ // Abrir resumo de todas as contas do mês, inclusive já liquidadas, sem carregar os filtros salvos.
+ state={...defaults,from:financeiroAlertMonth,to:financeiroAlertMonth,
+  statusP:'all',statusR:'all',nf:'all',prevP:'0',prevR:'0',empresa:null,grupo:'all',plano:'',view:'resumo'};
+}
 const brl=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
 const num=new Intl.NumberFormat('pt-BR',{maximumFractionDigits:2});
 function n(v){
