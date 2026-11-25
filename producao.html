@@ -570,6 +570,8 @@
         let abaAtiva = 'dashboard';
 
         let onlyWithBudget = false;
+        // Link direto dos alertas do Dashboard Gerencial.
+        let productionAlertMode = new URLSearchParams(window.location.search).get('alert') === 'os_atrasadas';
         let isValuesUnlocked = true;
 
         // Mapeamento de dígitos para senhas aleatórias
@@ -605,7 +607,15 @@
             }
 
             configurarVisibilidadeAbas();
-
+            if (productionAlertMode) {
+                // Ignora filtros adicionais e mostra todas as OS atrasadas, independentemente do mês.
+                ['searchInput','segmentoFilter','apontamentoAbertoFilter','clientFilter','prataFilter','classificacaoFilter','comprasFilter','terceirosFilter'].forEach(id => {
+                    const el=document.getElementById(id);if(el)el.value='';
+                });
+                document.getElementById('atrasadaFilter').value='sim';
+                document.getElementById('producaoFilter').value='nao_finalizado';
+                onlyWithBudget=false;
+            }
             lucide.createIcons();
             setViewMode(currentView, false);
             loadProductionData();
@@ -1216,6 +1226,10 @@
             return rawData.filter(item => {
                 const estaNoLimbo = String(item.u_limbo) === '1' || item.u_limbo === 1;
                 if (estaNoLimbo) return false;
+                if (productionAlertMode) {
+                    const st = String(item.status_producao || '').toUpperCase();
+                    if (st.includes('FINALIZADO') || st.includes('CONCLUID') || st.includes('100%')) return false;
+                }
                 if (search) {
                     const fullItemStr = Object.values(item).join(' ');
                     if (!matchesWildcardSearch(fullItemStr, search)) return false;
@@ -1304,7 +1318,7 @@
 
             const search = (document.getElementById('searchInput')?.value || '').trim();
 
-            if (search) {
+            if (search || productionAlertMode) {
                 renderSearchResultsView(filtered);
             } else {
                 if (currentView === 'month') {
@@ -1788,12 +1802,13 @@
                         <div class="flex items-center gap-2">
                             <i data-lucide="search-check" class="w-5 h-5 text-pstec-700"></i>
                             <h3 class="font-extrabold text-slate-800 text-sm">
-                                Resultado da Busca Global (${filtered.length} OS${filtered.length === 1 ? '' : 's'} Encontradas)
+                                ${productionAlertMode ? 'OS atrasadas · Dashboard Gerencial' : 'Resultado da Busca Global'} (${filtered.length} OS${filtered.length === 1 ? '' : 's'})
                             </h3>
                         </div>
-                        <span class="text-xs font-extrabold text-pstecgreen-600 font-mono">
-                            Total: ${formatBRL(totalValorBusca)}
-                        </span>
+                        <div class="flex items-center gap-2">
+                            ${productionAlertMode ? '<button type="button" onclick="clearAllFilters()" class="bg-slate-100 text-slate-700 border border-slate-200 rounded-lg px-3 py-1.5 font-bold text-xs">Limpar filtro do alerta</button>' : ''}
+                            <span class="text-xs font-extrabold text-pstecgreen-600 font-mono">Total: ${formatBRL(totalValorBusca)}</span>
+                        </div>
                     </div>
 
                     ${filtered.length === 0 ? `
@@ -2174,6 +2189,10 @@
         }
 
         function clearAllFilters() {
+            if (productionAlertMode) {
+                productionAlertMode = false;
+                history.replaceState(null, '', window.location.pathname);
+            }
             document.getElementById('searchInput').value = '';
             document.getElementById('atrasadaFilter').value = '';
             document.getElementById('apontamentoAbertoFilter').value = '';
