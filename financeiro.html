@@ -116,8 +116,8 @@
   </div>
  </section>
  <section class="page" id="view_juros">
-  <div class="toolbar"><div><h2 class="sectiontitle" style="margin:0">Juros de antecipação</h2><p class="sectiondesc" style="margin:4px 0">Contas a pagar: JUROS DE ANTECIPAÇÃO + Contas a receber: DESCONTOS (sinal invertido).</p></div><div class="inline"><span class="pill" id="jurosTotalAnterior"></span><span class="pill" id="jurosTotalAtual"></span></div></div>
-  <div class="card chartcard"><div class="toolbar" style="margin:0 0 8px"><h3>Comparativo anual por mês</h3><div class="inline"><label for="jurosModo" class="muted">Exibir</label><select id="jurosModo" class="toggle"><option value="total">Total de antecipações</option><option value="pagar">Somente juros (a pagar)</option><option value="receber">Somente descontos (a receber)</option></select></div></div><div class="sub">Data de pagamento; na ausência, vencimento ou abertura. Respeita a empresa e o ano de referência; independe dos demais filtros.</div><div id="jurosComposicao" class="inline" style="margin:0 0 12px"></div><div id="jurosApiAviso" class="hintbar" style="display:none"></div><div id="jurosEmpty" class="hintbar" style="display:none"></div><div class="chartbox" id="jurosChartBox" style="height:350px"><canvas id="chartJuros"></canvas></div></div>
+  <div class="toolbar"><div><h2 class="sectiontitle" style="margin:0">Juros de antecipação</h2><p class="sectiondesc" style="margin:4px 0">Contas a pagar: JUROS DE ANTECIPAÇÃO + Contas a receber: DESCONTOS e JUROS DE ANTECIPAÇÃO (sinal invertido).</p></div><div class="inline"><span class="pill" id="jurosTotalAnterior"></span><span class="pill" id="jurosTotalAtual"></span></div></div>
+  <div class="card chartcard"><div class="toolbar" style="margin:0 0 8px"><h3>Comparativo anual por mês</h3><div class="inline"><label for="jurosModo" class="muted">Exibir</label><select id="jurosModo" class="toggle"><option value="total">Total de antecipações</option><option value="pagar">Somente juros (a pagar)</option><option value="receber">Todos do contas a receber</option><option value="descontos">Somente descontos (a receber)</option><option value="juros_receber">Somente juros (a receber)</option></select></div></div><div class="sub">Data de pagamento; na ausência, vencimento ou abertura. Respeita a empresa e o ano de referência; independe dos demais filtros.</div><div id="jurosComposicao" class="inline" style="margin:0 0 12px"></div><div id="jurosApiAviso" class="hintbar" style="display:none"></div><div id="jurosEmpty" class="hintbar" style="display:none"></div><div class="chartbox" id="jurosChartBox" style="height:350px"><canvas id="chartJuros"></canvas></div></div>
   <div class="card tablecard" style="margin-top:14px"><div class="toolbar"><strong style="font-size:13px">Lançamentos de juros e descontos</strong><span class="statline" id="jurosRowsLabel"></span></div><div class="tablewrap" id="jurosTable" style="max-height:65vh"></div></div>
  </section>
  <section class="page" id="view_detalhes">
@@ -326,10 +326,20 @@ function isInterest(r){
  return bool(r.juros_antecipacao)||(text.includes('JUROS')&&text.includes('ANTECIP'));
 }
 function interestDate(r){return datekey(r.dt_pagamento)||datekey(r.dt_vencimento)||datekey(r.dt_abertura)}
-function discountPlans(r){
+function receivingPlanType(p){
+ if(!p)return '';
+ const name=norm(p.plano_contas),code=String(p.cod_plano_contas??'');
+ if(code==='195'||name==='JUROS DE ANTECIPACAO')return 'juros_receber';
+ if(code==='97'||['DESCONTO','DESCONTOS'].includes(name))return 'descontos';
+ return '';
+}
+function receivingPlans(r){
  let plans=r.planos_contas;
  if(typeof plans==='string'){try{plans=JSON.parse(plans)}catch(e){plans=null}}
- return Array.isArray(plans)?plans.filter(p=>p&&['DESCONTO','DESCONTOS'].includes(norm(p.plano_contas))):[];
+ return Array.isArray(plans)?plans:null;
+}
+function matchesJurosMode(r){
+ return jurosModo==='total'||r.tipo_juros===jurosModo||(jurosModo==='receber'&&r.tipo_juros!=='pagar');
 }
 function allJurosRows(){
  const items=[];
@@ -338,12 +348,16 @@ function allJurosRows(){
  }
  for(const r of raw.receber){
   if(!company(r))continue;
-  const plans=discountPlans(r);
-  if(plans.length){
-   for(const p of plans)items.push({...r,origem:'Contas a receber',tipo_juros:'receber',parte:r.cliente,plano_contas:p.plano_contas,valor_antecipacao:-n(p.valor)});
+  const plans=receivingPlans(r);
+  if(plans!==null){
+   for(const p of plans){
+    const type=receivingPlanType(p);if(!type)continue;
+    items.push({...r,origem:'Contas a receber',tipo_juros:type,parte:r.cliente,plano_contas:p.plano_contas||(type==='juros_receber'?'JUROS DE ANTECIPAÇÃO':'DESCONTOS'),valor_antecipacao:-n(p.valor)});
+   }
   }else{
+   // Compatibilidade com o campo consolidado antigo, que representa apenas descontos.
    const value=r.valor_juros_antecipacao!=null?n(r.valor_juros_antecipacao):-n(r.valor_desconto);
-   if(value!==0)items.push({...r,origem:'Contas a receber',tipo_juros:'receber',parte:r.cliente,plano_contas:'DESCONTOS',valor_antecipacao:value});
+   if(value!==0)items.push({...r,origem:'Contas a receber',tipo_juros:'descontos',parte:r.cliente,plano_contas:'DESCONTOS',valor_antecipacao:value});
   }
  }
  return items;
@@ -356,29 +370,29 @@ function jurosRows(all,y){
 }
 function drawJuros(){
  const y=Number(state.anoJ)||year,allInterest=allJurosRows(),items=jurosRows(allInterest,y);
- const months=Array.from({length:12},()=>Array.from({length:2},()=>({pagar:0,receber:0})));
+ const months=Array.from({length:12},()=>Array.from({length:2},()=>({pagar:0,descontos:0,juros_receber:0})));
  for(const r of items){
   const key=interestDate(r),jy=Number(key.slice(0,4)),m=Number(key.slice(5,7))-1;
   if(m>=0&&m<12)months[m][jy===y?1:0][r.tipo_juros]+=r.valor_antecipacao;
  }
- const sums=[0,1].map(i=>months.reduce((a,m)=>({pagar:a.pagar+m[i].pagar,receber:a.receber+m[i].receber}),{pagar:0,receber:0}));
- const total=x=>round(x.pagar+x.receber);
+ const sums=[0,1].map(i=>months.reduce((a,m)=>({pagar:a.pagar+m[i].pagar,descontos:a.descontos+m[i].descontos,juros_receber:a.juros_receber+m[i].juros_receber}),{pagar:0,descontos:0,juros_receber:0}));
+ const total=x=>round(x.pagar+x.descontos+x.juros_receber);
  document.getElementById('jurosTotalAnterior').textContent=(y-1)+': '+brl.format(total(sums[0]));
  document.getElementById('jurosTotalAtual').textContent=y+': '+brl.format(total(sums[1]));
- document.getElementById('jurosComposicao').innerHTML=sums.map((x,i)=>'<span class="pill" style="color:#b53b33">'+(y-1+i)+' · Juros: '+brl.format(round(x.pagar))+'</span><span class="pill" style="color:#9a600b">'+(y-1+i)+' · Descontos: '+brl.format(round(x.receber))+'</span>').join('');
+ document.getElementById('jurosComposicao').innerHTML=sums.map((x,i)=>'<span class="pill" style="color:#b53b33">'+(y-1+i)+' · Juros (pagar): '+brl.format(round(x.pagar))+'</span><span class="pill" style="color:#9a600b">'+(y-1+i)+' · Descontos (receber): '+brl.format(round(x.descontos))+'</span><span class="pill" style="color:#80529c">'+(y-1+i)+' · Juros (receber): '+brl.format(round(x.juros_receber))+'</span>').join('');
  document.getElementById('jurosModo').value=jurosModo;
- const value=x=>jurosModo==='total'?total(x):round(x[jurosModo]);
- const shown=items.filter(r=>jurosModo==='total'||r.tipo_juros===jurosModo).sort((a,b)=>interestDate(b).localeCompare(interestDate(a)));
+ const value=x=>jurosModo==='total'?total(x):jurosModo==='receber'?round(x.descontos+x.juros_receber):round(x[jurosModo]);
+ const shown=items.filter(matchesJurosMode).sort((a,b)=>interestDate(b).localeCompare(interestDate(a)));
  makeChart('chartJuros','bar',['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'],[
   {label:String(y-1),data:months.map(x=>value(x[0])),backgroundColor:'#596577',borderRadius:3},
   {label:String(y),data:months.map(x=>value(x[1])),backgroundColor:'#e4a42a',borderRadius:3}
  ],{layout:{padding:{top:22,bottom:18}}});
- const years=[...new Set(allInterest.filter(r=>jurosModo==='total'||r.tipo_juros===jurosModo).map(r=>interestDate(r).slice(0,4)).filter(Boolean))].sort();
+ const years=[...new Set(allInterest.filter(matchesJurosMode).map(r=>interestDate(r).slice(0,4)).filter(Boolean))].sort();
  const notice=document.getElementById('jurosEmpty'),box=document.getElementById('jurosChartBox'),apiNotice=document.getElementById('jurosApiAviso');
- const missingPlans=raw.receber.length>0&&!raw.receber.some(r=>Object.hasOwn(r,'planos_contas')||Object.hasOwn(r,'valor_juros_antecipacao')||Object.hasOwn(r,'valor_desconto'));
+ const missingPlans=raw.receber.some(r=>company(r)&&receivingPlans(r)===null);
  const incomplete=missingPlans||!sync.receber?.ok&&!sync.receber?.cache;
  apiNotice.style.display=incomplete?'block':'none';
- apiNotice.textContent=missingPlans?'O endpoint de contas a receber ainda não retornou os planos de contas ou descontos. Totais podem estar incompletos.':'Dados de contas a receber ainda não disponíveis. Totais podem estar incompletos.';
+ apiNotice.textContent=missingPlans?'Existem títulos a receber sem a lista de planos de contas. Os juros de antecipação do recebimento podem estar incompletos.':'Dados de contas a receber ainda não disponíveis. Totais podem estar incompletos.';
  if(shown.length===0){
   notice.style.display='block';
   notice.textContent=years.length?'Nenhum lançamento da origem selecionada em '+(y-1)+' ou '+y+'. Anos disponíveis: '+years.join(', ')+'.':'Nenhum lançamento de juros ou descontos identificado para a origem selecionada.';
