@@ -41,6 +41,20 @@
 @media(max-width:1450px){.filtergrid{grid-template-columns:repeat(4,minmax(0,1fr))}.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:950px){.chartgrid,.chartgrid.equal{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.filtergrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:560px){.wrap{padding:14px 10px 30px}.topin{padding:10px 12px}.filtercard{padding:12px}.filtergrid{grid-template-columns:repeat(2,minmax(0,1fr))}.kpis{gap:8px}.kpi{padding:13px 11px}.kpi strong{font-size:17px}.chartcard{padding:13px}.chartbox{height:260px}.navbutton{padding:9px 12px}.brandtitle{font-size:15px}.wide{grid-column:1/-1}}
+.company-picker{position:relative;min-width:0}
+.company-trigger{width:100%;height:35px;display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid #dce5ef;background:#f9fbfe;border-radius:8px;padding:0 9px;color:#22374b;font-size:12px;text-align:left;cursor:pointer}
+.company-trigger:focus-visible{outline:2px solid #5188d9;outline-offset:1px}
+#empresaCaption{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.company-chevron{border:solid currentColor;border-width:0 1.5px 1.5px 0;padding:3px;transform:rotate(45deg);margin:0 3px 4px;flex-shrink:0}
+.company-popup{position:absolute;top:calc(100% + 5px);left:0;width:max-content;min-width:100%;max-width:min(430px,calc(100vw - 24px));background:white;border:1px solid #dce5ef;border-radius:10px;box-shadow:0 8px 24px #102a4626;padding:6px;z-index:60}
+.company-popup[hidden]{display:none}
+.field .company-option{display:flex;align-items:center;gap:9px;padding:9px 7px;margin:0;font-size:12px;font-weight:550;color:#22374b;text-transform:none;letter-spacing:0;cursor:pointer;border-radius:5px}
+.company-option:hover{background:#edf4fc}
+.field .company-option input{width:16px;height:16px;flex:0 0 16px;margin:0;padding:0;accent-color:#003b96}
+.company-option span{overflow-wrap:anywhere}
+.company-all{border-bottom:1px solid #e3eaf2}
+#empresaList{max-height:260px;overflow:auto}
+@media(max-width:560px){.company-popup{width:100%;min-width:0;max-width:100%}}
 </style>
 </head>
 <body>
@@ -61,7 +75,7 @@
   <div class="filtergrid">
    <div class="field"><label>Período inicial</label><div class="period-pair"><select id="f_fromMonth" aria-label="Mês inicial"></select><select id="f_fromYear" aria-label="Ano inicial"></select></div></div>
    <div class="field"><label>Período final</label><div class="period-pair"><select id="f_toMonth" aria-label="Mês final"></select><select id="f_toYear" aria-label="Ano final"></select></div></div>
-   <div class="field"><label>Empresa</label><select id="f_empresa"><option value="">Todas</option></select></div>
+   <div class="field"><label id="empresaLabel">Empresa</label><div class="company-picker" id="empresaPicker"><button type="button" id="f_empresa" class="company-trigger" aria-labelledby="empresaLabel empresaCaption" aria-expanded="false" aria-controls="empresaOptions"><span id="empresaCaption">Todas</span><span aria-hidden="true" class="company-chevron"></span></button><div class="company-popup" id="empresaOptions" hidden><label class="company-option company-all"><input type="checkbox" id="empresaAll"><span>Selecionar todas</span></label><div id="empresaList"></div></div></div></div>
    <div class="field"><label>A pagar — previsão</label><select id="f_prevP"><option value="0">Somente efetivos</option><option value="1">Somente previsões</option><option value="all">Ambos</option></select></div>
    <div class="field"><label>A pagar — situação</label><select id="f_statusP"><option value="abertos">Em aberto + parcial</option><option value="EM ABERTO">Em aberto</option><option value="PARCIAL">Parcial</option><option value="PAGO">Pago</option><option value="all">Todas</option></select></div>
    <div class="field"><label>A receber — previsão</label><select id="f_prevR"><option value="0">Somente efetivos</option><option value="1">Somente previsões</option><option value="all">Ambos</option></select></div>
@@ -130,10 +144,13 @@ const STATE_KEY='pstec_financeiro_filtros_v1';
 const raw={pagar:[],receber:[],carteira:[]},sync={},charts={};
 const today=new Date(),year=today.getFullYear(),currentMonth=today.getMonth(),quarter=Math.floor(currentMonth/3)*3;
 const ym=(y,m)=>String(y)+'-'+String(m+1).padStart(2,'0');
-const defaults={from:ym(year,quarter),to:ym(year,quarter+2),empresa:'',prevP:'0',statusP:'abertos',prevR:'0',statusR:'abertos',nf:'COM NF',valorP:'rateio',grupo:'all',plano:'',carteira:'1',busca:'',anoJ:String(year),view:'resumo',detail:'pagar',pageSize:'50'};
+const defaults={from:ym(year,quarter),to:ym(year,quarter+2),empresa:null,prevP:'0',statusP:'abertos',prevR:'0',statusR:'abertos',nf:'COM NF',valorP:'rateio',grupo:'all',plano:'',carteira:'1',busca:'',anoJ:String(year),view:'resumo',detail:'pagar',pageSize:'50'};
 let jurosModo='total';
+let companyOptions=new Map();
 let state={...defaults},page=0,model={rows:[],pagar:[],receber:[],carteira:[]},loading=false,renderTimer=0;
 try{const saved=JSON.parse(localStorage.getItem(STATE_KEY)||'{}');for(const k of Object.keys(defaults))if(Object.hasOwn(saved,k))state[k]=saved[k];}catch(e){}
+// Migra a seleção única salva pelas versões anteriores.
+state.empresa=Array.isArray(state.empresa)?[...new Set(state.empresa.map(String).filter(Boolean))]:state.empresa==null||state.empresa===''?null:[String(state.empresa)];
 const brl=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
 const num=new Intl.NumberFormat('pt-BR',{maximumFractionDigits:2});
 function n(v){
@@ -170,14 +187,14 @@ function monthsRange(){
  return out;
 }
 function company(r){
- if(!state.empresa)return true;
- if(r.cod_empresa!==null&&r.cod_empresa!==undefined&&String(r.cod_empresa)!=='')
-  return String(r.cod_empresa)===state.empresa;
- // capital_carteira identifica a empresa por nome; os endpoints financeiros usam código.
- const sel=document.getElementById('f_empresa');
- const selected=sel?[...sel.options].find(o=>o.value===state.empresa):null;
+ if(state.empresa===null)return true;
+ if(!state.empresa.length)return false;
+ const code=String(r.cod_empresa??'').trim();
+ if(code)return state.empresa.includes(code);
+ // A Carteira pode identificar a empresa apenas pelo nome.
  const simplify=v=>norm(v).replace(/[^A-Z0-9]/g,'');
- return !!selected&&simplify(r.empresa)===simplify(selected.textContent);
+ const name=simplify(r.empresa);
+ return !!name&&state.empresa.some(code=>companyOptions.has(code)&&simplify(companyOptions.get(code))===name);
 }
 function prev(r,opt){return opt==='all'||String(n(r.previsao))===opt}
 function status(v,filter){const x=norm(v),f=norm(filter);return f==='ALL'||(f==='ABERTOS'?(x==='EM ABERTO'||x==='PARCIAL'):x===f)}
@@ -481,12 +498,45 @@ function normalizeCarteiraCapital(rows){
 function fillCompanies(){
  const list=new Map();
  for(const type of Object.keys(raw))for(const r of raw[type]){
-  const key=String(r.cod_empresa??'');
+  const key=String(r.cod_empresa??'').trim();
   if(key&&!list.has(key))list.set(key,String(r.empresa||'Empresa '+key));
  }
- const sel=document.getElementById('f_empresa');
- sel.innerHTML='<option value="">Todas</option>'+[...list].sort((a,b)=>a[1].localeCompare(b[1])).map(x=>'<option value="'+ehtml(x[0])+'">'+ehtml(x[1])+'</option>').join('');
- sel.value=state.empresa;
+ companyOptions=new Map([...list].sort((a,b)=>a[1].localeCompare(b[1],'pt-BR')));
+ document.getElementById('empresaList').innerHTML=[...companyOptions].map(([code,name])=>'<label class="company-option"><input type="checkbox" value="'+ehtml(code)+'" data-company><span>'+ehtml(name)+'</span></label>').join('');
+ drawCompanyFilter();
+}
+function drawCompanyFilter(){
+ const selected=state.empresa;
+ const all=document.getElementById('empresaAll');
+ const list=document.getElementById('empresaList');
+ const boxes=[...list.querySelectorAll('input[data-company]')];
+ for(const box of boxes)box.checked=selected===null||selected.includes(box.value);
+ all.checked=selected===null||(boxes.length>0&&boxes.every(box=>box.checked));
+ all.indeterminate=!all.checked&&boxes.some(box=>box.checked);
+ all.disabled=boxes.length===0;
+ const count=selected===null?0:selected.length;
+ const caption=selected===null?'Todas':count===0?'Nenhuma':count===1?(companyOptions.get(selected[0])||'Empresa '+selected[0]):count+' empresas selecionadas';
+ const el=document.getElementById('empresaCaption');
+ el.textContent=caption;
+ document.getElementById('f_empresa').title=selected===null?'Todas as empresas':selected.map(code=>companyOptions.get(code)||'Empresa '+code).join(', ')||'Nenhuma empresa selecionada';
+}
+function changeCompanies(next){
+ state.empresa=next;
+ drawCompanyFilter();page=0;save();scheduleRender();
+}
+function setupCompanyFilter(){
+ const picker=document.getElementById('empresaPicker'),trigger=document.getElementById('f_empresa'),popup=document.getElementById('empresaOptions');
+ const open=value=>{popup.hidden=!value;trigger.setAttribute('aria-expanded',String(value))};
+ trigger.addEventListener('click',()=>open(popup.hidden));
+ document.getElementById('empresaAll').addEventListener('change',e=>changeCompanies(e.target.checked?null:[]));
+ document.getElementById('empresaList').addEventListener('change',e=>{
+  const box=e.target;if(!box.matches('input[data-company]'))return;
+  const next=new Set(state.empresa===null?companyOptions.keys():state.empresa);
+  if(box.checked)next.add(box.value);else next.delete(box.value);
+  changeCompanies([...next]);
+ });
+ document.addEventListener('click',e=>{if(!picker.contains(e.target))open(false)});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!popup.hidden){open(false);trigger.focus()}});
 }
 async function loadCache(){
  if(!window.PstecCache)return;
@@ -522,7 +572,8 @@ async function reloadAll(){
 }
 function save(){localStorage.setItem(STATE_KEY,JSON.stringify(state))}
 function applyFilters(){
- for(const id of ['empresa','prevP','statusP','prevR','statusR','nf','valorP','grupo','plano','carteira','busca','anoJ']){
+ drawCompanyFilter();
+ for(const id of ['prevP','statusP','prevR','statusR','nf','valorP','grupo','plano','carteira','busca','anoJ']){
   const el=document.getElementById('f_'+id);if(el)el.value=state[id]??defaults[id];
  }
  for(const side of ['from','to']){
@@ -565,11 +616,12 @@ function setup(){
  const yearSel=document.getElementById('f_anoJ');
  for(let y=year+1;y>=year-12;y--)yearSel.innerHTML+='<option value="'+y+'">'+y+'</option>';
  populatePeriodSelectors();
+ setupCompanyFilter();
  applyFilters();
  for(const side of ['from','to']){
   for(const kind of ['Month','Year'])document.getElementById('f_'+side+kind).addEventListener('change',()=>periodChanged(side));
  }
- for(const id of ['empresa','prevP','statusP','prevR','statusR','nf','valorP','grupo','plano','carteira','busca','anoJ']){
+ for(const id of ['prevP','statusP','prevR','statusR','nf','valorP','grupo','plano','carteira','busca','anoJ']){
   const el=document.getElementById('f_'+id);
   el.addEventListener(id==='plano'||id==='busca'?'input':'change',()=>{
    state[id]=el.value;
