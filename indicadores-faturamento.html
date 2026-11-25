@@ -171,7 +171,11 @@ const VIEW_KEY='pstec_indicadores_view_v1';
 const FILTER_STATE_KEY='pstec_indicadores_filter_state_v1';
 
 let data=[], currentRows=[], charts={}, refreshing=false, cacheSavedAt=null, lastApiSync=0, timer=null, searchTimer=null;
-let viewMode=localStorage.getItem(VIEW_KEY)||'table';
+const indicatorAlertParams=new URLSearchParams(window.location.search);
+const indicatorAlertActive=indicatorAlertParams.get('alert')==='fora_prazo';
+const indicatorAlertMonth=/^\d{4}-(0[1-9]|1[0-2])$/.test(indicatorAlertParams.get('mes')||'')?indicatorAlertParams.get('mes'):'';
+let indicatorAlertApplied=false;
+let viewMode=indicatorAlertActive?'table':(localStorage.getItem(VIEW_KEY)||'table');
 if(window.ChartDataLabels)Chart.register(ChartDataLabels);
 let sortState={key:null,asc:true};
 let dashboardFilter=null;
@@ -462,6 +466,7 @@ function toggleAllColFilter(){
 }
 
 function clearFilters(){
+ if(indicatorAlertActive)history.replaceState(null,'',window.location.pathname);
  ['searchInput','fEmpresa','fCliente','fPedido','fNF','fOrcamento','fEntrega','fPrazo','fAno','fMes','fDe','fAte'].forEach(id=>{let e=document.getElementById(id);if(e)e.value=''});
  Object.keys(colSelections).forEach(k=>delete colSelections[k]);dashboardFilter=null;sortState={key:null,asc:true};
  try{localStorage.removeItem(FILTER_STATE_KEY)}catch{}
@@ -808,8 +813,20 @@ function executeExcelExport(){
 
 function logout(){['pstec_token','pstec_usuario_nome','pstec_perm_faturamento','pstec_perm_finalizacao'].forEach(k=>localStorage.removeItem(k));window.location.href='login-pstec.html'}
 function updateLast(){let dt=PstecCache.formatDateTime(cacheSavedAt);document.getElementById('lastUpdate').textContent=cacheSavedAt?'Dados: '+(dt||'-'):'Aguardando dados...'}
+function applyIndicatorAlertLink(){
+ if(!indicatorAlertActive||indicatorAlertApplied)return;
+ indicatorAlertApplied=true;
+ ['searchInput','fEmpresa','fCliente','fPedido','fNF','fOrcamento','fEntrega','fPrazo','fAno','fMes','fDe','fAte'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+ Object.keys(colSelections).forEach(k=>delete colSelections[k]);
+ if(indicatorAlertMonth){
+  document.getElementById('fAno').value=indicatorAlertMonth.slice(0,4);
+  document.getElementById('fMes').value=indicatorAlertMonth.slice(5,7);
+ }
+ dashboardFilter={type:'prazoBucket',value:'FORA DO PRAZO',label:'Fora do prazo'+(indicatorAlertMonth?' · '+indicatorAlertMonth:'')+' · Dashboard Gerencial'};
+ sortState={key:null,asc:true};
+}
 function applyDataset(raw,source,savedAt){
- data=(Array.isArray(raw)?raw:[]).map(normalizeRow);cacheSavedAt=savedAt||cacheSavedAt;populateFilters();restoreFilterState();render();updateLast();PstecCache.updateStatus(source==='cache'?'cache':'api',cacheSavedAt)
+ data=(Array.isArray(raw)?raw:[]).map(normalizeRow);cacheSavedAt=savedAt||cacheSavedAt;populateFilters();restoreFilterState();applyIndicatorAlertLink();render();updateLast();PstecCache.updateStatus(source==='cache'?'cache':'api',cacheSavedAt)
 }
 async function fetchData(manual){
  if(refreshing)return;refreshing=true;let icon=document.getElementById('refreshIcon'),btn=document.getElementById('btnRefresh');if(manual){icon.classList.add('animate-spin');btn.disabled=true}else if(data.length)PstecCache.updateStatus('updating',cacheSavedAt);
