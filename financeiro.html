@@ -102,9 +102,9 @@
   </div>
  </section>
  <section class="page" id="view_juros">
-  <div class="toolbar"><div><h2 class="sectiontitle" style="margin:0">Juros de antecipação</h2><p class="sectiondesc" style="margin:4px 0">Plano “JUROS DE ANTECIPAÇÃO”; ano escolhido versus anterior.</p></div><div class="inline"><span class="pill" id="jurosTotalAnterior"></span><span class="pill" id="jurosTotalAtual"></span></div></div>
-  <div class="card chartcard"><h3>Comparativo anual por mês</h3><div class="sub">Agrupado pela data de pagamento; sem pagamento, usa vencimento. Independe de período, situação e previsão dos demais painéis.</div><div id="jurosEmpty" class="hintbar" style="display:none"></div><div class="chartbox" id="jurosChartBox" style="height:350px"><canvas id="chartJuros"></canvas></div></div>
-  <div class="card tablecard" style="margin-top:14px"><div class="toolbar"><strong style="font-size:13px">Lançamentos de juros</strong><span class="statline" id="jurosRowsLabel"></span></div><div class="tablewrap" id="jurosTable"></div></div>
+  <div class="toolbar"><div><h2 class="sectiontitle" style="margin:0">Juros de antecipação</h2><p class="sectiondesc" style="margin:4px 0">Contas a pagar: JUROS DE ANTECIPAÇÃO + Contas a receber: DESCONTO (sinal invertido).</p></div><div class="inline"><span class="pill" id="jurosTotalAnterior"></span><span class="pill" id="jurosTotalAtual"></span></div></div>
+  <div class="card chartcard"><div class="toolbar" style="margin:0 0 8px"><h3>Comparativo anual por mês</h3><div class="inline"><label for="jurosModo" class="muted">Exibir</label><select id="jurosModo" class="toggle"><option value="total">Total de antecipações</option><option value="pagar">Somente juros (a pagar)</option><option value="receber">Somente descontos (a receber)</option></select></div></div><div class="sub">Data de pagamento; na ausência, vencimento ou abertura. Respeita a empresa e o ano de referência; independe dos demais filtros.</div><div id="jurosComposicao" class="inline" style="margin:0 0 12px"></div><div id="jurosApiAviso" class="hintbar" style="display:none"></div><div id="jurosEmpty" class="hintbar" style="display:none"></div><div class="chartbox" id="jurosChartBox" style="height:350px"><canvas id="chartJuros"></canvas></div></div>
+  <div class="card tablecard" style="margin-top:14px"><div class="toolbar"><strong style="font-size:13px">Lançamentos de juros e descontos</strong><span class="statline" id="jurosRowsLabel"></span></div><div class="tablewrap" id="jurosTable" style="max-height:65vh"></div></div>
  </section>
  <section class="page" id="view_detalhes">
   <h2 class="sectiontitle">Detalhamento financeiro</h2><p class="sectiondesc">Registros filtrados, consulta por origem e exportação completa.</p>
@@ -125,12 +125,13 @@ const API='https://pstec.consultoriarf.net/';
 const SOURCES={pagar:'financeiro_pagar',receber:'financeiro_receber',carteira:'capital_carteira'};
 const CACHE_PREFIX='pstec_financeiro_analitico_v1_';
 // O cache da Carteira precisa ser isolado do antigo financeiro_carteira.
-const CACHE_KEYS={pagar:CACHE_PREFIX+'pagar',receber:CACHE_PREFIX+'receber',carteira:'pstec_financeiro_carteira_capital_v2'};
+const CACHE_KEYS={pagar:CACHE_PREFIX+'pagar',receber:'pstec_financeiro_receber_planos_v2',carteira:'pstec_financeiro_carteira_capital_v2'};
 const STATE_KEY='pstec_financeiro_filtros_v1';
 const raw={pagar:[],receber:[],carteira:[]},sync={},charts={};
 const today=new Date(),year=today.getFullYear(),currentMonth=today.getMonth(),quarter=Math.floor(currentMonth/3)*3;
 const ym=(y,m)=>String(y)+'-'+String(m+1).padStart(2,'0');
 const defaults={from:ym(year,quarter),to:ym(year,quarter+2),empresa:'',prevP:'0',statusP:'abertos',prevR:'0',statusR:'abertos',nf:'COM NF',valorP:'rateio',grupo:'all',plano:'',carteira:'1',busca:'',anoJ:String(year),view:'resumo',detail:'pagar',pageSize:'50'};
+let jurosModo='total';
 let state={...defaults},page=0,model={rows:[],pagar:[],receber:[],carteira:[]},loading=false,renderTimer=0;
 try{const saved=JSON.parse(localStorage.getItem(STATE_KEY)||'{}');for(const k of Object.keys(defaults))if(Object.hasOwn(saved,k))state[k]=saved[k];}catch(e){}
 const brl=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
@@ -254,7 +255,22 @@ function makeChart(id,type,labels,datasets,options={}){
  if(type!=='doughnut'&&!result.scales){
   result.scales={x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'#e9edf3'},ticks:{callback:v=>new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1}).format(v),font:{size:10}}}};
  }
- charts[id]=new Chart(canvas,{type,data:{labels,datasets},options:result});
+ const plugins=id==='chartJuros'?[{
+  id:'jurosDataLabels',
+  afterDatasetsDraw(chart){
+   const ctx=chart.ctx;ctx.save();ctx.font='10px Segoe UI, sans-serif';ctx.fillStyle='#34475a';ctx.textAlign='center';
+   const compact=new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1});
+   chart.data.datasets.forEach((dataset,i)=>{
+    if(!chart.isDatasetVisible(i))return;
+    chart.getDatasetMeta(i).data.forEach((bar,j)=>{
+     const val=dataset.data[j];if(!val||bar.hidden)return;
+     ctx.textBaseline=val<0?'top':'bottom';
+     ctx.fillText(compact.format(val),bar.x,bar.y+(val<0?4:-4));
+    });
+   });ctx.restore();
+  }
+ }]:[];
+ charts[id]=new Chart(canvas,{type,data:{labels,datasets},options:result,plugins});
 }
 function chartPay(id){
  makeChart(id,'bar',model.rows.map(r=>monthLabel(r.mes)),[
@@ -285,48 +301,75 @@ function isInterest(r){
  const text=norm(r.plano_contas);
  return bool(r.juros_antecipacao)||(text.includes('JUROS')&&text.includes('ANTECIP'));
 }
-function interestDate(r){return datekey(r.dt_pagamento||r.dt_vencimento||r.dt_abertura)}
-function jurosRows(){
- const y=Number(state.anoJ)||year;
- return raw.pagar.filter(r=>{
+function interestDate(r){return datekey(r.dt_pagamento)||datekey(r.dt_vencimento)||datekey(r.dt_abertura)}
+function discountPlans(r){
+ let plans=r.planos_contas;
+ if(typeof plans==='string'){try{plans=JSON.parse(plans)}catch(e){plans=null}}
+ return Array.isArray(plans)?plans.filter(p=>p&&norm(p.plano_contas)==='DESCONTO'):[];
+}
+function allJurosRows(){
+ const items=[];
+ for(const r of raw.pagar){
+  if(company(r)&&isInterest(r))items.push({...r,origem:'Contas a pagar',tipo_juros:'pagar',parte:r.fornecedor,valor_antecipacao:n(r.valor_rateio)});
+ }
+ for(const r of raw.receber){
+  if(!company(r))continue;
+  const plans=discountPlans(r);
+  if(plans.length){
+   for(const p of plans)items.push({...r,origem:'Contas a receber',tipo_juros:'receber',parte:r.cliente,plano_contas:p.plano_contas,valor_antecipacao:-n(p.valor)});
+  }else{
+   const value=r.valor_juros_antecipacao!=null?n(r.valor_juros_antecipacao):-n(r.valor_desconto);
+   if(value!==0)items.push({...r,origem:'Contas a receber',tipo_juros:'receber',parte:r.cliente,plano_contas:'DESCONTO',valor_antecipacao:value});
+  }
+ }
+ return items;
+}
+function jurosRows(all,y){
+ return all.filter(r=>{
   const sourceYear=Number(interestDate(r).slice(0,4));
-  return company(r)&&isInterest(r)&&(sourceYear===y||sourceYear===y-1);
+  return sourceYear===y||sourceYear===y-1;
  });
 }
 function drawJuros(){
- const y=Number(state.anoJ)||year,items=jurosRows(),months=Array.from({length:12},()=>[0,0]);
+ const y=Number(state.anoJ)||year,allInterest=allJurosRows(),items=jurosRows(allInterest,y);
+ const months=Array.from({length:12},()=>Array.from({length:2},()=>({pagar:0,receber:0})));
  for(const r of items){
   const key=interestDate(r),jy=Number(key.slice(0,4)),m=Number(key.slice(5,7))-1;
-  if(m>=0&&m<12)months[m][jy===y?1:0]+=n(r.valor_rateio);
+  if(m>=0&&m<12)months[m][jy===y?1:0][r.tipo_juros]+=r.valor_antecipacao;
  }
- const p=round(months.reduce((a,x)=>a+x[0],0)),q=round(months.reduce((a,x)=>a+x[1],0));
- document.getElementById('jurosTotalAnterior').textContent=(y-1)+': '+brl.format(p);
- document.getElementById('jurosTotalAtual').textContent=y+': '+brl.format(q);
+ const sums=[0,1].map(i=>months.reduce((a,m)=>({pagar:a.pagar+m[i].pagar,receber:a.receber+m[i].receber}),{pagar:0,receber:0}));
+ const total=x=>round(x.pagar+x.receber);
+ document.getElementById('jurosTotalAnterior').textContent=(y-1)+': '+brl.format(total(sums[0]));
+ document.getElementById('jurosTotalAtual').textContent=y+': '+brl.format(total(sums[1]));
+ document.getElementById('jurosComposicao').innerHTML=sums.map((x,i)=>'<span class="pill" style="color:#b53b33">'+(y-1+i)+' · Juros: '+brl.format(round(x.pagar))+'</span><span class="pill" style="color:#9a600b">'+(y-1+i)+' · Descontos: '+brl.format(round(x.receber))+'</span>').join('');
+ document.getElementById('jurosModo').value=jurosModo;
+ const value=x=>jurosModo==='total'?total(x):round(x[jurosModo]);
+ const shown=items.filter(r=>jurosModo==='total'||r.tipo_juros===jurosModo).sort((a,b)=>interestDate(b).localeCompare(interestDate(a)));
  makeChart('chartJuros','bar',['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'],[
-  {label:String(y-1),data:months.map(x=>round(x[0])),backgroundColor:'#596577',borderRadius:3},
-  {label:String(y),data:months.map(x=>round(x[1])),backgroundColor:'#e4a42a',borderRadius:3}
- ]);
- const allInterest=raw.pagar.filter(r=>company(r)&&isInterest(r));
- const years=[...new Set(allInterest.map(r=>interestDate(r).slice(0,4)).filter(Boolean))].sort();
- const notice=document.getElementById('jurosEmpty');
- const box=document.getElementById('jurosChartBox');
- if(items.length===0){
+  {label:String(y-1),data:months.map(x=>value(x[0])),backgroundColor:'#596577',borderRadius:3},
+  {label:String(y),data:months.map(x=>value(x[1])),backgroundColor:'#e4a42a',borderRadius:3}
+ ],{layout:{padding:{top:22,bottom:18}}});
+ const years=[...new Set(allInterest.filter(r=>jurosModo==='total'||r.tipo_juros===jurosModo).map(r=>interestDate(r).slice(0,4)).filter(Boolean))].sort();
+ const notice=document.getElementById('jurosEmpty'),box=document.getElementById('jurosChartBox'),apiNotice=document.getElementById('jurosApiAviso');
+ const missingPlans=raw.receber.length>0&&!raw.receber.some(r=>Object.hasOwn(r,'planos_contas')||Object.hasOwn(r,'valor_juros_antecipacao')||Object.hasOwn(r,'valor_desconto'));
+ const incomplete=missingPlans||!sync.receber?.ok&&!sync.receber?.cache;
+ apiNotice.style.display=incomplete?'block':'none';
+ apiNotice.textContent=missingPlans?'O endpoint de contas a receber ainda não retornou os planos de contas ou descontos. Totais podem estar incompletos.':'Dados de contas a receber ainda não disponíveis. Totais podem estar incompletos.';
+ if(shown.length===0){
   notice.style.display='block';
-  notice.textContent=allInterest.length
-   ? 'Há '+allInterest.length+' lançamentos de juros, mas nenhum em '+(y-1)+' ou '+y+'. Anos disponíveis: '+years.join(', ')+'.'
-   : 'Nenhum título identificado com plano de contas contendo JUROS e ANTECIPAÇÃO. Confira a nomenclatura no detalhamento de A pagar.';
+  notice.textContent=years.length?'Nenhum lançamento da origem selecionada em '+(y-1)+' ou '+y+'. Anos disponíveis: '+years.join(', ')+'.':'Nenhum lançamento de juros ou descontos identificado para a origem selecionada.';
   box.style.display='none';
  }else{notice.style.display='none';box.style.display='block'}
- document.getElementById('jurosRowsLabel').textContent=items.length+' rateios';
- const cols=[['empresa','Empresa'],['dt_pagamento','Pagamento'],['dt_vencimento','Vencimento'],['fornecedor','Fornecedor'],['documento','Documento'],['plano_contas','Plano'],['valor_rateio','Valor']];
- document.getElementById('jurosTable').innerHTML=htmlTable(items.slice(0,300),cols);
+ document.getElementById('jurosRowsLabel').textContent=shown.length+' rateios';
+ const cols=[['empresa','Empresa'],['origem','Origem'],['dt_pagamento','Pagamento'],['dt_vencimento','Vencimento'],['parte','Fornecedor / Cliente'],['documento','Documento'],['plano_contas','Plano'],['valor_antecipacao','Valor considerado']];
+ document.getElementById('jurosTable').innerHTML=htmlTable(shown,cols);
 }
 const cols={
  pagar:[['empresa','Empresa'],['dt_abertura','Lançamento'],['dt_vencimento','Vencimento'],['fornecedor','Fornecedor'],['documento','Documento'],['n_nf','NF'],['plano_contas','Plano de contas'],['grupo_financeiro','Grupo'],['previsao','Previsão'],['status_pagamento','Situação'],['valor_rateio','Rateio'],['saldo_rateado','Saldo rateado']],
  receber:[['empresa','Empresa'],['dt_abertura','Lançamento'],['dt_vencimento','Vencimento'],['cliente','Cliente'],['documento','Documento'],['n_nf','NF'],['status_emissao_nf','Emissão NF'],['previsao','Previsão'],['status_titulo','Situação'],['valor_corrigido_titulo','Valor corrigido'],['valor_recebido','Recebido'],['saldo_a_receber','A receber']],
  carteira:[['empresa','Empresa'],['prazo','Prazo'],['cliente','Cliente'],['orcamento','Orçamento'],['os','OS'],['n_pedido','Pedido'],['produto','Produto'],['status_orcamento','Status orçamento'],['qtde_pendente','Qtde pendente'],['situacao_carteira','Situação'],['vl_unitario','Valor unitário'],['vl_a_faturar','A faturar']]
 };
-const numericCols=['valor_rateio','saldo_rateado','valor_titulo','valor_corrigido_titulo','valor_pago_titulo','saldo_a_receber','valor_recebido','vl_a_faturar','vl_total','vl_unitario'];
+const numericCols=['valor_antecipacao','valor_rateio','saldo_rateado','valor_titulo','valor_corrigido_titulo','valor_pago_titulo','saldo_a_receber','valor_recebido','vl_a_faturar','vl_total','vl_unitario'];
 function formatCell(row,key){
  const v=row[key];
  if(key==='grupo_financeiro'&&String(v).toUpperCase()==='FINANCEIRO')return 'Geral';
@@ -534,6 +577,7 @@ function setup(){
   });
  }
  document.querySelectorAll('.navbutton').forEach(b=>b.addEventListener('click',()=>changeView(b.dataset.view)));
+ document.getElementById('jurosModo').addEventListener('change',e=>{jurosModo=e.target.value;render()});
  document.getElementById('detailType').addEventListener('change',e=>{state.detail=e.target.value;page=0;save();drawDetails()});
  document.getElementById('pageSize').addEventListener('change',e=>{state.pageSize=e.target.value;page=0;save();drawDetails()});
  render();loadCache().then(reloadAll);
