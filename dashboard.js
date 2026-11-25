@@ -616,22 +616,22 @@ function renderAlerts(production,carteira,purchase,quality,net){
  var alerts=[];
  if(production&&production.late.length){
   var examples=production.late.slice(0,3).map(function(r){return text(r.n_os||r.cod_os_completo||r.os);}).filter(Boolean).join(', ');
-  alerts.push({level:'red',title:integer.format(production.late.length)+' OS atrasadas',body:'Produção com prazo em atraso'+(examples?'. Exemplos: '+examples:'')+'.',url:'producao.html',link:'Ver produção'});
+  alerts.push({level:'red',title:integer.format(production.late.length)+' OS atrasadas',body:'Produção com prazo em atraso'+(examples?'. Exemplos: '+examples:'')+'.',url:'producao.html?alert=os_atrasadas',link:'Ver produção filtrada'});
  }
  if(carteira){
   var todayIso=dateIso(new Date()),late=carteira.filter(function(r){var d=dateIso(field(r,['Dt. Pesquisa','Dt. Negociada','Prev. entrega(original)']));return d&&d<todayIso;});
-  if(late.length)alerts.push({level:'red',title:integer.format(late.length)+' itens da carteira com prazo vencido',body:'Saldo a faturar em atraso: '+fmtBRL(late.reduce(function(s,r){return s+amount(r,['Vl. a faturar']);},0))+'.',url:'carteira.html',link:'Ver carteira'});
+  if(late.length)alerts.push({level:'red',title:integer.format(late.length)+' itens da carteira com prazo vencido',body:'Saldo a faturar em atraso: '+fmtBRL(late.reduce(function(s,r){return s+amount(r,['Vl. a faturar']);},0))+'.',url:'carteira.html?alert=prazo_vencido',link:'Ver carteira filtrada'});
  }
- if(purchase&&purchase.withoutOC)alerts.push({level:'gold',title:integer.format(purchase.withoutOC)+' materiais ainda sem OC',body:'Materiais processados e solicitados, mas sem ordem de compra vinculada.',url:'compras.html',link:'Ver compras'});
- if(purchase&&purchase.notProcessed)alerts.push({level:'gold',title:integer.format(purchase.notProcessed)+' materiais não processados',body:'Itens da lista de materiais aguardando processamento.',url:'compras.html',link:'Ver materiais'});
- if(quality&&quality.late>0)alerts.push({level:'gold',title:integer.format(quality.late)+' unidades faturadas fora do prazo',body:'Quantidade faturada com atraso no mês selecionado.',url:'indicadores-faturamento.html',link:'Ver indicadores'});
- if(net!==null&&net<0)alerts.push({level:'red',title:'Saldo financeiro consolidado negativo',body:'Créditos (recebidos + a receber) menos compromissos (pagos + a pagar): '+fmtBRL(net)+'.',url:'financeiro.html',link:'Ver financeiro'});
+ if(purchase&&purchase.withoutOC)alerts.push({level:'gold',title:integer.format(purchase.withoutOC)+' materiais ainda sem OC',body:'Materiais processados e solicitados, mas sem ordem de compra vinculada.',url:'compras.html?alert=sem_oc',link:'Ver compras filtradas'});
+ if(purchase&&purchase.notProcessed)alerts.push({level:'gold',title:integer.format(purchase.notProcessed)+' materiais não processados',body:'Itens da lista de materiais aguardando processamento.',url:'compras.html?alert=nao_processados',link:'Ver materiais filtrados'});
+ if(quality&&quality.late>0)alerts.push({level:'gold',title:integer.format(quality.late)+' unidades faturadas fora do prazo',body:'Quantidade faturada com atraso no mês selecionado.',url:'indicadores-faturamento.html?alert=fora_prazo&mes='+encodeURIComponent(monthEl.value||defaultMonth),link:'Ver faturamento filtrado'});
+ if(net!==null&&net<0)alerts.push({level:'red',title:'Saldo financeiro consolidado negativo',body:'Créditos (recebidos + a receber) menos compromissos (pagos + a pagar): '+fmtBRL(net)+'.',url:'financeiro.html?alert=saldo_negativo&mes='+encodeURIComponent(monthEl.value||defaultMonth),link:'Ver financeiro do mês'});
  var failed=names.filter(function(k){return status[k].error&&!status[k].ready;});
  if(failed.length)alerts.push({level:'gold',title:'Fontes temporariamente indisponíveis',body:failed.map(function(k){return SOURCES[k].name;}).join(', ')+'. Indicadores dessas fontes aparecem com travessão.',url:'',link:''});
  if(!alerts.length)alerts.push({level:'',title:'Nenhuma atenção identificada pelos dados disponíveis',body:'Continue acompanhando os indicadores e o status de atualização das fontes.',url:'',link:''});
  byId('alertCount').textContent=alerts.length+' aviso(s)';
  byId('alerts').innerHTML=alerts.slice(0,8).map(function(a){
-  return '<div class="alert '+a.level+'"><span class="dot"></span><div><strong>'+esc(a.title)+'</strong><p>'+esc(a.body)+(a.url?' <a href="'+a.url+'">'+esc(a.link)+' →</a>':'')+'</p></div></div>';
+  return '<div class="alert '+a.level+'"><span class="dot"></span><div><strong>'+esc(a.title)+'</strong><p>'+esc(a.body)+(a.url?' <a href="'+esc(a.url)+'" title="Abrir painel com filtros aplicados">'+esc(a.link)+' →</a>':'')+'</p></div></div>';
  }).join('');
 }
 function render(){
