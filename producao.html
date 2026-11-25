@@ -1236,7 +1236,7 @@
                 }
 
                 if (atrasadaFiltro) {
-                    const isAtrasada = String(item.atrasada || '').toLowerCase() === 'sim' || String(item.atrasada || '').toLowerCase() === 's';
+                    const isAtrasada = ['sim','s','1','true'].includes(String(item.atrasada ?? '').trim().toLowerCase());
                     if (atrasadaFiltro === 'sim' && !isAtrasada) return false;
                     if (atrasadaFiltro === 'nao' && isAtrasada) return false;
                 }
@@ -1273,7 +1273,7 @@
 
         function updateMetrics(filtered) {
             const totalOS = filtered.length;
-            const atrasadas = filtered.filter(i => String(i.atrasada || '').toLowerCase() === 'sim' || String(i.atrasada || '').toLowerCase() === 's').length;
+            const atrasadas = filtered.filter(i => ['sim','s','1','true'].includes(String(i.atrasada ?? '').trim().toLowerCase())).length;
             const semOrcamento = filtered.filter(i => {
                 const hasB = String(i.possui_orcamento || '').toLowerCase();
                 return hasB !== 'sim' && hasB !== 's' && hasB !== '1';
